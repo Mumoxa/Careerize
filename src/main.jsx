@@ -57,7 +57,7 @@ function AuthPanel({ onDemo }) {
 
   async function submit(event) {
     event.preventDefault();
-    if (!hasSupabase) { setStatus('Login is designed but not connected yet. Add Supabase keys in Cloudflare environment variables.'); return; }
+    if (!hasSupabase) { setStatus('Login is not connected yet. Add Supabase keys in Cloudflare environment variables.'); return; }
     setStatus('Working...');
     const response = mode === 'signUp'
       ? await supabase.auth.signUp({ email, password })
@@ -69,7 +69,7 @@ function AuthPanel({ onDemo }) {
   return <section className="panel authPanel">
     <p className="eyebrow">Account required</p>
     <h2>Create an account to save your profile and results</h2>
-    <p className="muted">This is the correct structure for Careerize: learners log in, complete their profile, then return later to see their saved guidance.</p>
+    <p className="muted">Learners log in, complete their profile, and return later to see saved guidance.</p>
     <form className="authForm" onSubmit={submit}>
       <Field label="Email address" name="email" type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder="learner@example.com" />
       <Field label="Password" name="password" type="password" value={password} onChange={e => setPassword(e.target.value)} placeholder="Create a password" />
@@ -86,6 +86,7 @@ function App() {
   const [profile, setProfile] = useState(blankProfile);
   const [answers, setAnswers] = useState({});
   const [saveStatus, setSaveStatus] = useState('');
+  const [loadingProfile, setLoadingProfile] = useState(false);
 
   const user = session?.user || null;
   const storageKey = user ? `careerize-profile-${user.id}` : 'careerize-demo-profile';
@@ -99,11 +100,27 @@ function App() {
   }, []);
 
   useEffect(() => {
-    const savedProfile = window.localStorage.getItem(storageKey);
-    const savedAnswers = window.localStorage.getItem(answerKey);
-    setProfile(savedProfile ? JSON.parse(savedProfile) : blankProfile);
-    setAnswers(savedAnswers ? JSON.parse(savedAnswers) : {});
-  }, [storageKey, answerKey]);
+    async function loadUserData() {
+      setSaveStatus('');
+      if (hasSupabase && user && !demoMode) {
+        setLoadingProfile(true);
+        const [{ data: profileRow, error: profileError }, { data: resultRow, error: resultError }] = await Promise.all([
+          supabase.from('careerize_profiles').select('profile').eq('user_id', user.id).maybeSingle(),
+          supabase.from('careerize_results').select('answers').eq('user_id', user.id).maybeSingle()
+        ]);
+        if (profileError || resultError) setSaveStatus('Could not load saved database profile yet. Check Supabase table setup.');
+        setProfile(profileRow?.profile || blankProfile);
+        setAnswers(resultRow?.answers || {});
+        setLoadingProfile(false);
+        return;
+      }
+      const savedProfile = window.localStorage.getItem(storageKey);
+      const savedAnswers = window.localStorage.getItem(answerKey);
+      setProfile(savedProfile ? JSON.parse(savedProfile) : blankProfile);
+      setAnswers(savedAnswers ? JSON.parse(savedAnswers) : {});
+    }
+    loadUserData();
+  }, [user?.id, demoMode]);
 
   const ranked = useMemo(() => {
     const selected = [...Object.values(answers), ...profileTags(profile)];
@@ -114,14 +131,42 @@ function App() {
   const completion = useMemo(() => Math.round((Object.values(profile).filter(Boolean).length / Object.keys(blankProfile).length) * 100), [profile]);
 
   function updateProfile(event) { const { name, value } = event.target; setProfile(prev => ({ ...prev, [name]: value })); }
-  function saveProgress() { window.localStorage.setItem(storageKey, JSON.stringify(profile)); window.localStorage.setItem(answerKey, JSON.stringify(answers)); setSaveStatus(`Saved. Your current best match is ${best.title}.`); }
-  function resetProfile() { setProfile(blankProfile); setAnswers({}); window.localStorage.removeItem(storageKey); window.localStorage.removeItem(answerKey); setSaveStatus('Profile cleared.'); }
+
+  async function saveProgress() {
+    setSaveStatus('Saving...');
+    if (hasSupabase && user && !demoMode) {
+      const now = new Date().toISOString();
+      const { error: profileError } = await supabase.from('careerize_profiles').upsert({ user_id: user.id, profile, updated_at: now }, { onConflict: 'user_id' });
+      const { error: resultsError } = await supabase.from('careerize_results').upsert({ user_id: user.id, answers, ranked_results: ranked, best_match: best.title, updated_at: now }, { onConflict: 'user_id' });
+      if (profileError || resultsError) { setSaveStatus('Save failed. Check Supabase schema and row level security policies.'); return; }
+      setSaveStatus(`Saved to your account. Your current best match is ${best.title}.`);
+      return;
+    }
+    window.localStorage.setItem(storageKey, JSON.stringify(profile));
+    window.localStorage.setItem(answerKey, JSON.stringify(answers));
+    setSaveStatus(`Saved on this device only. Your current best match is ${best.title}.`);
+  }
+
+  async function resetProfile() {
+    setProfile(blankProfile);
+    setAnswers({});
+    if (hasSupabase && user && !demoMode) {
+      await supabase.from('careerize_profiles').delete().eq('user_id', user.id);
+      await supabase.from('careerize_results').delete().eq('user_id', user.id);
+    }
+    window.localStorage.removeItem(storageKey);
+    window.localStorage.removeItem(answerKey);
+    setSaveStatus('Profile cleared.');
+  }
+
   async function signOut() { if (hasSupabase && user) await supabase.auth.signOut(); setDemoMode(false); }
 
   if (!user && !demoMode) return <main className="page"><section className="hero"><div className="badge">Career guidance for school leavers</div><h1>Careerize</h1><p className="lead">Log in to create a learner profile, save career matches and return later to continue the journey.</p></section><AuthPanel onDemo={() => setDemoMode(true)} /></main>;
 
   return <main className="page">
-    <section className="hero"><div className="badge">{user ? `Signed in as ${user.email}` : 'Demo mode'}</div><h1>Careerize</h1><p className="lead">Build your learner profile, save your results, and come back later to continue comparing career routes.</p><div className="heroGrid"><div><strong>Account</strong><span>{user ? 'Profile linked to login' : 'Demo only, not cloud-saved'}</span></div><div><strong>Profile</strong><span>{completion}% complete</span></div><div><strong>Current match</strong><span>{best.title}</span></div></div></section>
+    <section className="hero"><div className="badge">{user ? `Signed in as ${user.email}` : 'Demo mode'}</div><h1>Careerize</h1><p className="lead">Build your learner profile, save your results, and come back later to continue comparing career routes.</p><div className="heroGrid"><div><strong>Account</strong><span>{user ? 'Saved to database when configured' : 'Demo only, not cloud-saved'}</span></div><div><strong>Profile</strong><span>{completion}% complete</span></div><div><strong>Current match</strong><span>{best.title}</span></div></div></section>
+
+    {loadingProfile && <section className="panel"><p className="statusNote">Loading your saved Careerize profile...</p></section>}
 
     <section className="panel profilePanel"><div className="sectionHead"><div><p className="eyebrow">Step 1</p><h2>Your saved learner profile</h2><p className="muted">Complete this once, save it, then return later using the same login to continue.</p></div><div className="completion"><strong>{completion}%</strong><span>profile complete</span></div></div><div className="profileGrid">
       <Field label="First name" name="firstName" value={profile.firstName} onChange={updateProfile} placeholder="Example: Lwazi" />
