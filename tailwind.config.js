@@ -12,7 +12,7 @@ export default {
         cyber: "#F2FF49",
         violet: "#8A5BFF",
         mint: "#6CFFB0",
-        pinky: "#FF6AD5",
+        pink: "#FF6AD5",
       },
     },
   },
