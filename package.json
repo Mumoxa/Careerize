@@ -6,6 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "validate:catalog": "node scripts/validateCatalog.mjs",
+    "check": "npm run validate:catalog && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {
