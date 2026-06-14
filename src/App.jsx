@@ -15,8 +15,12 @@ import {
   Gauge,
   GraduationCap,
   Heart,
+  Lightbulb,
+  Lock,
   Menu,
+  Map,
   RotateCcw,
+  ShieldCheck,
   Sparkles,
   Star,
   ThumbsDown,
@@ -45,6 +49,7 @@ const NAV_ITEMS = [
   { id: "discover", label: "Discovery" },
   { id: "reality", label: "Reality Check" },
   { id: "pathway", label: "Pathway" },
+  { id: "trust", label: "Trust" },
   { id: "sponsors", label: "Partners" },
 ];
 
@@ -105,7 +110,7 @@ export default function App() {
 
           <div className="hidden items-center gap-3 md:flex">
             <a href="#discover" className="rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:border-white/40">Try demo</a>
-            <a href="#discover" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Open the app</a>
+            <a href="#discover" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Start safely</a>
           </div>
 
           <button
@@ -135,17 +140,17 @@ export default function App() {
 
       <section className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-14 pt-12 md:grid-cols-[1.05fr_0.95fr] md:pb-20 md:pt-20">
         <div className="flex flex-col justify-center">
-          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Career guidance for South African learners</Pill>
+          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Career discovery for South African learners</Pill>
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65 }}
             className="mt-6 font-display text-[44px] font-semibold leading-[0.95] tracking-[-0.04em] md:text-[88px]"
           >
-            Do not search for a job. <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">Discover yourself.</span>
+            Make subject and career choices with <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">evidence, not pressure.</span>
           </motion.h1>
           <p className="mt-7 max-w-xl text-base leading-7 text-white/65 md:text-lg">
-            A gamified career discovery experience for Grade 10s and school leavers who do not yet know what work really looks like.
+            Careerize helps Grade 10s and school leavers compare real work patterns, stress, tools and entry routes before they spend years and money on a path.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <a href="#discover" className="inline-flex items-center gap-2 rounded-full bg-cyber px-6 py-3 font-semibold text-black shadow-[0_0_55px_-14px_rgba(242,255,73,.9)]">Start discovery <ArrowRight size={18} /></a>
@@ -154,7 +159,7 @@ export default function App() {
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
             <MiniStat value={CAREER_ROUTES.length} label="starter routes" />
             <MiniStat value={`${progress}%`} label="profile complete" />
-            <MiniStat value="SA" label="local context" />
+            <MiniStat value="Human" label="final choice" />
           </div>
         </div>
 
@@ -162,7 +167,7 @@ export default function App() {
       </section>
 
       <section id="discover" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into practical career routes." />
+        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into practical career routes with clear caveats. It is guidance, not a hidden hiring decision." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <GlassCard>
             <div className="flex items-center justify-between gap-4">
@@ -199,7 +204,7 @@ export default function App() {
 
           <GlassCard>
             <h3 className="font-display text-2xl font-semibold">Interest tags</h3>
-            <p className="mt-2 text-sm text-white/55">This makes the experience feel more like discovery and less like a school form.</p>
+            <p className="mt-2 text-sm text-white/55">Tags add texture without pretending to measure personality, worth or potential.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {INTEREST_SIGNALS.map((signal) => {
                 const Icon = ICONS[signal.icon] ?? Sparkles;
@@ -238,7 +243,7 @@ export default function App() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold">{index + 1}. {route.title}</span>
-                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% fit</span>
+                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% signal</span>
                   </div>
                   <p className={`${active.id === route.id ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
                 </button>
@@ -261,6 +266,16 @@ export default function App() {
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
           <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
         </div>
+        <NextActionPlan route={active} progress={progress} />
+      </section>
+
+      <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
+        <SectionHeading eyebrow="Trust architecture" title="Guidance should increase agency, not quietly score people" text="Careerize is designed around learner dignity: transparent signals, visible caveats and no automated rejection or suitability decisioning." />
+        <div className="mt-9 grid gap-5 md:grid-cols-3">
+          <TrustCard icon={ShieldCheck} title="Explainable suggestions" text="Routes are ranked from the answers and tags learners choose. The app shows reality checks instead of pretending one score can decide a future." />
+          <TrustCard icon={Lock} title="Privacy by default" text="This frontend demo keeps discovery state in the browser session. The optional Supabase schema limits saved learner records to the signed-in owner through row-level security." />
+          <TrustCard icon={Lightbulb} title="Human decision loop" text="Careerize can support family, school and mentor conversations, but it should not replace counselling, admissions advice or employer judgement." />
+        </div>
       </section>
 
       <section id="sponsors" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
@@ -282,7 +297,7 @@ export default function App() {
 
       <footer className="relative z-10 mx-auto mt-16 flex max-w-7xl flex-col gap-4 border-t border-white/5 px-5 py-10 text-sm text-white/40 md:flex-row md:justify-between">
         <div className="flex items-center gap-3"><LogoMark small /> <span>© 2026 Careerize · Made in South Africa</span></div>
-        <div className="flex gap-6"><a href="#top">Privacy</a><a href="#sponsors">For Schools</a><a href="#sponsors">Partner with us</a></div>
+        <div className="flex gap-6"><a href="#trust">Privacy</a><a href="#sponsors">For Schools</a><a href="mailto:hello@careerize.co.za">Partner with us</a></div>
       </footer>
     </main>
   );
@@ -305,6 +320,9 @@ function HeroCard({ ranked, active, progress }) {
             <InfoPill icon={Clock} text={active.stress} />
             <InfoPill icon={Compass} text={active.remote} />
           </div>
+          <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
+            Not a verdict: this is a transparent signal based on your current answers. Change any answer to compare alternatives.
+          </p>
         </div>
         <div className="mt-5 space-y-3">
           {ranked.slice(0, 3).map((route, index) => (
@@ -316,6 +334,44 @@ function HeroCard({ ranked, active, progress }) {
         </div>
       </GlassCard>
     </motion.div>
+  );
+}
+
+function NextActionPlan({ route, progress }) {
+  const actions = [
+    progress < 100 ? "Complete the remaining discovery questions so the route comparison is less noisy." : "Compare the top three routes with a parent, teacher or mentor before choosing subjects.",
+    `Watch or interview someone who does ${route.title.toLowerCase()} work and ask about the worst part, not only the best part.`,
+    "Write down one low-cost experiment for the next 14 days: shadowing, a short course, a project, a school subject conversation or a workplace visit.",
+  ];
+
+  return (
+    <GlassCard className="mt-5">
+      <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
+        <div>
+          <Pill><Map size={14} /> Next best action</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Turn interest into a safe experiment.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/55">The product should never leave a learner with a label and no next step. The next step is small, observable and reversible.</p>
+        </div>
+        <div className="grid gap-3">
+          {actions.map((action, index) => (
+            <div key={action} className="flex gap-3 rounded-3xl border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-white/70">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-cyber font-semibold text-black">{index + 1}</span>
+              <span>{action}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+function TrustCard({ icon: Icon, title, text }) {
+  return (
+    <GlassCard>
+      <span className="inline-flex rounded-3xl bg-mint/15 p-4 text-mint"><Icon size={24} /></span>
+      <h3 className="mt-5 font-display text-2xl font-semibold">{title}</h3>
+      <p className="mt-3 text-sm leading-6 text-white/55">{text}</p>
+    </GlassCard>
   );
 }
 
