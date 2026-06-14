@@ -212,7 +212,7 @@ export async function saveDiscovery(session, discovery) {
       ranked_results: record.ranked_results,
       best_match: record.best_match,
       match_percent: discovery.matchPercent,
-      assessment_version: "v1.2",
+      assessment_version: "v1.3",
     });
     if (sessionError) throw sessionError;
 
