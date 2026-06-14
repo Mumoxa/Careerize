@@ -1,8 +1,8 @@
 # Careerize
 
-Careerize is an independent, free career-intelligence platform for South African Grade 10 learners, school leavers and early-career explorers who need to understand what real work looks like before they choose subjects, studies, training routes or first-work options.
+Careerize is a free, independent career-intelligence platform for South African learners, school leavers, jobseekers, parents and advisors who need to understand real work before choosing subjects, qualifications, training routes or first-work options.
 
-The product exists to show careers honestly: day-to-day work, tools, environment, stress, lifestyle impact, routes in, routes up, earnings reality, growth limits, worst parts, best parts and related careers learners may not know exist.
+The product exists to compare careers honestly: day-to-day work, tools, environment, stress, lifestyle impact, routes in, routes up, salary/demand uncertainty, growth limits, worst parts, best parts, related careers and next safe experiments.
 
 ## Strategic boundary
 
@@ -48,16 +48,30 @@ docs/strategy-and-repo-scope.md
 
 The current app includes:
 
+- South African-first landing page and audience segmentation.
 - Simple discovery questions.
 - Interest tags.
 - Deterministic career-route signals.
+- Transparent recommendation explanations showing matched signals, missing signals, confidence and next step.
+- Structured starter career profiles with day-in-life, tasks, subjects, qualification/pathway notes, misconceptions, best/worst parts and uncertainty states.
+- Source registry and confidence display for starter content.
+- Salary/demand sections that clearly show when source-verified data is not yet available.
+- Low-data mode toggle.
 - Learner-owned saved profile and discovery-result persistence through Supabase when configured.
 - Local-browser demo fallback when Supabase environment variables are absent.
-- Career reality cards.
-- Entry and growth pathway prompts.
+- South African pathway readiness across NSC, university, TVET, learnership, apprenticeship, short-course, work and pivot routes.
 - Independence and trust principles.
 
 There is no payment flow, employer dashboard, course sales, CV upload, recruitment workflow or commercial partner pipeline.
+
+## New documentation from the market-insights review
+
+```text
+docs/market-insights-decision-log.md
+docs/REPO_ASSESSMENT.md
+docs/PRODUCT_GAP_AUDIT.md
+docs/SOURCES.md
+```
 
 ## Run locally
 
@@ -111,23 +125,39 @@ src/lib/savedDiscovery.js
 
 This separation is intentional. Future career routes should be added to the catalog without changing the main UI logic. Route suggestions are guidance signals only, not suitability verdicts.
 
-## Adding a new career route
+## Adding or editing a career route
 
-Add a new object to `CAREER_ROUTES` with:
+Add or update an object in `CAREER_ROUTES` with:
 
 - `id`
 - `title`
 - `stream`
+- `country`
+- `status`
+- `lastUpdated`
+- `dataConfidence`
+- `sourceIds`
 - `signalWeights`
 - `summary`
 - `day`
+- `dayInLife`
+- `keyTasks`
 - `tools`
+- `toolExamples`
 - `environment`
+- `workEnvironment`
 - `stress`
 - `remote`
 - `growth`
 - `worst`
 - `best`
+- `subjects`
+- `qualifications`
+- `pathways`
+- `salary.status` and `salary.explanation`
+- `demand.status` and `demand.explanation`
+- `misconceptions`
+- `fitWarnings`
 
 Then run:
 
@@ -140,12 +170,17 @@ npm run build
 
 - Every route ID must be unique.
 - Every signal weight must reference a known question option or interest signal.
-- Every route must include all display fields.
+- Every route must include all required display fields.
+- Every route must reference at least one source record.
+- Every route must show a data-confidence score and last-updated date.
+- Every salary/demand section must show a source-verified state or a clear unknown state.
+- Do not display salary numbers, demand rankings or qualification eligibility claims without a source URL, access date and confidence score.
 - Signal weights must be positive numbers.
-- Career content must be honest, plain-English, and useful to an uninformed learner.
+- Career content must be honest, plain-English and useful to an uninformed learner.
 - Content must explain jargon and avoid assuming a university-bound, privileged or already-informed user.
 - Content must include the unglamorous reality of the work, not just the attractive parts.
 - Personalised guidance must explain options and next steps; it must not tell users what they must do.
+- Avoid overclaim phrases such as “perfect match”, “guaranteed” or “100% accurate”.
 
 ## Deployment
 
@@ -153,4 +188,5 @@ Deployment trigger: latest aligned frontend should deploy from `main`.
 
 ## Known technical debt
 
-A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.
+- A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.
+- Full admin CMS, bulk import, real source-backed salary bands, real demand heatmaps, PWA/offline support, i18n files, accessibility tests and e2e tests are still future work.
