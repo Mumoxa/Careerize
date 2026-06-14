@@ -7,7 +7,7 @@ The app is deployment-ready as a static Vite frontend demo if `npm run check` pa
 ## Required commands
 
 ```bash
-npm install
+npm ci
 npm run check
 ```
 

@@ -13,7 +13,7 @@ Careerize is a trusted career discovery experience for South African Grade 10 le
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
@@ -81,8 +81,4 @@ npm run build
 
 ## Deployment
 
-Deployment trigger: latest optimized frontend should deploy from `main`.
-
-## Known technical debt
-
-A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.
+Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app.
