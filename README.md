@@ -91,4 +91,4 @@ npm run build
 
 ## Deployment
 
-Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app. For production saved records, run `supabase/schema.sql`, configure the two Vite Supabase variables, and verify row-level security with separate learner accounts before launch.
+Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app. For production saved records, run the latest `supabase/schema.sql`, configure the two Vite Supabase variables, and verify row-level security with separate learner accounts before launch. If Supabase reports `permission denied for table careerize_profiles`, re-run the latest schema so the authenticated-role table grants are applied.

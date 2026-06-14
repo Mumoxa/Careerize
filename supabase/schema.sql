@@ -40,6 +40,19 @@ alter table public.careerize_profiles enable row level security;
 alter table public.careerize_results enable row level security;
 alter table public.careerize_discovery_sessions enable row level security;
 
+-- Supabase/PostgREST still requires table privileges in addition to RLS policies.
+-- Without these grants, authenticated users can hit "permission denied for table
+-- careerize_profiles" (or the result/session tables) before RLS policies are evaluated.
+grant usage on schema public to anon, authenticated;
+
+revoke all on table public.careerize_profiles from anon;
+revoke all on table public.careerize_results from anon;
+revoke all on table public.careerize_discovery_sessions from anon;
+
+grant select, insert, update, delete on table public.careerize_profiles to authenticated;
+grant select, insert, update, delete on table public.careerize_results to authenticated;
+grant select, insert, delete on table public.careerize_discovery_sessions to authenticated;
+
 -- Idempotent policy reset. Supabase SQL editor may show notices if policies do not yet exist; that is safe.
 drop policy if exists "Users can read their own Careerize profile" on public.careerize_profiles;
 drop policy if exists "Users can insert their own Careerize profile" on public.careerize_profiles;
