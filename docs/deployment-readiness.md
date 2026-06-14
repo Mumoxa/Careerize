@@ -24,7 +24,7 @@ VITE_SUPABASE_URL=your-project-url
 VITE_SUPABASE_ANON_KEY=your-public-anon-key
 ```
 
-Then run `supabase/schema.sql` and verify row-level security before launch.
+Then run `supabase/schema.sql` and verify row-level security before launch. The current SQL is intended for first setup. If you rerun it after policies already exist, drop or rename duplicate policies first.
 
 ## Pre-deployment checklist
 
