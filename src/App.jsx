@@ -391,7 +391,7 @@ export default function App() {
         <SectionHeading eyebrow="Trust architecture" title="Guidance should increase agency, not quietly score people" text="Careerize is designed around learner dignity: transparent signals, visible caveats and no automated rejection or suitability decisioning." />
         <div className="mt-9 grid gap-5 md:grid-cols-3">
           <TrustCard icon={ShieldCheck} title="Explainable suggestions" text="Routes are ranked from the answers and tags learners choose. The app shows reality checks instead of pretending one score can decide a future." />
-          <TrustCard icon={Lock} title="Privacy by default" text="This frontend demo keeps discovery state in the browser session. The optional Supabase schema limits saved learner records to the signed-in owner through row-level security." />
+          <TrustCard icon={Lock} title="Privacy by default" text="Saved views use Supabase row-level security when configured. If Supabase is not configured, Careerize labels the browser-only local demo fallback instead of pretending it is production auth." />
           <TrustCard icon={Lightbulb} title="Human decision loop" text="Careerize can support family, school and mentor conversations, but it should not replace counselling, admissions advice or employer judgement." />
         </div>
       </section>

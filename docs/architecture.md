@@ -4,7 +4,7 @@
 
 Careerize is currently a Vite React single-page application styled with Tailwind CSS. The main application logic lives in `src/App.jsx`, career data lives in `src/data/careerCatalog.js`, and deterministic scoring utilities live in `src/lib/scoring.js`.
 
-There is no active backend runtime in the app. A Supabase SQL schema exists in `supabase/schema.sql` for future authenticated learner profiles, latest result snapshots and discovery-session history. The schema enables row-level security policies so users can only access their own records.
+Careerize is frontend-first. The app can run as a static Vite experience in local demo mode, or connect directly to Supabase Auth/Postgres when `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured. The Supabase schema in `supabase/schema.sql` supports learner-owned profiles, latest result snapshots and discovery-session history with row-level security policies so users can only access their own records.
 
 ## Current product surface
 
@@ -21,10 +21,10 @@ There is no active backend runtime in the app. A Supabase SQL schema exists in `
 | Severity | Risk | Impact | Status |
 | --- | --- | --- | --- |
 | High | The UI could imply a career match is a verdict. | Learners may over-trust a simple signal model. | Mitigated with clearer copy, signal language and trust section. |
-| High | Supabase schema exists but frontend persistence/auth are not wired. | Product may appear more complete than it is if undocumented. | Documented as future architecture, not live functionality. |
+| High | Supabase saved-record mode depends on correct environment and RLS setup. | Production login can fail or expose data if Supabase is misconfigured. | Documented env setup; UI labels local demo mode; deployment checklist requires RLS verification. |
 | Medium | Most UI and business logic live in one component. | Harder to scale into auth, school, employer and admin surfaces. | Acceptable for current demo; should be split before larger features. |
 | Medium | No automated interaction tests. | Regressions in discovery flow could be missed. | Build/catalog validation exists; add component/E2E tests next. |
-| Medium | No environment variable documentation. | Future Supabase setup can be misconfigured. | Add deployment env docs when auth is wired. |
+| Medium | Local demo mode is not real cross-device auth. | Users could misunderstand browser-only persistence. | UI and docs explicitly label local mode and require Supabase for real saved records. |
 
 ## Target architecture
 
@@ -49,6 +49,7 @@ There is no active backend runtime in the app. A Supabase SQL schema exists in `
 ## Changes made in this pass
 
 - Clarified product positioning around evidence, safety and learner agency.
+- Added a saved learner view so learners can log in, save, log out and restore personalised discovery results.
 - Added a trust architecture section to the UI.
 - Reframed match copy as transparent signal strength rather than a verdict.
 - Added next-best-action guidance so the learner leaves with a small experiment, not just a label.
@@ -56,7 +57,7 @@ There is no active backend runtime in the app. A Supabase SQL schema exists in `
 
 ## Recommended next architecture work
 
-- Split `src/App.jsx` into feature components before adding auth or persistence.
+- Split `src/App.jsx` into feature components before adding more saved-profile, school or employer functionality.
 - Add a small test suite for scoring and discovery interactions.
 - Add account deletion/correction and profile-edit flows before wider school rollout.
 - Add organization and role tables before building school/employer dashboards.

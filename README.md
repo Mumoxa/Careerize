@@ -9,6 +9,7 @@ Careerize is a trusted career discovery experience for South African Grade 10 le
 - Tailwind CSS
 - Framer Motion
 - Lucide React icons
+- Supabase Auth/Postgres for saved learner records when configured
 
 ## Run locally
 
@@ -19,7 +20,12 @@ npm run dev
 
 ## Saved learner records
 
-The app supports a saved personalised discovery view. If `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, sign-in uses Supabase Auth and saves the latest result to `careerize_results` with a history row in `careerize_discovery_sessions`. Without those variables, the app clearly falls back to local demo mode and stores records only in the current browser.
+The app supports a saved personalised discovery view so a learner can log in, save results, log out, return later, change prompts and keep exploring.
+
+- With `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, sign-in uses Supabase Auth, the latest result is saved to `careerize_results`, and each save writes a history row to `careerize_discovery_sessions`.
+- Without those variables, the UI clearly switches to local demo mode and stores records only in the current browser. Local demo mode is not cross-device authentication.
+
+Copy `.env.example` to `.env.local` and fill the Supabase values to test real saved records.
 
 ## Production build
 
@@ -85,4 +91,4 @@ npm run build
 
 ## Deployment
 
-Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app.
+Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app. For production saved records, run `supabase/schema.sql`, configure the two Vite Supabase variables, and verify row-level security with separate learner accounts before launch.
