@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
@@ -15,8 +15,15 @@ import {
   Gauge,
   GraduationCap,
   Heart,
+  Lightbulb,
+  Lock,
+  LogIn,
+  LogOut,
+  Map,
   Menu,
   RotateCcw,
+  Save,
+  ShieldCheck,
   Sparkles,
   Star,
   ThumbsDown,
@@ -28,6 +35,15 @@ import {
   Zap,
 } from "lucide-react";
 import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
+import {
+  getCurrentSession,
+  hasSupabaseConfig,
+  loadLearnerProfile,
+  loadSavedDiscovery,
+  saveDiscovery,
+  signInOrCreateLearner,
+  signOutLearner,
+} from "./lib/savedDiscovery";
 import { getProfileProgress, rankCareerRoutes, toggleSignal } from "./lib/scoring";
 
 const ICONS = {
@@ -45,16 +61,30 @@ const NAV_ITEMS = [
   { id: "discover", label: "Discovery" },
   { id: "reality", label: "Reality Check" },
   { id: "pathway", label: "Pathway" },
-  { id: "principles", label: "Principles" },
+  { id: "trust", label: "Trust" },
 ];
 
 const DEFAULT_SIGNALS = [];
+const EMPTY_PROFILE = {
+  preferredName: "",
+  stage: "",
+  location: "",
+  subjects: "",
+  notes: "",
+};
 
 export default function App() {
   const [open, setOpen] = useState(false);
   const [answers, setAnswers] = useState({});
   const [selectedSignals, setSelectedSignals] = useState(DEFAULT_SIGNALS);
   const [manualActiveId, setManualActiveId] = useState(null);
+  const [learnerProfile, setLearnerProfile] = useState(EMPTY_PROFILE);
+  const [session, setSession] = useState(null);
+  const [savedAt, setSavedAt] = useState(null);
+  const [authNotice, setAuthNotice] = useState("");
+  const [authError, setAuthError] = useState("");
+  const [isSaving, setIsSaving] = useState(false);
+  const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const ranked = useMemo(
     () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals),
@@ -64,6 +94,47 @@ export default function App() {
   const bestMatch = ranked[0];
   const active = ranked.find((route) => route.id === manualActiveId) || bestMatch;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function restoreSession() {
+      try {
+        const currentSession = await getCurrentSession();
+        if (cancelled) return;
+        setSession(currentSession);
+
+        if (currentSession) {
+          const [profile, saved] = await Promise.all([
+            loadLearnerProfile(currentSession),
+            loadSavedDiscovery(currentSession),
+          ]);
+          if (cancelled) return;
+
+          if (profile) {
+            setLearnerProfile({ ...EMPTY_PROFILE, ...profile });
+          }
+
+          if (saved) {
+            setAnswers(saved.answers ?? {});
+            setSelectedSignals(saved.selected_signals ?? DEFAULT_SIGNALS);
+            setManualActiveId(saved.best_match ?? null);
+            setSavedAt(saved.updated_at ?? null);
+            setAuthNotice("Your saved learner profile and discovery view have been restored.");
+          }
+        }
+      } catch (error) {
+        if (!cancelled) setAuthError(error.message || "We could not restore your saved profile.");
+      } finally {
+        if (!cancelled) setIsAuthLoading(false);
+      }
+    }
+
+    restoreSession();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   function choose(questionId, value) {
     setAnswers((prev) => ({ ...prev, [questionId]: value }));
@@ -75,10 +146,90 @@ export default function App() {
     setManualActiveId(null);
   }
 
+  function updateLearnerProfile(field, value) {
+    setLearnerProfile((current) => ({ ...current, [field]: value }));
+  }
+
   function reset() {
     setAnswers({});
     setSelectedSignals(DEFAULT_SIGNALS);
     setManualActiveId(null);
+  }
+
+  async function handleSignIn(credentials) {
+    setAuthError("");
+    setAuthNotice("");
+    setIsAuthLoading(true);
+
+    try {
+      const nextSession = await signInOrCreateLearner(credentials);
+      setSession(nextSession);
+
+      const [profile, saved] = await Promise.all([
+        loadLearnerProfile(nextSession),
+        loadSavedDiscovery(nextSession),
+      ]);
+
+      if (profile) {
+        setLearnerProfile({ ...EMPTY_PROFILE, ...profile });
+      } else if (credentials.name) {
+        setLearnerProfile((current) => ({ ...current, preferredName: credentials.name }));
+      }
+
+      if (saved) {
+        setAnswers(saved.answers ?? {});
+        setSelectedSignals(saved.selected_signals ?? DEFAULT_SIGNALS);
+        setManualActiveId(saved.best_match ?? null);
+        setSavedAt(saved.updated_at ?? null);
+        setAuthNotice("Welcome back. Your saved learner profile and discovery view have been restored.");
+      } else {
+        setAuthNotice("Signed in. Save your learner profile and discovery view when you are ready.");
+      }
+    } catch (error) {
+      setAuthError(error.message || "Sign in failed. Check your details and try again.");
+    } finally {
+      setIsAuthLoading(false);
+    }
+  }
+
+  async function handleSave() {
+    setAuthError("");
+    setAuthNotice("");
+    setIsSaving(true);
+
+    try {
+      const record = await saveDiscovery(session, {
+        profile: learnerProfile,
+        answers,
+        selectedSignals,
+        rankedResults: ranked,
+        bestMatch: active.id,
+        matchPercent: active.matchPercent,
+      });
+      setSavedAt(record.updated_at);
+      setAuthNotice("Saved. You can return later for more personalised career guidance without starting again.");
+    } catch (error) {
+      setAuthError(error.message || "We could not save your learner profile.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
+
+  async function handleSignOut() {
+    setAuthError("");
+    setAuthNotice("");
+    setIsAuthLoading(true);
+
+    try {
+      await signOutLearner();
+      setSession(null);
+      setSavedAt(null);
+      setAuthNotice("Logged out. This device no longer has an active Careerize session.");
+    } catch (error) {
+      setAuthError(error.message || "Logout failed.");
+    } finally {
+      setIsAuthLoading(false);
+    }
   }
 
   return (
@@ -105,7 +256,7 @@ export default function App() {
 
           <div className="hidden items-center gap-3 md:flex">
             <a href="#discover" className="rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:border-white/40">Try demo</a>
-            <a href="#principles" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Read principles</a>
+            <a href="#trust" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Read principles</a>
           </div>
 
           <button
@@ -145,7 +296,7 @@ export default function App() {
             Know the real work <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">before you choose.</span>
           </motion.h1>
           <p className="mt-7 max-w-xl text-base leading-7 text-white/65 md:text-lg">
-            Careerize helps South African learners compare what careers actually involve: the day-to-day work, tools, stress, environment, entry routes, growth paths, worst parts and best parts.
+            Careerize helps South African learners compare what careers actually involve: day-to-day work, tools, stress, environment, entry routes, growth paths, worst parts, best parts and related careers they may not know exist.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <a href="#discover" className="inline-flex items-center gap-2 rounded-full bg-cyber px-6 py-3 font-semibold text-black shadow-[0_0_55px_-14px_rgba(242,255,73,.9)]">Start discovery <ArrowRight size={18} /></a>
@@ -154,16 +305,30 @@ export default function App() {
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
             <MiniStat value={CAREER_ROUTES.length} label="starter routes" />
             <MiniStat value={`${progress}%`} label="profile complete" />
-            <MiniStat value="Free" label="individual access" />
+            <MiniStat value="Learner" label="owns the choice" />
           </div>
         </div>
 
-        <HeroCard ranked={ranked} active={active} progress={progress} />
+        <HeroCard ranked={ranked} active={active} progress={progress} session={session} savedAt={savedAt} />
       </section>
 
       <section id="discover" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into transparent career-route signals. This is guidance for exploration, not a personality label or suitability verdict." />
+        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into transparent career-route signals. This is guidance for exploration, not a personality label, hiring decision or suitability verdict." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
+          <AccountPanel
+            session={session}
+            savedAt={savedAt}
+            learnerProfile={learnerProfile}
+            authNotice={authNotice}
+            authError={authError}
+            isAuthLoading={isAuthLoading}
+            isSaving={isSaving}
+            onProfileChange={updateLearnerProfile}
+            onSignIn={handleSignIn}
+            onSave={handleSave}
+            onSignOut={handleSignOut}
+          />
+
           <GlassCard>
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -261,42 +426,33 @@ export default function App() {
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
           <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
         </div>
+        <NextActionPlan route={active} progress={progress} />
       </section>
 
-      <section id="principles" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <GlassCard className="overflow-hidden">
-          <div className="grid gap-8 md:grid-cols-[1fr_0.8fr] md:items-center">
-            <div>
-              <Pill><Sparkles size={14} /> Editorial independence</Pill>
-              <h2 className="mt-5 font-display text-4xl font-semibold tracking-[-0.04em] md:text-6xl">The user is never the product.</h2>
-              <p className="mt-5 max-w-2xl text-white/60">
-                Careerize exists to serve the learner. It does not sell jobs, courses, placements, CV access or employer leads. Career content must stay free, honest and independent.
-              </p>
-            </div>
-            <div className="grid gap-3">
-              {["No job board or recruitment marketplace", "No paid influence over career profiles", "No CVs, payments or client records in the repo", "No AI verdicts or personality-label claims"].map((item) => (
-                <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/75"><Check size={18} className="text-mint" /> {item}</div>
-              ))}
-            </div>
-          </div>
-        </GlassCard>
+      <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
+        <SectionHeading eyebrow="Trust architecture" title="Personalised guidance without turning the learner into a product" text="Careerize may remember a learner profile so the advice becomes more useful over time. It must not become a CV database, employer pipeline, payment system, hidden ranking engine or marketplace." />
+        <div className="mt-9 grid gap-5 md:grid-cols-3">
+          <TrustCard icon={ShieldCheck} title="Explainable suggestions" text="Routes are ranked from the answers and tags learners choose. The app shows reality checks instead of pretending one score can decide a future." />
+          <TrustCard icon={Lock} title="Learner-owned memory" text="Saved profiles are for the learner to return later, compare options and receive better guidance. Supabase records are protected by row-level security and limited to the signed-in owner." />
+          <TrustCard icon={Lightbulb} title="No commercial influence" text="No employers, recruiters, course providers or sponsors can pay to influence career profiles, unlock learners, collect CVs or steer recommendations." />
+        </div>
       </section>
 
       <footer className="relative z-10 mx-auto mt-16 flex max-w-7xl flex-col gap-4 border-t border-white/5 px-5 py-10 text-sm text-white/40 md:flex-row md:justify-between">
         <div className="flex items-center gap-3"><LogoMark small /> <span>© 2026 Careerize · Made in South Africa</span></div>
-        <div className="flex gap-6"><a href="#principles">Privacy</a><a href="#principles">Independence</a><a href="#top">Back to top</a></div>
+        <div className="flex gap-6"><a href="#trust">Privacy</a><a href="#trust">Independence</a><a href="#top">Back to top</a></div>
       </footer>
     </main>
   );
 }
 
-function HeroCard({ ranked, active, progress }) {
+function HeroCard({ ranked, active, progress, session, savedAt }) {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65 }} className="relative">
       <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-violet/25 via-mint/10 to-cyber/20 blur-3xl" />
       <GlassCard className="relative min-h-[520px] overflow-hidden">
         <div className="flex items-center justify-between">
-          <Pill><Eye size={14} /> Live discovery view</Pill>
+          <Pill><Eye size={14} /> Live learner profile</Pill>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/55">{progress}% complete</span>
         </div>
         <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/25 p-5">
@@ -308,7 +464,10 @@ function HeroCard({ ranked, active, progress }) {
             <InfoPill icon={Compass} text={active.remote} />
           </div>
           <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
-            Not a verdict: this signal is based only on the answers and tags selected in this demo. It should start a better conversation, not end one.
+            Not a verdict: this signal is based only on the answers and tags selected. It should start a better conversation, not end one.
+          </p>
+          <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs leading-5 text-white/55">
+            {session ? `Signed in as ${session.email}. ${savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}.` : "Save when you want this view available next time."}` : "Sign in below to save this personalised view and return to it later."}
           </p>
         </div>
         <div className="mt-5 space-y-3">
@@ -321,6 +480,137 @@ function HeroCard({ ranked, active, progress }) {
         </div>
       </GlassCard>
     </motion.div>
+  );
+}
+
+function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError, isAuthLoading, isSaving, onProfileChange, onSignIn, onSave, onSignOut }) {
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    onSignIn(form);
+  }
+
+  return (
+    <GlassCard className="lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <Pill><Lock size={14} /> Saved learner profile</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Save your context and come back smarter.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/55">
+            Careerize can remember a lightweight learner profile, discovery answers and route signals so future guidance can refer back to what the learner already explored.
+          </p>
+          <p className="mt-3 text-xs leading-5 text-white/40">
+            {hasSupabaseConfig ? "Supabase auth is active. Saved profiles are protected by row-level security and belong to the signed-in learner." : "Local demo mode is active because Supabase environment variables are not configured. Records are saved only in this browser."}
+          </p>
+        </div>
+
+        {session ? (
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm text-white/45">Current learner</p>
+            <p className="mt-2 font-semibold">{session.email}</p>
+            <p className="mt-2 text-xs leading-5 text-white/45">{savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}` : "No saved profile yet for this account."}</p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <ProfileInput label="Preferred name" value={learnerProfile.preferredName} onChange={(value) => onProfileChange("preferredName", value)} placeholder="What should Careerize call you?" />
+              <ProfileInput label="Stage" value={learnerProfile.stage} onChange={(value) => onProfileChange("stage", value)} placeholder="Grade 10, Grade 12, gap year..." />
+              <ProfileInput label="Town or suburb" value={learnerProfile.location} onChange={(value) => onProfileChange("location", value)} placeholder="For local route context" />
+              <ProfileInput label="Subjects or interests" value={learnerProfile.subjects} onChange={(value) => onProfileChange("subjects", value)} placeholder="Maths, tourism, art, computers..." />
+            </div>
+            <label className="mt-3 block text-sm text-white/60">
+              Notes for future guidance
+              <textarea className="mt-2 min-h-24 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={learnerProfile.notes} onChange={(event) => onProfileChange("notes", event.target.value)} placeholder="Questions, worries, careers you want to compare, or things you want Careerize to remember." />
+            </label>
+
+            <div className="mt-5 flex flex-wrap gap-3">
+              <button type="button" onClick={onSave} disabled={isSaving || isAuthLoading} className="inline-flex items-center gap-2 rounded-full bg-cyber px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">
+                <Save size={16} /> {isSaving ? "Saving..." : "Save learner profile"}
+              </button>
+              <button type="button" onClick={onSignOut} disabled={isAuthLoading} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-white/75 disabled:cursor-not-allowed disabled:opacity-60">
+                <LogOut size={16} /> Log out
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form onSubmit={submit} className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="text-sm text-white/60">
+                Learner name
+                <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={form.name} onChange={(event) => update("name", event.target.value)} placeholder="A learner name" />
+              </label>
+              <label className="text-sm text-white/60">
+                Email
+                <input required type="email" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={form.email} onChange={(event) => update("email", event.target.value)} placeholder="learner@example.com" />
+              </label>
+            </div>
+            <label className="mt-3 block text-sm text-white/60">
+              Password
+              <input required minLength={6} type="password" className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={form.password} onChange={(event) => update("password", event.target.value)} placeholder="At least 6 characters" />
+            </label>
+            <button type="submit" disabled={isAuthLoading} className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-full bg-cyber px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">
+              <LogIn size={16} /> {isAuthLoading ? "Checking..." : "Log in or create saved profile"}
+            </button>
+          </form>
+        )}
+      </div>
+
+      {(authNotice || authError) && (
+        <div className={`mt-5 rounded-2xl border p-4 text-sm ${authError ? "border-pink/30 bg-pink/10 text-white/75" : "border-mint/25 bg-mint/10 text-white/70"}`}>
+          {authError || authNotice}
+        </div>
+      )}
+    </GlassCard>
+  );
+}
+
+function ProfileInput({ label, value, onChange, placeholder }) {
+  return (
+    <label className="text-sm text-white/60">
+      {label}
+      <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
+    </label>
+  );
+}
+
+function NextActionPlan({ route, progress }) {
+  const actions = [
+    progress < 100 ? "Complete the remaining discovery questions so the route comparison is less noisy." : "Compare the top three routes with a parent, teacher or mentor before choosing subjects.",
+    `Watch or interview someone who does ${route.title.toLowerCase()} work and ask about the worst part, not only the best part.`,
+    "Write down one low-cost experiment for the next 14 days: shadowing, a short course, a project, a school subject conversation or a workplace visit.",
+  ];
+
+  return (
+    <GlassCard className="mt-5">
+      <div className="grid gap-6 lg:grid-cols-[0.7fr_1.3fr] lg:items-center">
+        <div>
+          <Pill><Map size={14} /> Next best action</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Turn interest into a safe experiment.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/55">The product should never leave a learner with a label and no next step. The next step is small, observable and reversible.</p>
+        </div>
+        <div className="grid gap-3">
+          {actions.map((action, index) => (
+            <div key={action} className="flex gap-3 rounded-3xl border border-white/10 bg-white/[0.035] p-4 text-sm leading-6 text-white/70">
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-cyber font-semibold text-black">{index + 1}</span>
+              <span>{action}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
+function TrustCard({ icon: Icon, title, text }) {
+  return (
+    <GlassCard>
+      <span className="inline-flex rounded-3xl bg-mint/15 p-4 text-mint"><Icon size={24} /></span>
+      <h3 className="mt-5 font-display text-2xl font-semibold">{title}</h3>
+      <p className="mt-3 text-sm leading-6 text-white/55">{text}</p>
+    </GlassCard>
   );
 }
 
@@ -392,7 +682,7 @@ function Pill({ children }) {
 }
 
 function LogoMark({ small = false }) {
-  return <div className={`${small ? "h-8 w-8" : "h-10 w-10"} grid place-items-center rounded-2xl bg-gradient-to-br from-cyber via-mint to-violet text-black shadow-[0_0_35px_-12px_rgba(242,255,73/.9)]`}><Compass size={small ? 16 : 20} /></div>;
+  return <div className={`${small ? "h-8 w-8" : "h-10 w-10"} grid place-items-center rounded-2xl bg-gradient-to-br from-cyber via-mint to-violet text-black shadow-[0_0_35px_-12px_rgba(242,255,73,.9)]`}><Compass size={small ? 16 : 20} /></div>;
 }
 
 function BgAurora() {
