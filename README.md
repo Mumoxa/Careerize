@@ -17,6 +17,10 @@ npm ci
 npm run dev
 ```
 
+## Saved learner records
+
+The app supports a saved personalised discovery view. If `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are configured, sign-in uses Supabase Auth and saves the latest result to `careerize_results` with a history row in `careerize_discovery_sessions`. Without those variables, the app clearly falls back to local demo mode and stores records only in the current browser.
+
 ## Production build
 
 ```bash

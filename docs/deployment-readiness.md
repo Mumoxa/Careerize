@@ -13,9 +13,7 @@ npm run check
 
 ## Environment variables
 
-No frontend environment variables are required for the current static demo.
-
-Future Supabase work should document any `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` usage, ensure anon keys are not treated as secrets, and verify row-level security before launch.
+No frontend environment variables are required for local demo mode. To enable real cross-device learner login and saved results, configure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, run `supabase/schema.sql`, and verify row-level security before launch. The anon key is public client configuration, not a server secret.
 
 ## Pre-deployment checklist
 

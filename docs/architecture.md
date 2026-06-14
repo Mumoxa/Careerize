@@ -11,9 +11,9 @@ There is no active backend runtime in the app. A Supabase SQL schema exists in `
 - Public landing page and interactive demo in one React route.
 - Learner discovery questions and interest tags.
 - Deterministic career-route ranking.
+- Saved learner discovery views through Supabase Auth when configured, with a labelled local-browser demo fallback when Supabase env vars are absent.
 - Career reality cards with day-to-day work, tools, stress, remote potential, growth, best and worst parts.
 - Sponsor/partner section.
-- No production auth flow currently wired into the frontend.
 - No employer dashboard, admin dashboard, payment flow, email flow, file upload or AI integration currently implemented.
 
 ## Key risks found
@@ -58,5 +58,5 @@ There is no active backend runtime in the app. A Supabase SQL schema exists in `
 
 - Split `src/App.jsx` into feature components before adding auth or persistence.
 - Add a small test suite for scoring and discovery interactions.
-- Wire Supabase auth only after environment, consent, deletion and profile-edit flows are designed.
+- Add account deletion/correction and profile-edit flows before wider school rollout.
 - Add organization and role tables before building school/employer dashboards.
