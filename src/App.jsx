@@ -45,7 +45,7 @@ const NAV_ITEMS = [
   { id: "discover", label: "Discovery" },
   { id: "reality", label: "Reality Check" },
   { id: "pathway", label: "Pathway" },
-  { id: "sponsors", label: "Partners" },
+  { id: "principles", label: "Principles" },
 ];
 
 const DEFAULT_SIGNALS = [];
@@ -91,7 +91,7 @@ export default function App() {
             <LogoMark />
             <div>
               <div className="text-sm font-semibold tracking-tight">Careerize</div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Discover, do not guess</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Free career intelligence</div>
             </div>
           </a>
 
@@ -105,7 +105,7 @@ export default function App() {
 
           <div className="hidden items-center gap-3 md:flex">
             <a href="#discover" className="rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:border-white/40">Try demo</a>
-            <a href="#discover" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Open the app</a>
+            <a href="#principles" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Read principles</a>
           </div>
 
           <button
@@ -135,17 +135,17 @@ export default function App() {
 
       <section className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-14 pt-12 md:grid-cols-[1.05fr_0.95fr] md:pb-20 md:pt-20">
         <div className="flex flex-col justify-center">
-          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Career guidance for South African learners</Pill>
+          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Independent career intelligence</Pill>
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65 }}
             className="mt-6 font-display text-[44px] font-semibold leading-[0.95] tracking-[-0.04em] md:text-[88px]"
           >
-            Do not search for a job. <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">Discover yourself.</span>
+            Know the real work <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">before you choose.</span>
           </motion.h1>
           <p className="mt-7 max-w-xl text-base leading-7 text-white/65 md:text-lg">
-            A gamified career discovery experience for Grade 10s and school leavers who do not yet know what work really looks like.
+            Careerize helps South African learners compare what careers actually involve: the day-to-day work, tools, stress, environment, entry routes, growth paths, worst parts and best parts.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <a href="#discover" className="inline-flex items-center gap-2 rounded-full bg-cyber px-6 py-3 font-semibold text-black shadow-[0_0_55px_-14px_rgba(242,255,73,.9)]">Start discovery <ArrowRight size={18} /></a>
@@ -154,7 +154,7 @@ export default function App() {
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
             <MiniStat value={CAREER_ROUTES.length} label="starter routes" />
             <MiniStat value={`${progress}%`} label="profile complete" />
-            <MiniStat value="SA" label="local context" />
+            <MiniStat value="Free" label="individual access" />
           </div>
         </div>
 
@@ -162,13 +162,13 @@ export default function App() {
       </section>
 
       <section id="discover" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into practical career routes." />
+        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into transparent career-route signals. This is guidance for exploration, not a personality label or suitability verdict." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
           <GlassCard>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-display text-2xl font-semibold">Quick fit questions</h3>
-                <p className="mt-2 text-sm text-white/55">Simple enough for an uninformed learner, but useful enough to shape a route.</p>
+                <h3 className="font-display text-2xl font-semibold">Quick signal questions</h3>
+                <p className="mt-2 text-sm text-white/55">Simple enough for an uninformed learner, but useful enough to open a better career conversation.</p>
               </div>
               <button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-white/70 hover:border-white/30"><RotateCcw size={16} /> Reset</button>
             </div>
@@ -199,7 +199,7 @@ export default function App() {
 
           <GlassCard>
             <h3 className="font-display text-2xl font-semibold">Interest tags</h3>
-            <p className="mt-2 text-sm text-white/55">This makes the experience feel more like discovery and less like a school form.</p>
+            <p className="mt-2 text-sm text-white/55">Tags add texture without pretending to measure personality, worth or future potential.</p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {INTEREST_SIGNALS.map((signal) => {
                 const Icon = ICONS[signal.icon] ?? Sparkles;
@@ -226,7 +226,7 @@ export default function App() {
         <SectionHeading eyebrow="Reality Check" title="Every career card must show the real job" text="The point is not to make careers sound glamorous. The point is to help learners make better choices before they commit years and money." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
           <GlassCard>
-            <p className="text-sm uppercase tracking-[0.18em] text-white/40">Ranked matches</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-white/40">Route signals</p>
             <div className="mt-5 space-y-3">
               {ranked.map((route, index) => (
                 <button
@@ -238,7 +238,7 @@ export default function App() {
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold">{index + 1}. {route.title}</span>
-                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% fit</span>
+                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% signal</span>
                   </div>
                   <p className={`${active.id === route.id ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
                 </button>
@@ -257,22 +257,24 @@ export default function App() {
       <section id="pathway" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <SectionHeading eyebrow="Pathway" title="Show the route in and the route up" text="A learner needs to know the entry point, the practical ladder and where the career can get stuck." />
         <div className="mt-9 grid gap-5 md:grid-cols-3">
-          <PathStep icon={GraduationCap} title="1. Entry" text="School subjects, TVET, diploma, degree, internship, apprenticeship, portfolio or short course." />
+          <PathStep icon={GraduationCap} title="1. Entry" text="School subjects, TVET, diploma, degree, internship, apprenticeship, portfolio, work exposure or practical project." />
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
           <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
         </div>
       </section>
 
-      <section id="sponsors" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
+      <section id="principles" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <GlassCard className="overflow-hidden">
           <div className="grid gap-8 md:grid-cols-[1fr_0.8fr] md:items-center">
             <div>
-              <Pill><Sparkles size={14} /> Hybrid NGO / Commercial model</Pill>
-              <h2 className="mt-5 font-display text-4xl font-semibold tracking-[-0.04em] md:text-6xl">Fund access. Build a future talent pipeline.</h2>
-              <p className="mt-5 max-w-2xl text-white/60">Companies, schools and funders can support learner access while Careerize builds useful labour-market insight over time.</p>
+              <Pill><Sparkles size={14} /> Editorial independence</Pill>
+              <h2 className="mt-5 font-display text-4xl font-semibold tracking-[-0.04em] md:text-6xl">The user is never the product.</h2>
+              <p className="mt-5 max-w-2xl text-white/60">
+                Careerize exists to serve the learner. It does not sell jobs, courses, placements, CV access or employer leads. Career content must stay free, honest and independent.
+              </p>
             </div>
             <div className="grid gap-3">
-              {["School access", "Sponsored learner licences", "Career stream data", "Employer pathway content"].map((item) => (
+              {["No job board or recruitment marketplace", "No paid influence over career profiles", "No CVs, payments or client records in the repo", "No AI verdicts or personality-label claims"].map((item) => (
                 <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-4 text-sm text-white/75"><Check size={18} className="text-mint" /> {item}</div>
               ))}
             </div>
@@ -282,7 +284,7 @@ export default function App() {
 
       <footer className="relative z-10 mx-auto mt-16 flex max-w-7xl flex-col gap-4 border-t border-white/5 px-5 py-10 text-sm text-white/40 md:flex-row md:justify-between">
         <div className="flex items-center gap-3"><LogoMark small /> <span>© 2026 Careerize · Made in South Africa</span></div>
-        <div className="flex gap-6"><a href="#top">Privacy</a><a href="#sponsors">For Schools</a><a href="#sponsors">Partner with us</a></div>
+        <div className="flex gap-6"><a href="#principles">Privacy</a><a href="#principles">Independence</a><a href="#top">Back to top</a></div>
       </footer>
     </main>
   );
@@ -294,23 +296,26 @@ function HeroCard({ ranked, active, progress }) {
       <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-violet/25 via-mint/10 to-cyber/20 blur-3xl" />
       <GlassCard className="relative min-h-[520px] overflow-hidden">
         <div className="flex items-center justify-between">
-          <Pill><Eye size={14} /> Live learner profile</Pill>
+          <Pill><Eye size={14} /> Live discovery view</Pill>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/55">{progress}% complete</span>
         </div>
         <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/25 p-5">
-          <p className="text-sm text-white/45">Best current match</p>
+          <p className="text-sm text-white/45">Strongest current signal</p>
           <h2 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">{active.title}</h2>
           <p className="mt-3 text-sm leading-6 text-white/60">{active.summary}</p>
           <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-white/60">
             <InfoPill icon={Clock} text={active.stress} />
             <InfoPill icon={Compass} text={active.remote} />
           </div>
+          <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
+            Not a verdict: this signal is based only on the answers and tags selected in this demo. It should start a better conversation, not end one.
+          </p>
         </div>
         <div className="mt-5 space-y-3">
           {ranked.slice(0, 3).map((route, index) => (
             <div key={route.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4">
               <div><p className="text-sm font-semibold">{route.title}</p><p className="text-xs text-white/40">{route.stream}</p></div>
-              <div className="flex items-center gap-2 text-xs text-white/55"><Star size={14} className="text-cyber" /> {index === 0 ? "Top" : `#${index + 1}`}</div>
+              <div className="flex items-center gap-2 text-xs text-white/55"><Star size={14} className="text-cyber" /> {index === 0 ? "Top signal" : `#${index + 1}`}</div>
             </div>
           ))}
         </div>
@@ -387,7 +392,7 @@ function Pill({ children }) {
 }
 
 function LogoMark({ small = false }) {
-  return <div className={`${small ? "h-8 w-8" : "h-10 w-10"} grid place-items-center rounded-2xl bg-gradient-to-br from-cyber via-mint to-violet text-black shadow-[0_0_35px_-12px_rgba(242,255,73,.9)]`}><Compass size={small ? 16 : 20} /></div>;
+  return <div className={`${small ? "h-8 w-8" : "h-10 w-10"} grid place-items-center rounded-2xl bg-gradient-to-br from-cyber via-mint to-violet text-black shadow-[0_0_35px_-12px_rgba(242,255,73/.9)]`}><Compass size={small ? 16 : 20} /></div>;
 }
 
 function BgAurora() {
