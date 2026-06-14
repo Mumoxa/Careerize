@@ -1,6 +1,6 @@
 -- Careerize Supabase schema
 -- Run this in Supabase SQL Editor after creating your Supabase project.
--- This supports: user account auth, one editable learner profile, latest result snapshot, and full discovery history.
+-- Purpose: learner-owned saved profiles, latest discovery result snapshots and discovery history.
 
 create table if not exists public.careerize_profiles (
   id uuid primary key default gen_random_uuid(),
@@ -32,7 +32,7 @@ create table if not exists public.careerize_discovery_sessions (
   ranked_results jsonb not null default '[]'::jsonb,
   best_match text,
   match_percent integer,
-  assessment_version text not null default 'v1.1',
+  assessment_version text not null default 'v1.2',
   created_at timestamptz not null default now()
 );
 
@@ -40,90 +40,39 @@ alter table public.careerize_profiles enable row level security;
 alter table public.careerize_results enable row level security;
 alter table public.careerize_discovery_sessions enable row level security;
 
--- Supabase/PostgREST still requires table privileges in addition to RLS policies.
--- Without these grants, authenticated users can hit "permission denied for table
--- careerize_profiles" (or the result/session tables) before RLS policies are evaluated.
-grant usage on schema public to anon, authenticated;
-
-revoke all on table public.careerize_profiles from anon;
-revoke all on table public.careerize_results from anon;
-revoke all on table public.careerize_discovery_sessions from anon;
-
-grant select, insert, update, delete on table public.careerize_profiles to authenticated;
-grant select, insert, update, delete on table public.careerize_results to authenticated;
-grant select, insert, delete on table public.careerize_discovery_sessions to authenticated;
-
--- Idempotent policy reset. Supabase SQL editor may show notices if policies do not yet exist; that is safe.
-drop policy if exists "Users can read their own Careerize profile" on public.careerize_profiles;
-drop policy if exists "Users can insert their own Careerize profile" on public.careerize_profiles;
-drop policy if exists "Users can update their own Careerize profile" on public.careerize_profiles;
-drop policy if exists "Users can delete their own Careerize profile" on public.careerize_profiles;
-
-drop policy if exists "Users can read their own Careerize results" on public.careerize_results;
-drop policy if exists "Users can insert their own Careerize results" on public.careerize_results;
-drop policy if exists "Users can update their own Careerize results" on public.careerize_results;
-drop policy if exists "Users can delete their own Careerize results" on public.careerize_results;
-
-drop policy if exists "Users can read their own Careerize sessions" on public.careerize_discovery_sessions;
-drop policy if exists "Users can insert their own Careerize sessions" on public.careerize_discovery_sessions;
-drop policy if exists "Users can delete their own Careerize sessions" on public.careerize_discovery_sessions;
-
-create policy "Users can read their own Careerize profile"
-on public.careerize_profiles
-for select
+create policy "Careerize profile owner select"
+on public.careerize_profiles for select
 using (auth.uid() = user_id);
 
-create policy "Users can insert their own Careerize profile"
-on public.careerize_profiles
-for insert
+create policy "Careerize profile owner insert"
+on public.careerize_profiles for insert
 with check (auth.uid() = user_id);
 
-create policy "Users can update their own Careerize profile"
-on public.careerize_profiles
-for update
+create policy "Careerize profile owner update"
+on public.careerize_profiles for update
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
-create policy "Users can delete their own Careerize profile"
-on public.careerize_profiles
-for delete
+create policy "Careerize result owner select"
+on public.careerize_results for select
 using (auth.uid() = user_id);
 
-create policy "Users can read their own Careerize results"
-on public.careerize_results
-for select
-using (auth.uid() = user_id);
-
-create policy "Users can insert their own Careerize results"
-on public.careerize_results
-for insert
+create policy "Careerize result owner insert"
+on public.careerize_results for insert
 with check (auth.uid() = user_id);
 
-create policy "Users can update their own Careerize results"
-on public.careerize_results
-for update
+create policy "Careerize result owner update"
+on public.careerize_results for update
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
-create policy "Users can delete their own Careerize results"
-on public.careerize_results
-for delete
+create policy "Careerize session owner select"
+on public.careerize_discovery_sessions for select
 using (auth.uid() = user_id);
 
-create policy "Users can read their own Careerize sessions"
-on public.careerize_discovery_sessions
-for select
-using (auth.uid() = user_id);
-
-create policy "Users can insert their own Careerize sessions"
-on public.careerize_discovery_sessions
-for insert
+create policy "Careerize session owner insert"
+on public.careerize_discovery_sessions for insert
 with check (auth.uid() = user_id);
-
-create policy "Users can delete their own Careerize sessions"
-on public.careerize_discovery_sessions
-for delete
-using (auth.uid() = user_id);
 
 create index if not exists careerize_discovery_sessions_user_created_idx
 on public.careerize_discovery_sessions (user_id, created_at desc);

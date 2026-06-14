@@ -1,6 +1,39 @@
 # Careerize
 
-Careerize is a trusted career discovery experience for South African Grade 10 learners and school leavers who need to compare real work patterns, stress, tools, entry routes and growth paths before making subject, study or first-work decisions.
+Careerize is an independent, free career-intelligence platform for South African Grade 10 learners, school leavers and early-career explorers who need to understand what real work looks like before they choose subjects, studies, training routes or first-work options.
+
+The product exists to show careers honestly: day-to-day work, tools, environment, stress, lifestyle impact, routes in, routes up, earnings reality, growth limits, worst parts, best parts and related careers learners may not know exist.
+
+## Strategic boundary
+
+Careerize is not a marketplace, job board, recruitment tool, course directory, employer pipeline, personality test or black-box AI career advisor. It must not sell jobs, sell courses, collect CVs for employers, broker introductions, run placements, or allow commercial partners to influence career content.
+
+Personalised guidance is allowed when it serves the learner. The platform may save learner-owned profiles, discovery answers, interests, notes, route comparisons and exploration history so the user can return later and receive better guidance. This saved layer must never become a CV database, employer unlock system, hiring funnel, advertising profile, payment store or commercial marketplace.
+
+The repository must only contain what is necessary to build and maintain the independent career-intelligence platform.
+
+Do not commit:
+
+- Client, employer, recruiter, sponsor or marketplace account data.
+- Learner CVs, job applications, candidate records or recruitment records.
+- Payment records, invoices, billing logs, card details, bank details or payment credentials.
+- Marketing lists, lead lists or unrelated contact data.
+- API keys, secrets, access tokens or private credentials.
+- Any feature that implies automated suitability decisions, hiring decisions, admissions decisions or psychometric certainty.
+
+Allowed learner-owned records:
+
+- Account authentication identifiers needed for login.
+- Lightweight learner profile fields used for guidance context.
+- Discovery answers, selected interests, saved route comparisons and notes.
+- Discovery-session history used for learner reflection and product improvement.
+- Consent, privacy and deletion/correction records when those flows are added.
+
+For the full product boundary, see:
+
+```text
+docs/strategy-and-repo-scope.md
+```
 
 ## Current stack
 
@@ -9,23 +42,44 @@ Careerize is a trusted career discovery experience for South African Grade 10 le
 - Tailwind CSS
 - Framer Motion
 - Lucide React icons
-- Supabase Auth/Postgres for saved learner records when configured
+- Supabase Auth and Row Level Security when configured
+
+## Current product surface
+
+The current app includes:
+
+- Simple discovery questions.
+- Interest tags.
+- Deterministic career-route signals.
+- Learner-owned saved profile and discovery-result persistence through Supabase when configured.
+- Local-browser demo fallback when Supabase environment variables are absent.
+- Career reality cards.
+- Entry and growth pathway prompts.
+- Independence and trust principles.
+
+There is no payment flow, employer dashboard, course sales, CV upload, recruitment workflow or commercial partner pipeline.
 
 ## Run locally
 
 ```bash
-npm ci
+npm install
 npm run dev
 ```
 
-## Saved learner records
+## Supabase saved-profile setup
 
-The app supports a saved personalised discovery view so a learner can log in, save results, log out, return later, change prompts and keep exploring.
+The app works without Supabase in local demo mode. To enable cross-device learner login and saved learner profiles:
 
-- With `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, sign-in uses Supabase Auth, the latest result is saved to `careerize_results`, and each save writes a history row to `careerize_discovery_sessions`.
-- Without those variables, the UI clearly switches to local demo mode and stores records only in the current browser. Local demo mode is not cross-device authentication.
+1. Create a Supabase project.
+2. Run `supabase/schema.sql` in the Supabase SQL editor.
+3. Set these frontend environment variables:
 
-Copy `.env.example` to `.env.local` and fill the Supabase values to test real saved records.
+```text
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
+```
+
+The anon key is public frontend configuration, not a server secret. Do not commit `.env` files.
 
 ## Production build
 
@@ -49,7 +103,13 @@ Scoring logic lives in:
 src/lib/scoring.js
 ```
 
-This separation is intentional. Future career routes should be added to the catalog without changing the main UI logic. Route suggestions are deterministic guidance signals, not automated suitability decisions.
+Saved learner profile and discovery persistence lives in:
+
+```text
+src/lib/savedDiscovery.js
+```
+
+This separation is intentional. Future career routes should be added to the catalog without changing the main UI logic. Route suggestions are guidance signals only, not suitability verdicts.
 
 ## Adding a new career route
 
@@ -76,19 +136,21 @@ npm run validate:catalog
 npm run build
 ```
 
-## Data rules
+## Content rules
 
 - Every route ID must be unique.
 - Every signal weight must reference a known question option or interest signal.
 - Every route must include all display fields.
 - Signal weights must be positive numbers.
-
-## Product and architecture docs
-
-- `docs/product-strategy.md` explains the 2030-ready product thesis and trust principles.
-- `docs/architecture.md` documents the current frontend architecture, Supabase boundary and target architecture.
-- `docs/deployment-readiness.md` lists deployment checks and current platform limitations.
+- Career content must be honest, plain-English, and useful to an uninformed learner.
+- Content must explain jargon and avoid assuming a university-bound, privileged or already-informed user.
+- Content must include the unglamorous reality of the work, not just the attractive parts.
+- Personalised guidance must explain options and next steps; it must not tell users what they must do.
 
 ## Deployment
 
-Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app. For production saved records, run the latest `supabase/schema.sql`, configure the two Vite Supabase variables, and verify row-level security with separate learner accounts before launch. If Supabase reports `permission denied for table careerize_profiles`, re-run the latest schema so the authenticated-role table grants are applied.
+Deployment trigger: latest aligned frontend should deploy from `main`.
+
+## Known technical debt
+
+A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.

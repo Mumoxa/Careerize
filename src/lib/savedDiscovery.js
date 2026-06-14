@@ -28,6 +28,18 @@ function localRecordKey(email) {
   return `${LOCAL_RECORD_PREFIX}${normalizeEmail(email)}`;
 }
 
+function readLocalRecord(email) {
+  try {
+    return JSON.parse(window.localStorage.getItem(localRecordKey(email)) ?? "null");
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalRecord(email, record) {
+  window.localStorage.setItem(localRecordKey(email), JSON.stringify(record));
+}
+
 function getLocalSession() {
   try {
     return JSON.parse(window.localStorage.getItem(LOCAL_SESSION_KEY) ?? "null");
@@ -42,6 +54,16 @@ function setLocalSession(session) {
 
 function clearLocalSession() {
   window.localStorage.removeItem(LOCAL_SESSION_KEY);
+}
+
+function cleanProfile(profile = {}) {
+  return {
+    preferredName: String(profile.preferredName ?? "").trim(),
+    stage: String(profile.stage ?? "").trim(),
+    location: String(profile.location ?? "").trim(),
+    subjects: String(profile.subjects ?? "").trim(),
+    notes: String(profile.notes ?? "").trim(),
+  };
 }
 
 export async function getCurrentSession() {
@@ -74,11 +96,16 @@ export async function signInOrCreateLearner({ email, password, name }) {
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
       email: normalizedEmail,
       password,
-      options: { data: { name } },
+      options: { data: { name: name?.trim() || normalizedEmail } },
     });
 
     if (signUpError) throw signUpError;
-    return signUpData.user ? { id: signUpData.user.id, email: signUpData.user.email, provider: "supabase" } : null;
+
+    if (!signUpData.user) {
+      throw new Error("Check your inbox to confirm your email, then log in again.");
+    }
+
+    return { id: signUpData.user.id, email: signUpData.user.email, provider: "supabase" };
   }
 
   const session = {
@@ -102,6 +129,25 @@ export async function signOutLearner() {
   clearLocalSession();
 }
 
+export async function loadLearnerProfile(session) {
+  if (!session) return null;
+  const supabase = await getSupabaseClient();
+
+  if (supabase && session.provider === "supabase") {
+    const { data, error } = await supabase
+      .from("careerize_profiles")
+      .select("profile, updated_at")
+      .eq("user_id", session.id)
+      .maybeSingle();
+
+    if (error) throw error;
+    return data?.profile ? { ...data.profile, updated_at: data.updated_at } : null;
+  }
+
+  const stored = readLocalRecord(session.email);
+  return stored?.profile ?? null;
+}
+
 export async function loadSavedDiscovery(session) {
   if (!session) return null;
   const supabase = await getSupabaseClient();
@@ -117,16 +163,14 @@ export async function loadSavedDiscovery(session) {
     return data;
   }
 
-  try {
-    return JSON.parse(window.localStorage.getItem(localRecordKey(session.email)) ?? "null");
-  } catch {
-    return null;
-  }
+  const stored = readLocalRecord(session.email);
+  return stored?.discovery ?? stored ?? null;
 }
 
 export async function saveDiscovery(session, discovery) {
   if (!session) throw new Error("Sign in before saving your discovery view.");
   const supabase = await getSupabaseClient();
+  const profile = cleanProfile(discovery.profile);
 
   const record = {
     answers: discovery.answers,
@@ -137,6 +181,18 @@ export async function saveDiscovery(session, discovery) {
   };
 
   if (supabase && session.provider === "supabase") {
+    const { error: profileError } = await supabase
+      .from("careerize_profiles")
+      .upsert(
+        {
+          user_id: session.id,
+          profile,
+          updated_at: record.updated_at,
+        },
+        { onConflict: "user_id" }
+      );
+    if (profileError) throw profileError;
+
     const { error: resultError } = await supabase
       .from("careerize_results")
       .upsert(
@@ -150,18 +206,22 @@ export async function saveDiscovery(session, discovery) {
 
     const { error: sessionError } = await supabase.from("careerize_discovery_sessions").insert({
       user_id: session.id,
+      profile_snapshot: profile,
       answers: record.answers,
       selected_signals: record.selected_signals,
       ranked_results: record.ranked_results,
       best_match: record.best_match,
       match_percent: discovery.matchPercent,
-      assessment_version: "v1.1",
+      assessment_version: "v1.2",
     });
     if (sessionError) throw sessionError;
 
     return record;
   }
 
-  window.localStorage.setItem(localRecordKey(session.email), JSON.stringify(record));
+  writeLocalRecord(session.email, {
+    profile,
+    discovery: record,
+  });
   return record;
 }
