@@ -2,7 +2,7 @@
 
 Careerize is a free, independent career-intelligence platform for South African learners, school leavers, jobseekers, parents and advisors who need to understand real work before choosing subjects, qualifications, training routes or first-work options.
 
-The product exists to compare careers honestly: day-to-day work, tools, environment, stress, lifestyle impact, routes in, routes up, salary/demand uncertainty, growth limits, worst parts, best parts, related careers and next safe experiments.
+The product exists to compare careers honestly: day-to-day work, tools, environment, stress, lifestyle impact, routes in, routes up, earning-potential insight, demand uncertainty, growth limits, worst parts, best parts, related careers and next safe experiments.
 
 ## Strategic boundary
 
@@ -55,7 +55,8 @@ The current app includes:
 - Transparent recommendation explanations showing matched signals, missing signals, confidence and next step.
 - Structured starter career profiles with day-in-life, tasks, subjects, qualification/pathway notes, misconceptions, best/worst parts and uncertainty states.
 - Source registry and confidence display for starter content.
-- Salary/demand sections that clearly show when source-verified data is not yet available.
+- Qualitative earning-potential insights instead of detailed salary information.
+- Demand sections that clearly show when source-verified data is not yet available.
 - Low-data mode toggle.
 - Learner-owned saved profile and discovery-result persistence through Supabase when configured.
 - Local-browser demo fallback when Supabase environment variables are absent.
@@ -154,7 +155,7 @@ Add or update an object in `CAREER_ROUTES` with:
 - `subjects`
 - `qualifications`
 - `pathways`
-- `salary.status` and `salary.explanation`
+- `earningPotential.status`, `earningPotential.label` and `earningPotential.explanation`
 - `demand.status` and `demand.explanation`
 - `misconceptions`
 - `fitWarnings`
@@ -173,8 +174,9 @@ npm run build
 - Every route must include all required display fields.
 - Every route must reference at least one source record.
 - Every route must show a data-confidence score and last-updated date.
-- Every salary/demand section must show a source-verified state or a clear unknown state.
-- Do not display salary numbers, demand rankings or qualification eligibility claims without a source URL, access date and confidence score.
+- Careerize should not display detailed salary information in the starter product.
+- Use qualitative earning-potential guidance such as high upside, steady earning path, variable by route, or stronger with scarce skills.
+- Do not display salary numbers, salary bands, demand rankings or qualification eligibility claims without a source URL, access date and confidence score.
 - Signal weights must be positive numbers.
 - Career content must be honest, plain-English and useful to an uninformed learner.
 - Content must explain jargon and avoid assuming a university-bound, privileged or already-informed user.
@@ -189,4 +191,5 @@ Deployment trigger: latest aligned frontend should deploy from `main`.
 ## Known technical debt
 
 - A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.
-- Full admin CMS, bulk import, real source-backed salary bands, real demand heatmaps, PWA/offline support, i18n files, accessibility tests and e2e tests are still future work.
+- Full admin CMS, bulk import, real demand heatmaps, PWA/offline support, i18n files, accessibility tests and e2e tests are still future work.
+- Detailed salary data is intentionally deferred. Careerize should stay with qualitative earning-potential insight unless there is a strong source-backed product reason to add salary detail later.
