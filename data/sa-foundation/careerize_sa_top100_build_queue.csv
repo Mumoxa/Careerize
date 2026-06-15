@@ -1,0 +1,101 @@
+priority_rank,career_title,cluster,current_repo_status,next_action
+1,Civil Engineer,Engineering & Built Environment,starter_profile,verify_and_normalise
+2,Electrical Engineer,Engineering & Built Environment,starter_profile,verify_and_normalise
+3,Electrician,Engineering & Built Environment,starter_profile,verify_and_normalise
+4,Mechanical Engineer,Engineering & Built Environment,starter_profile,verify_and_normalise
+5,Millwright,Engineering & Built Environment,starter_profile,verify_and_normalise
+6,Quantity Surveyor,Engineering & Built Environment,starter_profile,verify_and_normalise
+7,Plumber,Engineering & Built Environment,starter_profile,verify_and_normalise
+8,Software Developer,ICT,starter_profile,verify_and_normalise
+9,Cybersecurity Analyst,ICT,starter_profile,verify_and_normalise
+10,Data Analyst,ICT,starter_combined_profile,split_and_verify
+11,Data Scientist,ICT,starter_combined_profile,split_and_verify
+12,IT Project Manager,ICT,starter_profile,verify_and_normalise
+13,Registered Nurse,Healthcare & Medical,starter_profile,verify_and_normalise
+14,Medical Practitioner,Healthcare & Medical,starter_profile,verify_and_normalise
+15,Pharmacist,Healthcare & Medical,starter_profile,verify_and_normalise
+16,Occupational Therapist,Healthcare & Medical,starter_profile,verify_and_normalise
+17,Physiotherapist,Healthcare & Medical,starter_profile,verify_and_normalise
+18,Radiographer,Healthcare & Medical,starter_profile,verify_and_normalise
+19,Chartered Accountant (CA(SA)),Finance & Accounting,starter_profile,verify_and_normalise
+20,Actuary,Finance & Accounting,starter_profile,verify_and_normalise
+21,Financial Analyst,Finance & Accounting,starter_profile,verify_and_normalise
+22,Tax Practitioner,Finance & Accounting,starter_profile,verify_and_normalise
+23,Attorney,Law & Legal Services,starter_profile,verify_and_normalise
+24,Advocate,Law & Legal Services,new_split_profile,build_profile
+25,Teacher,Education & Training,starter_profile,verify_and_normalise
+26,Agricultural Scientist / Agronomist,Agriculture & Agribusiness,starter_profile,verify_and_normalise
+27,Farm Manager,Agriculture & Agribusiness,starter_profile,verify_and_normalise
+28,Mining Engineer,Mining & Resources,starter_profile,verify_and_normalise
+29,Geologist,Mining & Resources,starter_profile,verify_and_normalise
+30,Renewable Energy Engineer,Renewable Energy & Sustainability,starter_profile,verify_and_normalise
+31,Environmental Scientist / Consultant,Renewable Energy & Sustainability,starter_profile,verify_and_normalise
+32,Social Worker,Social Services & Community,starter_profile,verify_and_normalise
+33,Architect,Architecture & Urban Planning,starter_profile,verify_and_normalise
+34,Urban and Regional Planner,Architecture & Urban Planning,starter_profile,verify_and_normalise
+35,Journalist,Media Communications & Creative Industries,starter_profile,verify_and_normalise
+36,Graphic Designer,Media Communications & Creative Industries,starter_profile,verify_and_normalise
+37,Logistics Manager,Transport Logistics & Supply Chain,starter_combined_profile,split_and_verify
+38,Supply Chain Analyst,Transport Logistics & Supply Chain,starter_combined_profile,split_and_verify
+39,Mine Health and Safety Officer,SA-Specific & Prominent Careers,starter_profile,verify_and_normalise
+40,BBBEE Consultant,SA-Specific & Prominent Careers,starter_combined_profile,split_and_verify
+41,Traditional Health Practitioner,SA-Specific & Prominent Careers,starter_profile,verify_and_normalise
+42,Land Surveyor,SA-Specific & Prominent Careers,starter_profile,verify_and_normalise
+43,Correctional Services Officer,SA-Specific & Prominent Careers,starter_profile,verify_and_normalise
+44,SAPS Officer,SA-Specific & Prominent Careers,starter_profile,verify_and_normalise
+45,SANDF Member,SA-Specific & Prominent Careers,starter_profile,verify_and_normalise
+46,Welder,Engineering & Built Environment,not_started,build_profile
+47,Fitter and Turner,Engineering & Built Environment,not_started,build_profile
+48,Boilermaker,Engineering & Built Environment,not_started,build_profile
+49,Automotive Mechanic,Engineering & Built Environment,not_started,build_profile
+50,Diesel Mechanic,Engineering & Built Environment,not_started,build_profile
+51,Mechatronics Technician,Engineering & Built Environment,not_started,build_profile
+52,Civil Engineering Technician,Engineering & Built Environment,not_started,build_profile
+53,Electrical Engineering Technician,Engineering & Built Environment,not_started,build_profile
+54,Draughtsperson,Engineering & Built Environment,not_started,build_profile
+55,Construction Manager,Engineering & Built Environment,not_started,build_profile
+56,Building Inspector,Engineering & Built Environment,not_started,build_profile
+57,Health and Safety Officer,Engineering & Built Environment,not_started,build_profile
+58,Procurement Officer,Business Operations,not_started,build_profile
+59,Buyer,Business Operations,not_started,build_profile
+60,Human Resources Officer,Business Operations,not_started,build_profile
+61,Payroll Officer,Business Operations,not_started,build_profile
+62,Business Analyst,ICT,not_started,build_profile
+63,Network Administrator,ICT,not_started,build_profile
+64,Cloud Administrator,ICT,not_started,build_profile
+65,Database Administrator,ICT,not_started,build_profile
+66,Systems Analyst,ICT,not_started,build_profile
+67,UX/UI Designer,ICT,not_started,build_profile
+68,Call Centre Agent,Services & Sales,not_started,build_profile
+69,General Clerk,Clerical & Administration,not_started,build_profile
+70,Receptionist,Clerical & Administration,not_started,build_profile
+71,Sales Representative,Services & Sales,not_started,build_profile
+72,Retail Supervisor,Wholesale & Retail,not_started,build_profile
+73,Warehouse Supervisor,Transport Logistics & Supply Chain,not_started,build_profile
+74,Transport Planner,Transport Logistics & Supply Chain,not_started,build_profile
+75,Supply Chain Planner,Transport Logistics & Supply Chain,not_started,build_profile
+76,General Office Clerk,Clerical & Administration,not_started,build_profile
+77,Sales Clerk,Services & Sales,not_started,build_profile
+78,Shop Sales Assistant,Wholesale & Retail,not_started,build_profile
+79,Cashier,Wholesale & Retail,not_started,build_profile
+80,Delivery Driver,Transport Logistics & Supply Chain,not_started,build_profile
+81,Truck Driver,Transport Logistics & Supply Chain,not_started,build_profile
+82,Security Officer,Safety & Security,not_started,build_profile
+83,Cleaner,Services & Care,not_started,build_profile
+84,Child Care Worker,Services & Care,not_started,build_profile
+85,Community Health Worker,Healthcare & Medical,not_started,build_profile
+86,Care Worker,Services & Care,not_started,build_profile
+87,Early Childhood Development Practitioner,Education & Training,not_started,build_profile
+88,Administrative Officer,Clerical & Administration,not_started,build_profile
+89,Municipal Officer,Public Service & Local Government,not_started,build_profile
+90,Traffic Officer,Public Safety & Local Government,not_started,build_profile
+91,Firefighter,Public Safety & Local Government,not_started,build_profile
+92,Customer Service Agent,Services & Sales,not_started,build_profile
+93,Bookkeeper,Finance & Accounting,not_started,build_profile
+94,Accountant,Finance & Accounting,not_started,build_profile
+95,Internal Auditor,Finance & Accounting,not_started,build_profile
+96,Project Manager,Business Operations,not_started,build_profile
+97,Human Resources Manager,Business Operations,not_started,build_profile
+98,Chef,Hospitality & Tourism,not_started,build_profile
+99,Solar PV Installer,Renewable Energy & Sustainability,not_started,build_profile
+100,Hydrologist,Water Environment & Climate,not_started,build_profile
