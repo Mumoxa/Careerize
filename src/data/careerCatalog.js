@@ -6,8 +6,8 @@ export const SOURCE_REGISTRY = [
     url: "docs/strategy-and-repo-scope.md",
     accessedAt: "2026-06-15",
     confidence: 55,
-    supports: ["summary", "dayInLife", "tasks", "prosCons", "starterPathways"],
-    note: "Internal starter content used to prove the profile structure. It is not a labour-market data source.",
+    supports: ["summary", "dayInLife", "tasks", "prosCons", "starterPathways", "earningPotential"],
+    note: "Internal starter content used to prove the profile structure. It is not a labour-market data source and does not support salary numbers.",
   },
   {
     id: "careerize-source-model-v1",
@@ -16,7 +16,7 @@ export const SOURCE_REGISTRY = [
     url: "docs/market-insights-decision-log.md",
     accessedAt: "2026-06-15",
     confidence: 60,
-    supports: ["confidence", "sourceTransparency", "recommendationGuardrails"],
+    supports: ["confidence", "sourceTransparency", "recommendationGuardrails", "earningPotentialGuardrails"],
     note: "Methodology record for visible source/confidence states until external public sources are loaded.",
   },
 ];
@@ -32,16 +32,10 @@ export const PATHWAY_TYPES = [
   { id: "pivot", label: "Career-pivot route", description: "Move in from related work by using transferable skills." },
 ];
 
-const notVerifiedSalary = {
+const qualitativeDemandOnly = {
   status: "not-source-verified",
-  label: "Salary data not shown yet",
-  explanation: "This profile is ready for entry, middle and senior salary bands, but Careerize must add source-verified South African salary data before displaying numbers.",
-};
-
-const notVerifiedDemand = {
-  status: "not-source-verified",
-  label: "Demand data not shown yet",
-  explanation: "This profile is ready for province-level demand signals, but Careerize must add source-verified South African labour-market data before displaying demand claims.",
+  label: "Demand insight not verified yet",
+  explanation: "This profile is ready for province-level demand signals later, but Careerize must add source-verified South African labour-market data before displaying demand claims.",
 };
 
 const baseProfile = {
@@ -50,8 +44,7 @@ const baseProfile = {
   lastUpdated: "2026-06-15",
   dataConfidence: 55,
   sourceIds: ["careerize-editorial-v1", "careerize-source-model-v1"],
-  salary: notVerifiedSalary,
-  demand: notVerifiedDemand,
+  demand: qualitativeDemandOnly,
 };
 
 export const CAREER_ROUTES = [
@@ -70,6 +63,11 @@ export const CAREER_ROUTES = [
     growth: "Can grow into BI, analytics, data science, product, risk, operations or management.",
     worst: "Messy information and unclear business questions can be frustrating.",
     best: "You help people make decisions with facts instead of guesses.",
+    earningPotential: {
+      status: "editorial-insight",
+      label: "Strong earning potential if skill depth grows",
+      explanation: "Careerize does not show salary figures here. The useful learner insight is that analytics can become financially attractive when a person builds scarce data, business and communication skills.",
+    },
     dayInLife: ["Check the latest report and confirm what changed.", "Clean messy spreadsheet or system data.", "Build a dashboard, chart or summary.", "Explain what the numbers show and what remains uncertain."],
     keyTasks: ["Clean data", "Find patterns", "Build reports", "Explain insights", "Check if numbers make sense"],
     toolExamples: ["spreadsheet software", "dashboard software", "database/reporting systems", "presentation tools"],
@@ -103,6 +101,11 @@ export const CAREER_ROUTES = [
     growth: "Can grow into senior developer, technical lead, architect, engineering manager or product founder.",
     worst: "You can get stuck on difficult bugs for hours and still need to stay calm.",
     best: "You can create something useful from nothing and see people use it.",
+    earningPotential: {
+      status: "editorial-insight",
+      label: "High earning potential once skill and proof are strong",
+      explanation: "Careerize does not show salary figures here. The useful learner insight is that software can become a high-upside path, but junior entry is competitive and proof of ability matters.",
+    },
     dayInLife: ["Check the task board and clarify what must be built or fixed.", "Write code and test small pieces.", "Review another developer's code or get feedback.", "Fix bugs, update notes and prepare the next task."],
     keyTasks: ["Write code", "Test features", "Fix bugs", "Understand user problems", "Work with design, analysis or product teams"],
     toolExamples: ["code editor", "browser tools", "version-control platform", "project board", "testing tools"],
@@ -137,6 +140,11 @@ export const CAREER_ROUTES = [
     growth: "Can grow into accountant, analyst, financial manager, CFO, consultant or business owner.",
     worst: "Deadlines and detailed checking can become repetitive.",
     best: "You understand how businesses really work and where money goes.",
+    earningPotential: {
+      status: "editorial-insight",
+      label: "Good earning potential, especially with trust and progression",
+      explanation: "Careerize does not show salary figures here. The useful learner insight is that finance has many levels: support roles can be accessible, while professional and leadership routes can grow strongly over time.",
+    },
     dayInLife: ["Check payment, invoice or transaction queues.", "Update spreadsheets or finance systems.", "Follow up missing information.", "Prepare month-end or management reports."],
     keyTasks: ["Process transactions", "Check detail", "Prepare reports", "Follow rules", "Explain financial information"],
     toolExamples: ["spreadsheet software", "accounting system", "banking platform", "document system"],
@@ -171,6 +179,11 @@ export const CAREER_ROUTES = [
     growth: "Can grow into specialist artisan, supervisor, contractor, inspector, trainer or business owner.",
     worst: "Physical work, travel, unsafe sites and weather conditions can be difficult.",
     best: "You solve visible problems and your skill can stay useful across many industries.",
+    earningPotential: {
+      status: "editorial-insight",
+      label: "Strong practical earning potential with trade skill and reliability",
+      explanation: "Careerize does not show salary figures here. The useful learner insight is that qualified artisans can build strong earning power through scarce practical skill, overtime, contracting or business ownership.",
+    },
     dayInLife: ["Collect tools and confirm safety requirements.", "Inspect the site or equipment.", "Repair, install or test under the correct supervision.", "Record the work and prepare for the next callout."],
     keyTasks: ["Inspect faults", "Use tools safely", "Install or repair systems", "Read diagrams", "Follow safety rules"],
     toolExamples: ["hand tools", "testing meters", "safety equipment", "technical drawings", "maintenance systems"],
@@ -204,6 +217,11 @@ export const CAREER_ROUTES = [
     growth: "Can grow into senior clinical, specialist, management, research, education or private practice paths.",
     worst: "Emotionally heavy days, shift work and public-system pressure can be hard.",
     best: "Your work can directly improve someone’s life.",
+    earningPotential: {
+      status: "editorial-insight",
+      label: "Earning potential varies widely by health role and registration",
+      explanation: "Careerize does not show salary figures here. The useful learner insight is that healthcare includes many routes: some are support roles, while regulated specialist paths can carry stronger long-term earning potential.",
+    },
     dayInLife: ["Receive handover or prepare for the day's patients.", "Assess people and follow care or treatment steps.", "Update records and coordinate with other healthcare workers.", "Support patients or families and prepare for the next shift."],
     keyTasks: ["Care for people", "Record health information", "Follow safe procedures", "Work in teams", "Communicate clearly"],
     toolExamples: ["patient record system", "medical equipment", "protective gear", "care plans", "communication tools"],
