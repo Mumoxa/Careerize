@@ -1,0 +1,59 @@
+file_name,file_type,row_count,purpose
+careerize_sa_all_career_path_ladders.csv,csv,86,Progression ladders for economy-wide path families
+careerize_sa_all_career_paths_universe.csv,csv,86,Economy-wide career path family touchmap
+careerize_sa_all_career_paths_universe_notes.md,md,,Companion notes/documentation
+careerize_sa_backbone_tables_notes.md,md,,Companion notes/documentation
+careerize_sa_career_fanin.csv,csv,43,Career-first aggregated pathway output
+careerize_sa_career_fanin_notes.md,md,,Companion notes/documentation
+careerize_sa_critical_skills_map.csv,csv,43,Provisional 2023 critical skills mapping
+careerize_sa_critical_skills_map_notes.md,md,,Companion notes/documentation
+careerize_sa_delivery_checklist.csv,csv,26,High-level delivery checklist
+careerize_sa_expansion_layer_notes.md,md,,Companion notes/documentation
+careerize_sa_gap_investigation.md,md,,Initial gap investigation notes
+careerize_sa_graph_edges.csv,csv,543,Graph export of edges
+careerize_sa_graph_nodes.csv,csv,623,Graph export of nodes
+careerize_sa_graph_notes.md,md,,Companion notes/documentation
+careerize_sa_graph_summary.csv,csv,14,Summary counts for graph nodes and edges
+careerize_sa_occupations_ofo_seed.csv,csv,43,Starter career to OFO mapping seed
+careerize_sa_ofo_family_map.csv,csv,43,Repository support file
+careerize_sa_ofo_major_group_universe.csv,csv,8,Summary of the 8 OFO major groups
+careerize_sa_oihd_350_family_map.csv,csv,350,Inferred family map for all 350 OIHD occupations
+careerize_sa_oihd_350_family_map_notes.md,md,,Companion notes/documentation
+careerize_sa_oihd_350_family_summary.csv,csv,22,Summary view of inferred OIHD family distribution
+careerize_sa_oihd_350_family_summary_notes.md,md,,Companion notes/documentation
+careerize_sa_oihd_350_notes.md,md,,Companion notes/documentation
+careerize_sa_oihd_350_priority_scores.csv,csv,350,Internal production prioritisation scores for all 350 OIHD occupations
+careerize_sa_oihd_350_priority_scores_notes.md,md,,Companion notes/documentation
+careerize_sa_oihd_350_profile_queue.csv,csv,350,Production queue for all 350 OIHD occupations
+careerize_sa_oihd_350_profile_queue_notes.md,md,,Companion notes/documentation
+careerize_sa_oihd_350_seed.csv,csv,350,Full 2024 OIHD occupation seed extracted from gazette
+careerize_sa_oihd_350_to_qualification_bridge.csv,csv,350,Qualification-route anchors for all 350 OIHD occupations
+careerize_sa_oihd_350_to_qualification_bridge_notes.md,md,,Companion notes/documentation
+careerize_sa_pathway_coverage_gaps.csv,csv,0,Coverage gap tracker for seeded pathways
+careerize_sa_pathway_coverage_gaps_notes.md,md,,Companion notes/documentation
+careerize_sa_phase1_foundation_patch.md,md,,Foundation correction patch
+careerize_sa_phase3_coverage_roadmap.md,md,,Roadmap for coverage expansion
+careerize_sa_profiles_starter_db.csv,csv,43,Starter normalized career profile database
+careerize_sa_profiles_starter_db_dictionary.md,md,,Starter normalized career profile database
+careerize_sa_province_demand_notes.csv,csv,43,Geographic and province demand notes
+careerize_sa_public_private_informal_modes.csv,csv,43,Employment-mode layer for starter careers
+careerize_sa_public_private_informal_modes_notes.md,md,,Companion notes/documentation
+careerize_sa_qualification_fanout.csv,csv,41,Qualification-first aggregated pathway output
+careerize_sa_qualification_fanout_notes.md,md,,Companion notes/documentation
+careerize_sa_qualification_occupation_bridge_seed.csv,csv,64,Seed bridge between qualifications and careers
+careerize_sa_qualification_pathway_matrix.csv,csv,64,Expanded route matrix joining qualifications to careers
+careerize_sa_qualifications_seed.csv,csv,45,Seed qualification dictionary
+careerize_sa_registration_dependencies.csv,csv,43,Registration and practice-gate dependency table
+careerize_sa_repository_manifest.csv,csv,53,Repository file manifest
+careerize_sa_repository_status_dashboard.md,md,,Repository status dashboard
+careerize_sa_route_visual_matrix.csv,csv,64,Product-facing route visualisation table
+careerize_sa_route_visual_matrix_notes.md,md,,Companion notes/documentation
+careerize_sa_salary_verification_tracker.csv,csv,100,Salary verification workflow table
+careerize_sa_salary_verification_tracker_notes.md,md,,Companion notes/documentation
+careerize_sa_specialisations_seed.csv,csv,151,Specialisation and sub-career seed layer
+careerize_sa_top100_build_queue.csv,csv,100,Priority build order for the Top 100 careers
+careerize_sa_top100_profile_schema.csv,csv,100,Readiness schema for Top 100 careers
+careerize_sa_top100_profile_schema_notes.md,md,,Companion notes/documentation
+careerize_sa_top100_source_verification_tracker.csv,csv,100,Verification workflow tracker for Top 100 careers
+careerize_sa_top100_source_verification_tracker_notes.md,md,,Companion notes/documentation
+careerize_sa_visual_interdependency_map.md,md,,Mermaid-based visual interdependency notes
