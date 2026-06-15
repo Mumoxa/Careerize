@@ -86,13 +86,19 @@ for (const route of CAREER_ROUTES) {
     }
   }
 
-  for (const claimField of ["salary", "demand"]) {
-    if (!route[claimField]?.status || !route[claimField]?.explanation) {
-      errors.push(`Route ${route.id} must show a clear ${claimField} data status instead of unsupported claims.`);
-    }
+  if (route.salary) {
+    errors.push(`Route ${route.id} must not carry a salary field. Use qualitative earningPotential instead.`);
   }
 
-  const guidanceText = [route.summary, route.day, route.worst, route.best, ...(route.misconceptions ?? []), ...(route.fitWarnings ?? [])].join(" ");
+  if (!route.earningPotential?.status || !route.earningPotential?.label || !route.earningPotential?.explanation) {
+    errors.push(`Route ${route.id} must show a qualitative earningPotential insight instead of salary numbers.`);
+  }
+
+  if (!route.demand?.status || !route.demand?.explanation) {
+    errors.push(`Route ${route.id} must show a clear demand data status instead of unsupported demand claims.`);
+  }
+
+  const guidanceText = [route.summary, route.day, route.worst, route.best, route.earningPotential?.label, route.earningPotential?.explanation, ...(route.misconceptions ?? []), ...(route.fitWarnings ?? [])].join(" ");
   const language = validateGuidanceLanguage(guidanceText);
   if (!language.valid) {
     errors.push(`Route ${route.id} uses unsafe guidance language: ${language.reason}`);
@@ -120,4 +126,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Career catalog validation passed for ${CAREER_ROUTES.length} routes, ${DISCOVERY_QUESTIONS.length} questions, ${INTEREST_SIGNALS.length} interest signals, ${PATHWAY_TYPES.length} SA pathway types and ${SOURCE_REGISTRY.length} source records.`);
+console.log(`Career catalog validation passed for ${CAREER_ROUTES.length} routes, ${DISCOVERY_QUESTIONS.length} questions, ${INTEREST_SIGNALS.length} interest signals, ${PATHWAY_TYPES.length} SA pathway types, ${SOURCE_REGISTRY.length} source records and qualitative earning-potential insights.`);
