@@ -40,6 +40,26 @@ The current app includes:
 - Local-browser demo fallback when Supabase environment variables are absent.
 - South African pathway readiness across NSC, university, TVET, learnership, apprenticeship, short-course, work and pivot routes.
 
+## SA foundation data layer
+
+The repo now includes a separate South African foundation-data workbench:
+
+```text
+data/sa-foundation/
+```
+
+This folder is not duplicate frontend catalog content. It preserves source/backbone data from the supplied workspace for the next build phase: OFO/OIHD mapping, qualification-pathway logic, graph summaries, Top 100 enrichment sequence and verification workflow.
+
+Key files:
+
+```text
+data/sa-foundation/README.md
+data/sa-foundation/careerize_sa_repository_manifest.csv
+data/sa-foundation/careerize_sa_top100_build_queue.csv
+data/sa-foundation/careerize_sa_graph_summary.csv
+docs/SA_FOUNDATION_IMPORT_REVIEW.md
+```
+
 ## Current career coverage
 
 The 344 starter routes are spread across:
@@ -73,6 +93,7 @@ docs/CAREER_COVERAGE_MANIFEST.md
 
 ```text
 docs/CAREER_COVERAGE_MANIFEST.md
+docs/SA_FOUNDATION_IMPORT_REVIEW.md
 docs/FULL_OVERVIEW_REVIEW.md
 docs/market-insights-decision-log.md
 docs/REPO_ASSESSMENT.md
@@ -95,7 +116,7 @@ npm run dev
 npm run check
 ```
 
-`npm run check` validates the career catalog and then builds the app.
+`npm run check` validates the career catalog, validates the SA foundation workbench and then builds the app.
 
 ## Supabase saved-profile setup
 
