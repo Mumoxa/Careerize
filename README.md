@@ -65,14 +65,17 @@ The current app includes:
 
 There is no payment flow, employer dashboard, course sales, CV upload, recruitment workflow or commercial partner pipeline.
 
-## New documentation from the market-insights review
+## Documentation from the market-insights and full-overview reviews
 
 ```text
+docs/FULL_OVERVIEW_REVIEW.md
 docs/market-insights-decision-log.md
 docs/REPO_ASSESSMENT.md
 docs/PRODUCT_GAP_AUDIT.md
 docs/SOURCES.md
 ```
+
+`docs/FULL_OVERVIEW_REVIEW.md` is now the active alignment note for the consolidated overview. It keeps the full strategy direction but amends the salary-band recommendations into qualitative earning-potential guidance for the active product.
 
 ## Run locally
 
