@@ -1,12 +1,12 @@
 import React from "react";
-import { BarChart3, Check, Database, GraduationCap, Map, Search, ShieldCheck, WifiOff } from "lucide-react";
+import { Check, Database, GraduationCap, Map, Search, ShieldCheck, TrendingUp, WifiOff } from "lucide-react";
 import { CAREER_ROUTES, PATHWAY_TYPES, SOURCE_REGISTRY } from "../data/careerCatalog";
 
 const DECISIONS = [
   ["Structured O*NET-style profiles", "Adapt", "Careerize keeps its warmer South African voice, but the catalog now carries tasks, day-in-life, subjects, pathways, sources and confidence."],
   ["Skills Matcher pattern", "Adapt", "The deterministic route scoring is preserved and prepared for visible matched/missing signals instead of black-box AI."],
   ["NCS multi-route entry", "Replace weak area", "The old generic pathway concept is expanded into eight South African route types."],
-  ["Salary and demand visuals", "Prepare, not fake", "The product now shows source/data states and refuses to display numbers until the data is verified."],
+  ["Salary bands", "Defer", "Detailed salary information is intentionally out of scope for now. Careerize uses qualitative earning-potential insight instead of going down a false-precision rabbit hole."],
   ["Free and independent surface", "Preserve", "Careerize already had the right boundary: no job board, no course marketplace, no employer influence."],
 ];
 
@@ -17,7 +17,7 @@ const PROFILE_BLUEPRINT = [
   "School subjects to investigate",
   "SA training and work routes",
   "Best, worst and misconceptions",
-  "Salary/demand source state",
+  "Earning-potential insight",
   "Confidence and last-updated date",
 ];
 
@@ -67,7 +67,7 @@ export default function MarketInsightUpgrade() {
           </GlassCard>
 
           <GlassCard>
-            <Pill><BarChart3 size={14} /> Career profile blueprint</Pill>
+            <Pill><TrendingUp size={14} /> Career profile blueprint</Pill>
             <h3 className="mt-4 font-display text-3xl font-semibold">Structured enough for data, plain enough for a Grade 10 learner.</h3>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
               {PROFILE_BLUEPRINT.map((item) => (
@@ -77,7 +77,7 @@ export default function MarketInsightUpgrade() {
               ))}
             </div>
             <div className="mt-5 rounded-3xl border border-cyber/20 bg-cyber/10 p-5 text-sm leading-6 text-white/70">
-              Salary and demand sections are intentionally marked as not source-verified. This avoids misleading precision while keeping the UI ready for real South African data.
+              Detailed salary bands are intentionally not part of the starter product. Careerize should give a useful earning-potential signal, explain uncertainty, and avoid pretending exact pay data is available before it is responsibly sourced.
             </div>
           </GlassCard>
         </div>
@@ -99,7 +99,7 @@ export default function MarketInsightUpgrade() {
             <Pill><WifiOff size={14} /> Trust and access guardrails</Pill>
             <div className="mt-5 space-y-3 text-sm leading-6 text-white/60">
               <p><strong className="text-white/85">Low-data ready:</strong> the UI has a low-data control and avoids making heavy visuals the only way to understand the product.</p>
-              <p><strong className="text-white/85">No unsupported claims:</strong> starter profiles carry confidence scores and last-updated dates, while salary and demand remain withheld until sourced.</p>
+              <p><strong className="text-white/85">No unsupported salary claims:</strong> starter profiles use qualitative earning-potential insight only, while exact pay figures remain out of scope until the product has a strong reason and verified sources.</p>
               <p><strong className="text-white/85">No black-box verdict:</strong> scoring remains deterministic and explainable; it is a conversation starter, not a psychometric decision.</p>
             </div>
           </GlassCard>
