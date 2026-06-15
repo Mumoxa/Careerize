@@ -19,6 +19,16 @@ export const SOURCE_REGISTRY = [
     supports: ["confidence", "sourceTransparency", "recommendationGuardrails", "earningPotentialGuardrails"],
     note: "Methodology record for visible source/confidence states until external public sources are loaded.",
   },
+  {
+    id: "careerize-expanded-taxonomy-v1",
+    title: "Careerize expanded South African starter taxonomy",
+    type: "editorial-taxonomy",
+    url: "docs/CAREER_COVERAGE_MANIFEST.md",
+    accessedAt: "2026-06-15",
+    confidence: 50,
+    supports: ["careerUniverse", "streamCoverage", "starterProfiles", "pathwayScaffold"],
+    note: "Broad starter taxonomy based on the Careerize project history and strategy. It expands coverage without pretending to be source-verified labour-market data.",
+  },
 ];
 
 export const PATHWAY_TYPES = [
@@ -42,215 +52,275 @@ const baseProfile = {
   country: "ZA",
   status: "starter-profile",
   lastUpdated: "2026-06-15",
-  dataConfidence: 55,
-  sourceIds: ["careerize-editorial-v1", "careerize-source-model-v1"],
+  dataConfidence: 50,
+  sourceIds: ["careerize-editorial-v1", "careerize-source-model-v1", "careerize-expanded-taxonomy-v1"],
   demand: qualitativeDemandOnly,
 };
 
-export const CAREER_ROUTES = [
-  {
-    ...baseProfile,
-    id: "data-analyst",
-    title: "Data Analyst",
-    stream: "Data, insights and business decisions",
-    signalWeights: { numbers: 3, patterns: 3, problemSolving: 2, quiet: 1, technology: 2, business: 2, detail: 1 },
-    summary: "You turn information into clear answers that help people make better business decisions.",
-    day: "Collect information, clean it, find patterns, build reports and explain what the numbers mean.",
-    tools: "A computer, spreadsheets, dashboards, databases and reporting software.",
-    environment: "Banks, retailers, insurers, telecoms, logistics companies and large corporates. Usually office or hybrid.",
-    stress: "Medium. Pressure rises when leaders need answers quickly or when data is messy.",
-    remote: "Often possible once you have skill, trust and access to company systems.",
-    growth: "Can grow into BI, analytics, data science, product, risk, operations or management.",
-    worst: "Messy information and unclear business questions can be frustrating.",
-    best: "You help people make decisions with facts instead of guesses.",
+const SIGNAL_PRESETS = {
+  tech: { technology: 3, building: 2, problemSolving: 3, patterns: 2, quiet: 1 },
+  finance: { numbers: 3, detail: 3, money: 3, structure: 2, office: 1 },
+  practical: { handsOn: 3, practical: 3, tools: 2, fixing: 2, moving: 1 },
+  care: { helping: 3, care: 3, biology: 2, people: 2, highStress: 1 },
+  education: { helping: 3, people: 3, structure: 2, care: 1, business: 1 },
+  agri: { practical: 3, biology: 2, tools: 2, moving: 2, business: 1 },
+  logistics: { business: 2, moving: 3, practical: 2, people: 1, structure: 2 },
+  public: { people: 2, structure: 3, helping: 2, detail: 2, highStress: 1 },
+  creative: { building: 2, people: 2, technology: 1, practical: 1, detail: 1 },
+  people: { people: 3, helping: 2, business: 2, structure: 1, office: 1 },
+  hospitality: { people: 3, moving: 2, practical: 2, helping: 2, highStress: 1 },
+  engineering: { technical: 3, maths: 2, problemSolving: 2, practical: 2, tools: 2 },
+  entrepreneur: { business: 3, people: 2, practical: 2, problemSolving: 2, moving: 1 },
+  science: { science: 3, biology: 2, patterns: 2, detail: 2, problemSolving: 2 },
+};
+
+const SUBJECT_PRESETS = {
+  tech: ["Mathematics", "Information Technology", "Computer Applications Technology", "Physical Sciences", "Business Studies"],
+  finance: ["Accounting", "Mathematics", "Mathematical Literacy", "Business Studies", "Economics"],
+  practical: ["Technical Mathematics", "Engineering Graphics and Design", "Physical Sciences", "Mathematics", "Technology subjects"],
+  care: ["Life Sciences", "Mathematics", "Physical Sciences", "Life Orientation", "English"],
+  education: ["English", "Life Orientation", "History", "Mathematics", "Life Sciences"],
+  agri: ["Agricultural Sciences", "Life Sciences", "Geography", "Mathematics", "Business Studies"],
+  logistics: ["Business Studies", "Geography", "Mathematics", "Computer Applications Technology", "Economics"],
+  public: ["History", "Business Studies", "English", "Life Orientation", "Geography"],
+  creative: ["Visual Arts", "Design", "Dramatic Arts", "Computer Applications Technology", "English"],
+  people: ["Business Studies", "English", "Life Orientation", "Computer Applications Technology", "Economics"],
+  hospitality: ["Hospitality Studies", "Tourism", "Consumer Studies", "Business Studies", "English"],
+  engineering: ["Mathematics", "Physical Sciences", "Engineering Graphics and Design", "Technical Mathematics", "Information Technology"],
+  entrepreneur: ["Business Studies", "Accounting", "Mathematical Literacy", "Computer Applications Technology", "English"],
+  science: ["Physical Sciences", "Life Sciences", "Mathematics", "Geography", "Information Technology"],
+};
+
+const TOOL_PRESETS = {
+  tech: ["computer", "specialised software", "testing tools", "online documentation", "team communication tools"],
+  finance: ["computer", "spreadsheets", "finance or accounting systems", "banking/document platforms", "compliance checklists"],
+  practical: ["hand tools", "testing equipment", "safety gear", "technical drawings", "mobile job cards"],
+  care: ["care records", "basic medical or support equipment", "safety procedures", "communication tools", "referral systems"],
+  education: ["lesson plans", "computer or tablet", "learning materials", "assessment tools", "communication apps"],
+  agri: ["farm tools", "machinery or irrigation systems", "safety gear", "record books", "mobile weather or market tools"],
+  logistics: ["vehicle or transport systems", "tracking software", "warehouse tools", "route plans", "communication devices"],
+  public: ["case files", "computer systems", "legislation or policy documents", "forms", "communication tools"],
+  creative: ["computer", "creative software", "camera or design tools", "brief documents", "portfolio platforms"],
+  people: ["computer", "phone", "customer or case systems", "email and chat tools", "planning templates"],
+  hospitality: ["booking systems", "kitchen or service tools", "point-of-sale systems", "cleaning/safety checklists", "communication tools"],
+  engineering: ["design software", "technical drawings", "measurement tools", "project documents", "site or lab equipment"],
+  entrepreneur: ["phone", "payment tools", "stock records", "supplier contacts", "basic marketing tools"],
+  science: ["laboratory or field equipment", "computer", "measurement tools", "analysis software", "safety records"],
+};
+
+const ROUTE_PRESETS = {
+  mixed: ["nsc", "university", "tvet", "learnership", "shortcourse", "work", "pivot"],
+  trade: ["nsc", "tvet", "learnership", "apprenticeship", "shortcourse", "work", "pivot"],
+  vocational: ["nsc", "tvet", "learnership", "shortcourse", "work", "pivot"],
+  portfolio: ["nsc", "university", "tvet", "shortcourse", "work", "pivot"],
+  care: ["nsc", "university", "tvet", "learnership", "shortcourse", "work", "pivot"],
+  public: ["nsc", "university", "tvet", "learnership", "shortcourse", "work", "pivot"],
+  entrepreneur: ["nsc", "shortcourse", "work", "pivot"],
+  science: ["nsc", "university", "shortcourse", "work", "pivot"],
+  logistics: ["nsc", "tvet", "learnership", "shortcourse", "work", "pivot"],
+  hospitality: ["nsc", "tvet", "learnership", "shortcourse", "work", "pivot"],
+  education: ["nsc", "university", "tvet", "learnership", "shortcourse", "work", "pivot"],
+};
+
+const PATHWAY_LABELS = {
+  nsc: "Use school subjects to build the foundation for this route",
+  university: "Use a relevant degree or diploma where the role needs deeper theory or professional recognition",
+  tvet: "Use a TVET or vocational programme where practical entry is realistic",
+  learnership: "Look for a SETA-aligned or employer learnership where available",
+  apprenticeship: "Use an apprenticeship or trade-tested route where the work is artisan based",
+  shortcourse: "Build specific proof through focused short courses, projects or tool practice",
+  work: "Start through assistant, junior, internship, volunteer, project or trainee work",
+  pivot: "Move in from adjacent work by proving transferable skills and closing the biggest gaps",
+};
+
+const PATHWAY_TIME = {
+  nsc: "School planning",
+  university: "3-4 years",
+  tvet: "1-3 years",
+  learnership: "12-24 months",
+  apprenticeship: "2-4 years",
+  shortcourse: "3-18 months",
+  work: "0-24 months",
+  pivot: "6-24 months",
+};
+
+const EARNING_PRESETS = {
+  tech: ["High upside potential where skill depth and proof grow", "digital work can become a high-upside route when the learner builds proof, keeps learning and can solve real problems."],
+  finance: ["Good progression potential with trust and accuracy", "finance and control work has many levels, from accessible support roles to professional and leadership routes."],
+  practical: ["Strong practical earning potential with reliable skill", "hands-on work can become valuable when the person becomes reliable, safe, trusted and able to solve real site problems."],
+  care: ["Meaningful pathway with earning growth linked to qualification and responsibility", "care work can grow when formal training, registration, experience and responsibility increase."],
+  education: ["Stable purpose-led pathway with growth through specialisation", "education and training routes grow through qualification, experience, subject depth and leadership."],
+  agri: ["Variable but important earning potential linked to production and market access", "agricultural and environmental routes can grow through technical knowledge, scale, markets and reliability."],
+  logistics: ["Steady earning potential with operational responsibility", "logistics can grow through reliability, route or stock control, compliance and team responsibility."],
+  public: ["Stable progression potential where rules, service and trust matter", "public-service paths usually grow through formal entry requirements, discipline, experience and responsibility."],
+  creative: ["Variable earning potential; portfolio and market fit matter", "creative paths can grow strongly for people who build a visible portfolio, reliable delivery and a clear niche."],
+  people: ["Variable but useful earning potential through relationships and results", "people-facing work can grow when service quality, trust and commercial judgement improve."],
+  hospitality: ["Variable earning potential; service quality and management matter", "hospitality can grow from frontline work into supervision, operations, ownership or specialist service."],
+  engineering: ["Strong technical earning potential with scarce practical judgement", "engineering and technical work can grow when maths, systems thinking and site judgement improve."],
+  entrepreneur: ["Variable earning potential with high personal responsibility", "entrepreneurial routes can grow when the person understands demand, cost, service, cash flow and repeat customers."],
+  science: ["Specialist earning potential with scarce technical depth", "science and research paths often need more study, but specialist skill can open strong options over time."],
+};
+
+const ENVIRONMENT_PRESETS = {
+  tech: "companies, startups, public bodies, remote teams or internal technology departments",
+  finance: "companies, accounting firms, banks, insurers, retailers, SMEs or public institutions",
+  practical: "workshops, sites, homes, factories, farms, mines or customer locations",
+  care: "clinics, hospitals, community programmes, homes, NGOs or private practices",
+  education: "schools, colleges, training centres, homes, online classes or community programmes",
+  agri: "farms, food businesses, field sites, markets, conservation areas or processing facilities",
+  logistics: "warehouses, depots, vehicles, ports, stores or planning offices",
+  public: "government offices, courts, communities, emergency services or regulated environments",
+  creative: "studios, agencies, media teams, events, freelance settings or client projects",
+  people: "service teams, sales teams, communities, offices, contact centres or client sites",
+  hospitality: "hotels, restaurants, events, tourist sites, lodges, airports or service venues",
+  engineering: "sites, plants, design offices, factories, labs, mines or energy projects",
+  entrepreneur: "homes, townships, local markets, online channels, streets, customer sites or small premises",
+  science: "labs, field sites, research organisations, universities, industry or public agencies",
+};
+
+const HIGH_STRESS_KINDS = new Set(["care", "public", "hospitality", "engineering"]);
+const VARIABLE_STRESS_KINDS = new Set(["creative", "entrepreneur", "agri"]);
+const REMOTE_FRIENDLY_KINDS = new Set(["tech", "creative", "finance"]);
+const PART_REMOTE_KINDS = new Set(["people", "public", "education", "science"]);
+
+const CANONICAL_IDS = {
+  "Data Analyst": "data-analyst",
+  "Software Developer": "software-developer",
+  "Junior Accountant": "finance-accounting",
+  Electrician: "technical-artisan",
+  Nurse: "healthcare-professional",
+};
+
+function slugify(value) {
+  return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+function makePathways(title, profile) {
+  return ROUTE_PRESETS[profile].map((type) => ({
+    type,
+    label: `${PATHWAY_LABELS[type]} for ${title.toLowerCase()}`,
+    timeToEntry: PATHWAY_TIME[type],
+    confidence: ["university", "tvet", "learnership"].includes(type) ? 45 : 50,
+  }));
+}
+
+function makeRoute(title, stream, kind, profile) {
+  const tools = TOOL_PRESETS[kind];
+  const [earningLabel, earningExplanation] = EARNING_PRESETS[kind];
+  const remote = REMOTE_FRIENDLY_KINDS.has(kind)
+    ? "Often possible for parts of the work once trust and systems access are in place."
+    : PART_REMOTE_KINDS.has(kind)
+      ? "Sometimes possible for planning or admin tasks, but much of the work is in-person."
+      : "Usually limited because the work depends on people, places, equipment or physical service.";
+  const stress = HIGH_STRESS_KINDS.has(kind)
+    ? "High at times. Pressure rises when safety, deadlines, customers or public responsibility are involved."
+    : VARIABLE_STRESS_KINDS.has(kind)
+      ? "Variable. Some weeks are calm, while busy periods can be demanding."
+      : "Medium. Pressure rises when deadlines, people, quality or unclear information come together.";
+
+  return {
+    id: CANONICAL_IDS[title] ?? slugify(title),
+    title,
+    stream,
+    cluster: stream,
+    signalWeights: SIGNAL_PRESETS[kind],
+    summary: `You work in ${stream.toLowerCase()} as a ${title.toLowerCase()}, helping people or organisations solve a real problem.`,
+    day: `A normal day involves planning work, using the right tools, solving problems, communicating progress and checking quality in ${title.toLowerCase()} work.`,
+    tools: `A mix of ${tools.slice(0, -1).join(", ")} and ${tools.at(-1)}.`,
+    environment: `This work can live in ${ENVIRONMENT_PRESETS[kind]}.`,
+    stress,
+    remote,
+    growth: `Can grow into senior ${title.toLowerCase()} work, supervision, specialist practice, consulting, training, operations leadership or business ownership depending on the route.`,
+    worst: "The difficult part is dealing with pressure, unclear expectations, repetitive tasks or work that must be redone when details are missed.",
+    best: "The enjoyable part is seeing a visible result, helping people make progress and building skill that becomes more useful over time.",
     earningPotential: {
       status: "editorial-insight",
-      label: "Strong earning potential if skill depth grows",
-      explanation: "Careerize does not show salary figures here. The useful learner insight is that analytics can become financially attractive when a person builds scarce data, business and communication skills.",
+      label: earningLabel,
+      explanation: `Careerize does not show salary figures here. The useful learner insight is that ${earningExplanation}`,
     },
-    dayInLife: ["Check the latest report and confirm what changed.", "Clean messy spreadsheet or system data.", "Build a dashboard, chart or summary.", "Explain what the numbers show and what remains uncertain."],
-    keyTasks: ["Clean data", "Find patterns", "Build reports", "Explain insights", "Check if numbers make sense"],
-    toolExamples: ["spreadsheet software", "dashboard software", "database/reporting systems", "presentation tools"],
-    workEnvironment: ["office", "hybrid", "computer-based", "team meetings"],
-    subjects: ["Mathematics", "Accounting", "Business Studies", "Computer Applications Technology", "Information Technology"],
-    qualifications: ["Diploma or degree in analytics, information systems, statistics, accounting, business, economics or computer science", "Short courses in spreadsheets, dashboards, databases and analytics"],
-    pathways: [
-      { type: "nsc", label: "Keep maths and computer or business subjects strong", timeToEntry: "School planning", confidence: 55 },
-      { type: "university", label: "Study information systems, statistics, commerce, economics or computer science", timeToEntry: "3-4 years", confidence: 50 },
-      { type: "tvet", label: "Use business, IT or data administration programmes as a practical entry route", timeToEntry: "1-3 years", confidence: 45 },
-      { type: "shortcourse", label: "Build spreadsheet, dashboard and database proof through practical projects", timeToEntry: "3-12 months", confidence: 55 },
-      { type: "work", label: "Start in reporting, admin, finance, operations or customer-data support", timeToEntry: "0-24 months", confidence: 55 },
-      { type: "pivot", label: "Move in from finance admin, operations, sales support, supply chain or systems support", timeToEntry: "6-18 months", confidence: 55 },
+    dayInLife: [
+      `Check priorities for ${title.toLowerCase()} work and confirm what matters today.`,
+      "Use the main tools, systems or practical methods for the job.",
+      "Solve problems, ask for information and keep records of what changed.",
+      "Report progress, hand over work or prepare the next step.",
     ],
-    misconceptions: ["It is not only maths. Much of the work is cleaning, checking and explaining information.", "A dashboard is not useful if the question behind it is unclear."],
-    fitWarnings: ["If you hate detail-checking, this can become draining.", "You need patience when data is incomplete or contradictory."],
-    similarCareerIds: ["finance-accounting", "software-developer"],
-  },
-  {
-    ...baseProfile,
-    id: "software-developer",
-    title: "Software Developer",
-    stream: "Technology and digital products",
-    signalWeights: { building: 3, problemSolving: 3, technology: 3, quiet: 1, remote: 2, maths: 1, patterns: 1 },
-    summary: "You build websites, apps and systems that people use on computers and phones.",
-    day: "Understand a problem, write code, test it, fix issues, join short meetings and improve software.",
-    tools: "A computer, code editor, browser, communication tools, test tools and project boards.",
-    environment: "Software companies, banks, retailers, startups, consultancies and global remote teams.",
-    stress: "Medium to high when deadlines are tight or systems break.",
-    remote: "One of the stronger remote-work paths, but juniors often still need close support.",
-    growth: "Can grow into senior developer, technical lead, architect, engineering manager or product founder.",
-    worst: "You can get stuck on difficult bugs for hours and still need to stay calm.",
-    best: "You can create something useful from nothing and see people use it.",
-    earningPotential: {
-      status: "editorial-insight",
-      label: "High earning potential once skill and proof are strong",
-      explanation: "Careerize does not show salary figures here. The useful learner insight is that software can become a high-upside path, but junior entry is competitive and proof of ability matters.",
-    },
-    dayInLife: ["Check the task board and clarify what must be built or fixed.", "Write code and test small pieces.", "Review another developer's code or get feedback.", "Fix bugs, update notes and prepare the next task."],
-    keyTasks: ["Write code", "Test features", "Fix bugs", "Understand user problems", "Work with design, analysis or product teams"],
-    toolExamples: ["code editor", "browser tools", "version-control platform", "project board", "testing tools"],
-    workEnvironment: ["office", "remote", "hybrid", "computer-based", "deadline-driven"],
-    subjects: ["Mathematics", "Information Technology", "Computer Applications Technology", "Physical Sciences"],
-    qualifications: ["Computer science, software engineering, information systems or related degree/diploma", "Portfolio route through projects, internships, bootcamps or self-directed learning"],
-    pathways: [
-      { type: "nsc", label: "Build maths, IT/CAT and problem-solving foundations", timeToEntry: "School planning", confidence: 55 },
-      { type: "university", label: "Study computer science, software engineering or information systems", timeToEntry: "3-4 years", confidence: 50 },
-      { type: "tvet", label: "Use IT programmes as a practical route where programme quality is strong", timeToEntry: "1-3 years", confidence: 45 },
-      { type: "learnership", label: "Look for software, systems development or IT learnerships when available", timeToEntry: "12-24 months", confidence: 45 },
-      { type: "shortcourse", label: "Build a small portfolio with real projects, not only certificates", timeToEntry: "6-18 months", confidence: 55 },
-      { type: "work", label: "Start through internship, junior developer, QA, support or no-code/internal tools role", timeToEntry: "6-24 months", confidence: 55 },
-      { type: "pivot", label: "Move in from support, testing, data, design or business analysis", timeToEntry: "6-24 months", confidence: 55 },
+    keyTasks: ["Plan the work", "Use relevant tools or systems", "Solve practical or information problems", "Communicate with stakeholders", "Check quality and safety where relevant"],
+    toolExamples: tools,
+    workEnvironment: [REMOTE_FRIENDLY_KINDS.has(kind) ? "hybrid-or-remote-possible" : "mostly-in-person", "team-based", "skills-based", "SA-context"],
+    subjects: SUBJECT_PRESETS[kind],
+    qualifications: [
+      "Relevant NSC subject choices and practical proof of interest",
+      "Relevant certificate, diploma, degree, learnership, apprenticeship, short course or workplace route depending on the role level",
+      "Portfolio, workplace evidence, references or practical projects where formal qualification is not the only entry route",
     ],
-    misconceptions: ["It is not just typing code. You spend time understanding unclear problems.", "Remote work is possible, but juniors still need feedback and discipline."],
-    fitWarnings: ["If constant learning frustrates you, this path can feel exhausting.", "You need to handle being wrong often while debugging."],
-    similarCareerIds: ["data-analyst"],
-  },
-  {
-    ...baseProfile,
-    id: "finance-accounting",
-    title: "Finance or Accounting Professional",
-    stream: "Finance, accounting and business control",
-    signalWeights: { numbers: 3, detail: 3, business: 2, structure: 2, money: 2, office: 1 },
-    summary: "You help a business understand money, costs, payments, profit and financial rules.",
-    day: "Check transactions, prepare reports, follow up payments, compare budgets and help managers understand results.",
-    tools: "A computer, spreadsheets, accounting systems, banking platforms and document systems.",
-    environment: "Nearly every company needs finance people. Mostly office-based, sometimes hybrid at higher levels.",
-    stress: "Medium to high around month-end, audits and deadlines.",
-    remote: "Sometimes possible, but many teams still expect office time.",
-    growth: "Can grow into accountant, analyst, financial manager, CFO, consultant or business owner.",
-    worst: "Deadlines and detailed checking can become repetitive.",
-    best: "You understand how businesses really work and where money goes.",
-    earningPotential: {
-      status: "editorial-insight",
-      label: "Good earning potential, especially with trust and progression",
-      explanation: "Careerize does not show salary figures here. The useful learner insight is that finance has many levels: support roles can be accessible, while professional and leadership routes can grow strongly over time.",
-    },
-    dayInLife: ["Check payment, invoice or transaction queues.", "Update spreadsheets or finance systems.", "Follow up missing information.", "Prepare month-end or management reports."],
-    keyTasks: ["Process transactions", "Check detail", "Prepare reports", "Follow rules", "Explain financial information"],
-    toolExamples: ["spreadsheet software", "accounting system", "banking platform", "document system"],
-    workEnvironment: ["office", "hybrid", "deadline-driven", "rules-based"],
-    subjects: ["Accounting", "Mathematics", "Mathematical Literacy", "Business Studies", "Economics"],
-    qualifications: ["Accounting, finance, bookkeeping, tax, audit or commerce qualification depending on level", "Workplace experience in creditors, debtors, payroll, bookkeeping or financial administration"],
-    pathways: [
-      { type: "nsc", label: "Take accounting, business and maths-related subjects where possible", timeToEntry: "School planning", confidence: 55 },
-      { type: "university", label: "Study commerce, accounting, finance or economics for professional routes", timeToEntry: "3-4 years", confidence: 50 },
-      { type: "tvet", label: "Use financial management or bookkeeping programmes as an entry route", timeToEntry: "1-3 years", confidence: 50 },
-      { type: "learnership", label: "Use accounting, bookkeeping or business administration learnerships where available", timeToEntry: "12-24 months", confidence: 45 },
-      { type: "shortcourse", label: "Build bookkeeping, payroll, tax or accounting-software proof", timeToEntry: "3-12 months", confidence: 55 },
-      { type: "work", label: "Start in creditors, debtors, invoicing, payroll, cashiering or finance admin", timeToEntry: "0-24 months", confidence: 55 },
-      { type: "pivot", label: "Move in from admin, operations, stock control or sales support", timeToEntry: "6-18 months", confidence: 55 },
+    pathways: makePathways(title, profile),
+    misconceptions: [
+      `${title} is not only the visible part people see from outside; the real work includes repetition, admin, feedback and problem-solving.`,
+      "One qualification route is not the only route. Careerize shows several possible paths and marks uncertainty where data still needs verification.",
     ],
-    misconceptions: ["Finance is not only for future chartered accountants. There are many support and specialist levels.", "Accuracy and trust matter as much as liking numbers."],
-    fitWarnings: ["Month-end pressure is real.", "People who dislike rules and checking may struggle."],
-    similarCareerIds: ["data-analyst"],
-  },
-  {
-    ...baseProfile,
-    id: "technical-artisan",
-    title: "Electrician or Technical Artisan",
-    stream: "Skilled trades and technical work",
-    signalWeights: { handsOn: 3, fixing: 3, tools: 3, practical: 3, moving: 1, technical: 2 },
-    summary: "You install, repair and maintain physical systems like wiring, equipment or machinery.",
-    day: "Travel to a site, check the problem, use tools, repair or install equipment and make sure the work is safe.",
-    tools: "Hand tools, testing equipment, safety gear, ladders, meters and technical drawings.",
-    environment: "Homes, factories, mines, construction sites, offices or industrial plants.",
-    stress: "Medium. Can be high when safety risks, urgent breakdowns or customer pressure are involved.",
-    remote: "Not usually remote. The work is physical and site-based.",
-    growth: "Can grow into specialist artisan, supervisor, contractor, inspector, trainer or business owner.",
-    worst: "Physical work, travel, unsafe sites and weather conditions can be difficult.",
-    best: "You solve visible problems and your skill can stay useful across many industries.",
-    earningPotential: {
-      status: "editorial-insight",
-      label: "Strong practical earning potential with trade skill and reliability",
-      explanation: "Careerize does not show salary figures here. The useful learner insight is that qualified artisans can build strong earning power through scarce practical skill, overtime, contracting or business ownership.",
-    },
-    dayInLife: ["Collect tools and confirm safety requirements.", "Inspect the site or equipment.", "Repair, install or test under the correct supervision.", "Record the work and prepare for the next callout."],
-    keyTasks: ["Inspect faults", "Use tools safely", "Install or repair systems", "Read diagrams", "Follow safety rules"],
-    toolExamples: ["hand tools", "testing meters", "safety equipment", "technical drawings", "maintenance systems"],
-    workEnvironment: ["site-based", "hands-on", "safety-critical", "travel", "physical work"],
-    subjects: ["Mathematics", "Technical Mathematics", "Physical Sciences", "Electrical Technology", "Engineering Graphics and Design"],
-    qualifications: ["Trade route, apprenticeship, occupational certificate, TVET engineering studies or workplace-based training", "Trade test where applicable"],
-    pathways: [
-      { type: "nsc", label: "Take technical subjects where available and keep practical maths/science strong", timeToEntry: "School planning", confidence: 55 },
-      { type: "tvet", label: "Use TVET engineering or occupational programmes as a practical route", timeToEntry: "1-3 years", confidence: 50 },
-      { type: "learnership", label: "Look for technical learnerships linked to SETA or employer intake", timeToEntry: "12-36 months", confidence: 45 },
-      { type: "apprenticeship", label: "Complete an apprenticeship and trade test where required", timeToEntry: "3-4 years", confidence: 50 },
-      { type: "work", label: "Start as assistant, general worker, maintenance helper or site learner under supervision", timeToEntry: "0-24 months", confidence: 55 },
-      { type: "pivot", label: "Move in from maintenance, construction, facilities, mining or manufacturing support", timeToEntry: "6-36 months", confidence: 55 },
+    fitWarnings: [
+      "This route should be compared with at least two alternatives before making subject or study decisions.",
+      "Source-verified South African demand and qualification detail still needs to be added before treating this as final advice.",
     ],
-    misconceptions: ["This is skilled technical work, not a fallback for people who cannot study.", "Safety and discipline matter as much as being practical."],
-    fitWarnings: ["If you need predictable office work, the site-based reality may frustrate you.", "Safety shortcuts can cause harm, so rules matter."],
     similarCareerIds: [],
-  },
-  {
+  };
+}
+
+const CAREER_GROUPS = [["Technology, data and AI", "tech", "mixed", ["Software Developer", "Front-End Developer", "Back-End Developer", "Full-Stack Developer", "Mobile App Developer", "Web Developer", "Cloud Engineer", "DevOps Engineer", "QA Tester", "Automation Tester", "Cyber Security Analyst", "Security Operations Centre Analyst", "Network Technician", "IT Support Technician", "Systems Administrator", "Database Administrator", "Data Analyst", "Business Intelligence Analyst", "Data Engineer", "Machine Learning Engineer", "AI Product Specialist", "Prompt Engineer", "AI Workflow Builder", "No-Code Automation Builder", "Robotics Technician", "Drone Operator", "GIS Technician", "Game Developer", "UX Designer", "UI Designer", "Product Manager", "Scrum Master", "Business Analyst", "ERP Support Consultant", "CRM Administrator", "Digital Accessibility Tester"]], ["Finance, admin and business operations", "finance", "mixed", ["Bookkeeper", "Accounts Clerk", "Debtors Clerk", "Creditors Clerk", "Payroll Administrator", "Tax Assistant", "Junior Accountant", "Financial Analyst", "Management Accountant", "Internal Auditor", "Risk Analyst", "Compliance Officer", "Procurement Officer", "Office Administrator", "Executive Assistant", "Operations Coordinator", "Project Coordinator", "Tender Administrator", "Business Process Analyst", "Management Consultant", "Entrepreneurship Programme Coordinator", "Insurance Claims Assessor", "Banking Consultant", "Credit Analyst", "Collections Specialist", "Fraud Analyst", "Actuarial Assistant", "Investment Operations Analyst"]], ["Skilled trades, construction and engineering", "practical", "trade", ["Electrician", "Plumber", "Boilermaker", "Welder", "Fitter and Turner", "Millwright", "Diesel Mechanic", "Automotive Mechanic", "Refrigeration Technician", "Solar PV Installer", "Lift Technician", "CNC Machinist", "Toolmaker", "Panel Beater", "Painter and Decorator", "Bricklayer", "Carpenter", "Quantity Surveying Technician", "Construction Site Supervisor", "Civil Engineering Technician", "Mechanical Engineering Technician", "Electrical Engineering Technician", "Draughtsperson", "Architectural Technologist", "Land Survey Technician", "Building Inspector", "Safety Officer", "Facilities Maintenance Technician", "Water Treatment Technician", "Fire Systems Technician"]], ["Health, care and social services", "care", "care", ["Nurse", "Caregiver", "Community Health Worker", "Pharmacist Assistant", "Pharmacy Technician", "Emergency Care Assistant", "Paramedic", "Radiography Assistant", "Dental Assistant", "Medical Receptionist", "Clinical Data Capturer", "Health and Safety Practitioner", "Occupational Health Assistant", "Social Worker", "Auxiliary Social Worker", "Child and Youth Care Worker", "Counsellor", "Psychology Assistant", "Occupational Therapy Assistant", "Physiotherapy Assistant", "Dietitian Assistant", "Public Health Practitioner", "Healthcare Administrator", "Veterinary Nurse", "Animal Health Technician"]], ["Education, training and youth development", "education", "education", ["Foundation Phase Teacher", "High School Teacher", "TVET Lecturer", "Early Childhood Development Practitioner", "Tutor", "Online Tutor", "Training Facilitator", "Instructional Designer", "Learning Technologist", "Career Advisor", "School Counsellor", "Special Needs Support Assistant", "Sports Coach", "Youth Programme Coordinator", "Library Assistant", "Academic Administrator"]], ["Agriculture, food and environment", "agri", "vocational", ["Crop Farmer", "Livestock Farmer", "Poultry Farmer", "Agricultural Extension Officer", "Farm Manager", "Agronomist", "Irrigation Technician", "Horticulturist", "Viticulture Worker", "Food Technologist", "Quality Controller Food Production", "Butcher", "Baker", "Chef", "Environmental Officer", "Conservation Ranger", "Wildlife Guide", "Waste Management Coordinator", "Recycling Entrepreneur", "Water Resource Technician", "Climate Adaptation Officer", "Urban Farmer", "Landscape Gardener", "Pest Control Operator"]], ["Logistics, transport and supply chain", "logistics", "logistics", ["Truck Driver", "Delivery Driver", "Forklift Operator", "Warehouse Clerk", "Inventory Controller", "Supply Chain Coordinator", "Logistics Planner", "Fleet Controller", "Import Export Clerk", "Customs Clearing Agent", "Freight Forwarding Coordinator", "Port Operations Clerk", "Courier Operations Supervisor", "Rail Operations Assistant", "Transport Scheduler", "Route Planner", "Procurement Logistics Analyst", "Cold Chain Coordinator"]], ["Law, public service and public safety", "public", "public", ["Police Officer", "Traffic Officer", "Correctional Services Officer", "Security Supervisor", "Private Investigator", "Legal Secretary", "Paralegal", "Candidate Attorney", "Court Clerk", "Community Development Worker", "Municipal Administrator", "Policy Analyst", "Public Administration Officer", "Immigration Support Officer", "Disaster Management Officer", "Firefighter", "Emergency Call Centre Operator", "Forensic Technician", "Anti-Corruption Investigator", "Labour Relations Officer"]], ["Creative, media and design", "creative", "portfolio", ["Graphic Designer", "Digital Designer", "Photographer", "Videographer", "Video Editor", "Animator", "Motion Graphics Designer", "Illustrator", "Copywriter", "Content Creator", "Social Media Manager", "Community Manager", "Journalist", "Radio Presenter", "Podcast Producer", "Public Relations Officer", "Brand Strategist", "Fashion Designer", "Interior Designer", "Set Designer", "Makeup Artist", "Hair Stylist", "Music Producer", "Sound Engineer", "Event Creative Producer", "Virtual Production Artist"]], ["Sales, marketing and customer work", "people", "mixed", ["Sales Representative", "Retail Sales Assistant", "Call Centre Agent", "Customer Success Consultant", "Client Services Consultant", "Account Manager", "Recruitment Consultant", "Market Research Assistant", "Digital Marketer", "SEO Assistant", "Paid Media Specialist", "Email Marketing Coordinator", "E-Commerce Coordinator", "Merchandiser", "Category Assistant", "Real Estate Agent", "Insurance Broker", "Travel Consultant", "Fundraising Coordinator", "Community Outreach Officer"]], ["Hospitality, tourism, sport and events", "hospitality", "hospitality", ["Hotel Receptionist", "Guest House Manager", "Restaurant Manager", "Waiter", "Barista", "Tour Guide", "Travel Agent", "Event Coordinator", "Wedding Planner", "Conference Coordinator", "Casino Dealer", "Cruise Ship Worker", "Flight Attendant", "Ground Crew Agent", "Sports Administrator", "Fitness Instructor", "Personal Trainer", "Adventure Tourism Guide"]], ["Manufacturing, mining and energy", "engineering", "trade", ["Production Operator", "Production Supervisor", "Quality Inspector", "Process Controller", "Packaging Technologist", "Industrial Engineer", "Maintenance Planner", "Mining Technician", "Mine Overseer Assistant", "Geology Technician", "Metallurgical Technician", "Chemical Process Operator", "Energy Auditor", "Wind Turbine Technician", "Battery Technician", "Hydrogen Economy Technician", "Industrial Automation Technician", "Instrumentation Technician", "Materials Controller", "Textile Production Technician", "Furniture Maker", "Plastic Moulding Technician"]], ["Informal, entrepreneurship and community economy", "entrepreneur", "entrepreneur", ["Spaza Shop Owner", "Street Food Trader", "Home Bakery Operator", "Mobile Car Wash Owner", "Township Delivery Operator", "Freelance Digital Assistant", "Virtual Assistant", "Community Tutor", "Repair Shop Owner", "Second-Hand Clothing Trader", "Market Stall Trader", "Home-Based Childcare Provider", "Cleaning Services Owner", "Garden Services Owner", "Small-Scale Poultry Entrepreneur", "Local Events Supplier", "Community Wi-Fi Operator", "Informal Recycling Collector", "Craft Seller", "Mobile Beauty Service Provider"]], ["Science, research and frontier careers", "science", "science", ["Laboratory Technician", "Research Assistant", "Biotechnologist", "Microbiologist", "Chemist", "Materials Scientist", "Environmental Scientist", "Data Research Analyst", "Epidemiology Assistant", "Astronomy Outreach Officer", "Forensic Scientist", "Food Safety Scientist", "Clinical Trial Coordinator", "Marine Scientist", "Geologist", "Hydrologist", "Renewable Energy Researcher", "Carbon Accounting Analyst", "Circular Economy Analyst", "Digital Twin Specialist", "Smart City Analyst", "Human Factors Researcher", "Behavioural Insights Analyst", "Bioinformatics Analyst", "Space Systems Technician"]], ["Arts, culture, heritage and society", "creative", "portfolio", ["Museum Curator", "Archivist", "Heritage Officer", "Cultural Programme Coordinator", "Translator", "Interpreter", "Language Practitioner", "Publishing Assistant", "Editor", "Author", "Theatre Technician", "Actor", "Dancer", "Choreographer", "Arts Administrator", "Community Arts Facilitator"]]];
+
+const generatedRoutes = CAREER_GROUPS.flatMap(([stream, kind, profile, titles]) =>
+  titles.map((title) => makeRoute(title, stream, kind, profile))
+).sort((a, b) => a.stream.localeCompare(b.stream) || a.title.localeCompare(b.title));
+
+const routesByStream = generatedRoutes.reduce((acc, route) => {
+  acc[route.stream] = acc[route.stream] ?? [];
+  acc[route.stream].push(route.id);
+  return acc;
+}, {});
+
+export const CAREER_ROUTES = generatedRoutes.map((route) => {
+  const sameStream = routesByStream[route.stream] ?? [];
+  const index = sameStream.indexOf(route.id);
+  return {
     ...baseProfile,
-    id: "healthcare-professional",
-    title: "Healthcare Professional",
-    stream: "Health, care and human services",
-    signalWeights: { helping: 3, people: 3, science: 2, biology: 2, care: 3, highStress: 1 },
-    summary: "You help people stay healthy, recover or manage illness, injury and care needs.",
-    day: "See patients, check symptoms, follow care plans, record information and work with other healthcare workers.",
-    tools: "Medical equipment, patient records, computers, medicine-related systems and practical care tools.",
-    environment: "Hospitals, clinics, private practices, care facilities, laboratories or community health settings.",
-    stress: "High. You deal with real people, pressure, responsibility and emotional situations.",
-    remote: "Mostly not remote, except for some admin, advisory, research or digital-health roles.",
-    growth: "Can grow into senior clinical, specialist, management, research, education or private practice paths.",
-    worst: "Emotionally heavy days, shift work and public-system pressure can be hard.",
-    best: "Your work can directly improve someone’s life.",
-    earningPotential: {
-      status: "editorial-insight",
-      label: "Earning potential varies widely by health role and registration",
-      explanation: "Careerize does not show salary figures here. The useful learner insight is that healthcare includes many routes: some are support roles, while regulated specialist paths can carry stronger long-term earning potential.",
-    },
-    dayInLife: ["Receive handover or prepare for the day's patients.", "Assess people and follow care or treatment steps.", "Update records and coordinate with other healthcare workers.", "Support patients or families and prepare for the next shift."],
-    keyTasks: ["Care for people", "Record health information", "Follow safe procedures", "Work in teams", "Communicate clearly"],
-    toolExamples: ["patient record system", "medical equipment", "protective gear", "care plans", "communication tools"],
-    workEnvironment: ["people-facing", "shift work", "regulated", "high responsibility", "team-based"],
-    subjects: ["Life Sciences", "Physical Sciences", "Mathematics", "Mathematical Literacy", "English"],
-    qualifications: ["Health-science degree, diploma, nursing, allied health, emergency care or care-worker route depending on role", "Professional registration where legally required"],
-    pathways: [
-      { type: "nsc", label: "Check subject requirements early; many health routes need science and strong marks", timeToEntry: "School planning", confidence: 55 },
-      { type: "university", label: "Study the required health qualification for regulated professional roles", timeToEntry: "3-6+ years", confidence: 50 },
-      { type: "tvet", label: "Use care, community health or support programmes where properly accredited", timeToEntry: "1-3 years", confidence: 45 },
-      { type: "learnership", label: "Look for health and social development learnerships where available", timeToEntry: "12-24 months", confidence: 45 },
-      { type: "work", label: "Start through care support, admin, community work, volunteering or shadowing where lawful and safe", timeToEntry: "0-24 months", confidence: 50 },
-      { type: "pivot", label: "Move in from care, admin, community work, lab support or emergency services", timeToEntry: "6-36 months", confidence: 50 },
-    ],
-    misconceptions: ["Healthcare is not one career. It includes clinical, support, lab, admin, emergency and community roles.", "Wanting to help people is important, but training, regulation and resilience matter too."],
-    fitWarnings: ["If emotional pressure overwhelms you quickly, choose the healthcare environment carefully.", "Some routes are highly regulated and cannot be entered through shortcuts."],
-    similarCareerIds: [],
+    ...route,
+    similarCareerIds: sameStream.length > 2 ? [sameStream[(index + 1) % sameStream.length], sameStream[(index + 2) % sameStream.length]] : sameStream.filter((id) => id !== route.id),
+  };
+});
+
+export const CAREER_COVERAGE_SUMMARY = {
+  totalRoutes: 344,
+  country: "ZA",
+  status: "expanded-starter-taxonomy",
+  salaryPolicy: "qualitative-earning-potential-only",
+  streamCounts: {
+    "Technology, data and AI": 36,
+    "Finance, admin and business operations": 28,
+    "Skilled trades, construction and engineering": 30,
+    "Health, care and social services": 25,
+    "Education, training and youth development": 16,
+    "Agriculture, food and environment": 24,
+    "Logistics, transport and supply chain": 18,
+    "Law, public service and public safety": 20,
+    "Creative, media and design": 26,
+    "Sales, marketing and customer work": 20,
+    "Hospitality, tourism, sport and events": 18,
+    "Manufacturing, mining and energy": 22,
+    "Informal, entrepreneurship and community economy": 20,
+    "Science, research and frontier careers": 25,
+    "Arts, culture, heritage and society": 16
   },
-];
+};
 
 export const DISCOVERY_QUESTIONS = [
   {
     id: "interest",
-    label: "What sounds most interesting to you?",
+    label: "What pulls your attention first?",
     options: [
-      { value: "building", label: "Building things on a computer" },
+      { value: "building", label: "Building things on a computer or with ideas" },
       { value: "people", label: "Working with people" },
-      { value: "numbers", label: "Working with numbers" },
-      { value: "handsOn", label: "Fixing practical things" },
+      { value: "numbers", label: "Working with numbers and facts" },
+      { value: "handsOn", label: "Fixing or making practical things" },
     ],
   },
   {
@@ -306,4 +376,9 @@ export const INTEREST_SIGNALS = [
   { value: "biology", label: "Biology and health", icon: "Heart" },
   { value: "care", label: "Caring for people", icon: "Heart" },
   { value: "highStress", label: "Can handle pressure", icon: "Gauge" },
+  { value: "science", label: "Science thinking", icon: "Brain" },
+  { value: "technical", label: "Technical systems", icon: "Wrench" },
+  { value: "remote", label: "Remote-friendly work", icon: "Check" },
+  { value: "handsOn", label: "Hands-on work", icon: "Gauge" },
+  { value: "problemSolving", label: "Problem solving", icon: "Brain" },
 ];
