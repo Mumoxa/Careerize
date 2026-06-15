@@ -21,7 +21,6 @@ These files are **not** permission to publish detailed salary, demand or qualifi
 | `careerize_sa_repository_manifest.csv` | Human-readable file manifest from the workspace. |
 | `careerize_sa_top100_build_queue.csv` | First 100 careers to convert from starter profiles into deeper source-backed profiles. |
 | `careerize_sa_graph_summary.csv` | Summary counts for graph seed nodes/edges. |
-| `careerize_sa_oihd_350_family_summary.csv` | Family-level view of 350 OIHD occupations. |
 
 ## Full workspace assets represented in the manifest
 
