@@ -51,6 +51,18 @@ for (const route of CAREER_ROUTES) {
       errors.push(`Route ${route.id} is missing required display field: ${field}.`);
     }
   }
+
+  if (route.researchBasis !== undefined) {
+    if (!Array.isArray(route.researchBasis) || route.researchBasis.length === 0) {
+      errors.push(`Route ${route.id} researchBasis must be a non-empty array when provided.`);
+    } else {
+      for (const source of route.researchBasis) {
+        if (!source.label || !source.url || !URL.canParse(source.url)) {
+          errors.push(`Route ${route.id} has an invalid research source.`);
+        }
+      }
+    }
+  }
 }
 
 const sampleAnswers = Object.fromEntries(

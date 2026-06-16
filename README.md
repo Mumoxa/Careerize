@@ -1,6 +1,6 @@
 # Careerize
 
-Careerize is a gamified career discovery experience for South African Grade 10 learners and school leavers who do not yet know what real work looks like.
+Careerize is a trusted career discovery experience for South African Grade 10 learners and school leavers who need to compare real work patterns, stress, tools, entry routes and growth paths before making subject, study or first-work decisions.
 
 ## Current stack
 
@@ -9,13 +9,23 @@ Careerize is a gamified career discovery experience for South African Grade 10 l
 - Tailwind CSS
 - Framer Motion
 - Lucide React icons
+- Supabase Auth/Postgres for saved learner records when configured
 
 ## Run locally
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
+
+## Saved learner records
+
+The app supports a saved personalised discovery view so a learner can log in, save results, log out, return later, change prompts and keep exploring.
+
+- With `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`, sign-in uses Supabase Auth, learner identity/progress metadata is upserted to `careerize_profiles`, the latest result is saved to `careerize_results`, and each save writes a profile snapshot to `careerize_discovery_sessions`.
+- Without those variables, the UI clearly switches to local demo mode and stores records only in the current browser. Local demo mode is not cross-device authentication.
+
+Copy `.env.example` to `.env.local` and fill the Supabase values to test real saved records.
 
 ## Production build
 
@@ -39,11 +49,11 @@ Scoring logic lives in:
 src/lib/scoring.js
 ```
 
-This separation is intentional. Future career routes should be added to the catalog without changing the main UI logic.
+This separation is intentional. Future career routes should be added to the catalog without changing the main UI logic. Route suggestions are deterministic guidance signals, not automated suitability decisions.
 
 ## Adding a new career route
 
-Add a new object to `CAREER_ROUTES` with:
+Add a new object to `CAREER_ROUTES` with research-backed content:
 
 - `id`
 - `title`
@@ -58,6 +68,7 @@ Add a new object to `CAREER_ROUTES` with:
 - `growth`
 - `worst`
 - `best`
+- optional `researchBasis` array with `{ label, url }` source links
 
 Then run:
 
@@ -72,11 +83,14 @@ npm run build
 - Every signal weight must reference a known question option or interest signal.
 - Every route must include all display fields.
 - Signal weights must be positive numbers.
+- Any `researchBasis` source must include a label and valid URL.
+
+## Product and architecture docs
+
+- `docs/product-strategy.md` explains the 2030-ready product thesis and trust principles.
+- `docs/architecture.md` documents the current frontend architecture, Supabase boundary and target architecture.
+- `docs/deployment-readiness.md` lists deployment checks and current platform limitations.
 
 ## Deployment
 
-Deployment trigger: latest optimized frontend should deploy from `main`.
-
-## Known technical debt
-
-A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.
+Deployment trigger: latest optimized frontend should deploy from `main`. CI installs dependencies with `npm ci` from the committed lockfile, validates the catalog, and builds the app. For production saved records, run the latest `supabase/schema.sql`, configure the two Vite Supabase variables, and verify row-level security with separate learner accounts before launch. If Supabase reports `permission denied for table careerize_profiles`, re-run the latest schema so the authenticated-role table grants are applied.
