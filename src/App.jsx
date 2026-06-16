@@ -497,7 +497,7 @@ function LandingPage({ onRegister, onLogin, onDemo }) {
       </section>
 
       <section id="examples" className="relative z-10 mx-auto max-w-7xl px-5 py-12">
-        <SectionHeading eyebrow="Swift examples" title="A few paths to spark possibilities — not hundreds at once." text="Careerize mixes known jobs with newer and less obvious careers so users can discover options they may not have thought about." />
+        <SectionHeading eyebrow="Swift examples" title="A few paths to spark possibilities." text="Careerize mixes known jobs with newer and less obvious careers so users can discover options they may not have thought about." />
         <div className="mt-8 grid gap-5 lg:grid-cols-3">
           {examples.map((route) => <PublicCareerExample key={route.id} route={route} onDemo={onDemo} />)}
         </div>
@@ -714,7 +714,7 @@ function CareerWorkspace(props) {
 
       <section id="explore" className="mt-8">
         <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <SectionHeading eyebrow="Explore by world" title="Choose your next path without the 344-job overwhelm." text="Careerize shows a focused set first. Use career worlds to browse in chunks, then open details when a card feels interesting." />
+          <SectionHeading eyebrow="Explore by world" title="Choose your next path without overwhelm." text="Careerize shows a focused set first. Use career worlds to browse in clear clusters, then open details when a card feels interesting." />
           <div className="flex max-w-full gap-2 overflow-x-auto pb-1 no-scrollbar" aria-label="Career category filters">
             {CATEGORY_FILTERS.map((item) => <button key={item.value} type="button" onClick={() => onCategory(item.value)} className={`shrink-0 rounded-full border px-4 py-2 text-sm font-bold transition ${category === item.value ? "border-slate-950 bg-slate-950 text-white" : "border-slate-200 bg-white text-slate-600 hover:border-indigo-200"}`}>{item.label}</button>)}
           </div>
