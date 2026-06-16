@@ -2,7 +2,7 @@
 
 ## Current status
 
-The app is deployment-ready as a static Vite frontend if `npm run check` passes. It supports browser-only local demo records without environment variables. It supports real cross-device learner login, profile metadata and saved discovery records only when Supabase Auth/Postgres is configured and the RLS-backed schema has been installed. It should not be marketed as a full career platform yet because school dashboards, employer dashboards, admin tools, payments, uploads and AI integrations are not implemented.
+The app is deployment-ready as a static Vite frontend if `npm run check` passes. Pushes to `main` run the CI/CD deploy workflow, upload `dist`, and deploy to GitHub Pages. It supports browser-only local demo records without environment variables. It supports real cross-device learner login, profile metadata and saved discovery records only when Supabase Auth/Postgres is configured and the RLS-backed schema has been installed. It should not be marketed as a full career platform yet because school dashboards, employer dashboards, admin tools, payments, uploads and AI integrations are not implemented.
 
 ## Required commands
 
@@ -10,6 +10,12 @@ The app is deployment-ready as a static Vite frontend if `npm run check` passes.
 npm ci
 npm run check
 ```
+
+## Automated CI/CD
+
+- Pull requests and pushes to `main` run `.github/workflows/ci.yml` for locked install, catalog validation and build.
+- Pushes to `main` and manual `workflow_dispatch` runs also execute `.github/workflows/deploy.yml`, which repeats `npm ci` and `npm run check`, uploads `dist`, and deploys to GitHub Pages.
+- Vite uses a relative asset base so the generated static build can run from GitHub Pages project paths or another static host.
 
 ## Environment variables
 
