@@ -249,6 +249,36 @@ export const CAREER_ROUTES = [
       { label: "O*NET: Search Marketing Strategists", url: "https://www.onetonline.org/link/summary/13-1161.01" },
     ],
   },
+  {
+    id: "robotic-surgery-operator",
+    title: "Robotic Surgery Support Specialist",
+    stream: "Healthcare robotics and operating-room technology",
+    signalWeights: {
+      technology: 3,
+      helping: 2,
+      science: 2,
+      biology: 2,
+      care: 2,
+      detail: 3,
+      tools: 2,
+      highStress: 2,
+      problemSolving: 2,
+    },
+    summary: "You support robot-assisted surgery by helping prepare, test, troubleshoot and coordinate specialised surgical equipment while clinicians lead patient care.",
+    day: "Prepare robotic instruments, check equipment, support sterile setup, assist the theatre team during a procedure and help document or reset equipment after surgery.",
+    tools: "Robotic surgical systems, sterile instruments, imaging screens, operating-room checklists, troubleshooting guides and patient-safety protocols.",
+    environment: "Hospitals and specialist surgical centres. The work is in operating rooms with surgeons, nurses, anaesthetists and surgical technologists.",
+    stress: "High. The work is careful, time-sensitive and linked to patient safety, although the surgeon remains responsible for operating the robot.",
+    remote: "Not remote. This is hands-on clinical technology work inside a healthcare facility.",
+    growth: "Can grow from surgical technology or theatre support into robotic programme coordination, clinical application support, medical-device training or operating-room leadership.",
+    worst: "The environment can be intense, sterile-process mistakes matter and some procedures can run long or happen under pressure.",
+    best: "You work where healthcare, robotics and teamwork meet, helping advanced tools support safer, more precise procedures.",
+    researchBasis: [
+      { label: "Mayo Clinic: Robotic surgery overview", url: "https://www.mayoclinic.org/tests-procedures/robotic-surgery/about/pac-20394974" },
+      { label: "Association of Surgical Technologists: robotic procedure duties", url: "https://www.ast.org/webdocuments/ASTGuidelineRoboticSurgicalProcedures/" },
+      { label: "Cleveland Clinic: robotic surgery does not replace the surgeon", url: "https://my.clevelandclinic.org/health/treatments/22178-robotic-surgery" }
+    ],
+  },
 ];
 
 export const DISCOVERY_QUESTIONS = [

@@ -6,13 +6,13 @@
 
 :root {
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
-  color: #ffffff;
-  background: #05060a;
+  color: #0f172a;
+  background: #fbf8f2;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -21,14 +21,14 @@
 
 html {
   scroll-behavior: smooth;
-  background: #05060a;
+  background: #fbf8f2;
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #05060a;
+  background: #fbf8f2;
 }
 
 a {
@@ -56,12 +56,12 @@ button {
 }
 
 ::selection {
-  background: #f2ff49;
-  color: #05060a;
+  background: #c7d2fe;
+  color: #111827;
 }
 
 :focus-visible {
-  outline: 2px solid #f2ff49;
+  outline: 2px solid #4f46e5;
   outline-offset: 2px;
   border-radius: 12px;
 }

@@ -149,7 +149,7 @@ export async function loadSavedDiscovery(session) {
   if (supabase && session.provider === "supabase") {
     const { data, error } = await supabase
       .from("careerize_results")
-      .select("answers, selected_signals, ranked_results, best_match, updated_at")
+      .select("answers, selected_signals, ranked_results, best_match, personal_record, updated_at")
       .eq("user_id", session.id)
       .maybeSingle();
 
@@ -173,6 +173,7 @@ export async function saveDiscovery(session, discovery) {
     selected_signals: discovery.selectedSignals,
     ranked_results: discovery.rankedResults,
     best_match: discovery.bestMatch,
+    personal_record: discovery.personalRecord ?? {},
     updated_at: new Date().toISOString(),
   };
 
@@ -210,6 +211,7 @@ export async function saveDiscovery(session, discovery) {
       selected_signals: record.selected_signals,
       ranked_results: record.ranked_results,
       best_match: record.best_match,
+      personal_record: record.personal_record,
       match_percent: discovery.matchPercent,
       assessment_version: "v1.1",
     });

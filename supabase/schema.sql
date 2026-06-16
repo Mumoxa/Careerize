@@ -18,6 +18,7 @@ create table if not exists public.careerize_results (
   selected_signals jsonb not null default '[]'::jsonb,
   ranked_results jsonb not null default '[]'::jsonb,
   best_match text,
+  personal_record jsonb not null default '{}'::jsonb,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   unique(user_id)
@@ -31,10 +32,14 @@ create table if not exists public.careerize_discovery_sessions (
   selected_signals jsonb not null default '[]'::jsonb,
   ranked_results jsonb not null default '[]'::jsonb,
   best_match text,
+  personal_record jsonb not null default '{}'::jsonb,
   match_percent integer,
   assessment_version text not null default 'v1.1',
   created_at timestamptz not null default now()
 );
+
+alter table public.careerize_results add column if not exists personal_record jsonb not null default '{}'::jsonb;
+alter table public.careerize_discovery_sessions add column if not exists personal_record jsonb not null default '{}'::jsonb;
 
 alter table public.careerize_profiles enable row level security;
 alter table public.careerize_results enable row level security;
