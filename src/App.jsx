@@ -81,6 +81,8 @@ export default function App() {
   const bestMatch = ranked[0];
   const active = ranked.find((route) => route.id === manualActiveId) || bestMatch;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
+  const hasStartedDiscovery = progress > 0 || selectedSignals.length > 0;
+  const visibleSignals = hasStartedDiscovery ? INTEREST_SIGNALS : INTEREST_SIGNALS.slice(0, 8);
 
   useEffect(() => {
     let cancelled = false;
@@ -250,51 +252,40 @@ export default function App() {
 
       <section className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-14 pt-12 md:grid-cols-[1.05fr_0.95fr] md:pb-20 md:pt-20">
         <div className="flex flex-col justify-center">
-          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Career discovery for South African learners</Pill>
+          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Grade 10 friendly career discovery</Pill>
           <motion.h1
             initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.65 }}
             className="mt-6 font-display text-[44px] font-semibold leading-[0.95] tracking-[-0.04em] md:text-[88px]"
           >
-            Make subject and career choices with <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">evidence, not pressure.</span>
+            Answer a few simple questions. <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">See real career paths.</span>
           </motion.h1>
           <p className="mt-7 max-w-xl text-base leading-7 text-white/65 md:text-lg">
-            Careerize helps Grade 10s and school leavers compare real work patterns, stress, tools and entry routes before they spend years and money on a path.
+            Careerize starts light: choose what feels true, then the detailed job cards, reality checks and next steps appear around your choices.
           </p>
           <div className="mt-9 flex flex-wrap gap-3">
             <a href="#discover" className="inline-flex items-center gap-2 rounded-full bg-cyber px-6 py-3 font-semibold text-black shadow-[0_0_55px_-14px_rgba(242,255,73,.9)]">Start discovery <ArrowRight size={18} /></a>
             <a href="#reality" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-white/80 hover:border-white/40">See reality checks <ArrowUpRight size={18} /></a>
           </div>
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-            <MiniStat value={CAREER_ROUTES.length} label="starter routes" />
+            <MiniStat value={CAREER_ROUTES.length} label="researched routes" />
             <MiniStat value={`${progress}%`} label="profile complete" />
-            <MiniStat value="Human" label="final choice" />
+            <MiniStat value={hasStartedDiscovery ? active.title.split(" ")[0] : "Start"} label="next view" />
           </div>
         </div>
 
-        <HeroCard ranked={ranked} active={active} progress={progress} session={session} savedAt={savedAt} />
+        <HeroCard ranked={ranked} active={active} progress={progress} session={session} savedAt={savedAt} hasStarted={hasStartedDiscovery} />
       </section>
 
       <section id="discover" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into practical career routes with clear caveats. It is guidance, not a hidden hiring decision." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <AccountPanel
-            session={session}
-            savedAt={savedAt}
-            authNotice={authNotice}
-            authError={authError}
-            isAuthLoading={isAuthLoading}
-            isSaving={isSaving}
-            onSignIn={handleSignIn}
-            onSave={handleSave}
-            onSignOut={handleSignOut}
-          />
           <GlassCard>
             <div className="flex items-center justify-between gap-4">
               <div>
-                <h3 className="font-display text-2xl font-semibold">Quick fit questions</h3>
-                <p className="mt-2 text-sm text-white/55">Simple enough for an uninformed learner, but useful enough to shape a route.</p>
+                <h3 className="font-display text-2xl font-semibold">Step 1: answer 4 quick questions</h3>
+                <p className="mt-2 text-sm text-white/55">No long form. Pick the option that feels closest right now. You can change it later.</p>
               </div>
               <button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-white/70 hover:border-white/30"><RotateCcw size={16} /> Reset</button>
             </div>
@@ -324,10 +315,12 @@ export default function App() {
           </GlassCard>
 
           <GlassCard>
-            <h3 className="font-display text-2xl font-semibold">Interest tags</h3>
-            <p className="mt-2 text-sm text-white/55">Tags add texture without pretending to measure personality, worth or potential.</p>
+            <h3 className="font-display text-2xl font-semibold">Step 2: add interest tags</h3>
+            <p className="mt-2 text-sm text-white/55">
+              {hasStartedDiscovery ? "Add anything that feels relevant. These tags adjust the routes below." : "Start with a small set. More tags appear after you answer a question."}
+            </p>
             <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {INTEREST_SIGNALS.map((signal) => {
+              {visibleSignals.map((signal) => {
                 const Icon = ICONS[signal.icon] ?? Sparkles;
                 const activeSignal = selectedSignals.includes(signal.value);
                 return (
@@ -345,6 +338,17 @@ export default function App() {
               })}
             </div>
           </GlassCard>
+          <AccountPanel
+            session={session}
+            savedAt={savedAt}
+            authNotice={authNotice}
+            authError={authError}
+            isAuthLoading={isAuthLoading}
+            isSaving={isSaving}
+            onSignIn={handleSignIn}
+            onSave={handleSave}
+            onSignOut={handleSignOut}
+          />
         </div>
       </section>
 
@@ -352,9 +356,9 @@ export default function App() {
         <SectionHeading eyebrow="Reality Check" title="Every career card must show the real job" text="The point is not to make careers sound glamorous. The point is to help learners make better choices before they commit years and money." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
           <GlassCard>
-            <p className="text-sm uppercase tracking-[0.18em] text-white/40">Ranked matches</p>
+            <p className="text-sm uppercase tracking-[0.18em] text-white/40">{hasStartedDiscovery ? "Ranked matches" : "Waiting for your choices"}</p>
             <div className="mt-5 space-y-3">
-              {ranked.map((route, index) => (
+              {hasStartedDiscovery ? ranked.map((route, index) => (
                 <button
                   type="button"
                   key={route.id}
@@ -368,15 +372,21 @@ export default function App() {
                   </div>
                   <p className={`${active.id === route.id ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
                 </button>
-              ))}
+              )) : (
+                <EmptyGuidanceCard />
+              )}
             </div>
           </GlassCard>
 
-          <AnimatePresence mode="wait">
-            <motion.div key={active.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}>
-              <CareerCard route={active} />
-            </motion.div>
-          </AnimatePresence>
+          {hasStartedDiscovery ? (
+            <AnimatePresence mode="wait">
+              <motion.div key={active.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}>
+                <CareerCard route={active} />
+              </motion.div>
+            </AnimatePresence>
+          ) : (
+            <StarterPreview />
+          )}
         </div>
       </section>
 
@@ -387,7 +397,7 @@ export default function App() {
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
           <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
         </div>
-        <NextActionPlan route={active} progress={progress} />
+        {hasStartedDiscovery ? <NextActionPlan route={active} progress={progress} /> : <StarterPreview compact />}
       </section>
 
       <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
@@ -424,40 +434,84 @@ export default function App() {
   );
 }
 
-function HeroCard({ ranked, active, progress, session, savedAt }) {
+function HeroCard({ ranked, active, progress, session, savedAt, hasStarted }) {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65 }} className="relative">
       <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-violet/25 via-mint/10 to-cyber/20 blur-3xl" />
-      <GlassCard className="relative min-h-[520px] overflow-hidden">
+      <GlassCard className="relative min-h-[430px] overflow-hidden">
         <div className="flex items-center justify-between">
-          <Pill><Eye size={14} /> Live learner profile</Pill>
+          <Pill><Eye size={14} /> {hasStarted ? "Live learner profile" : "Start light"}</Pill>
           <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/55">{progress}% complete</span>
         </div>
-        <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/25 p-5">
-          <p className="text-sm text-white/45">Best current match</p>
-          <h2 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">{active.title}</h2>
-          <p className="mt-3 text-sm leading-6 text-white/60">{active.summary}</p>
-          <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-white/60">
-            <InfoPill icon={Clock} text={active.stress} />
-            <InfoPill icon={Compass} text={active.remote} />
-          </div>
-          <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
-            Not a verdict: this is a transparent signal based on your current answers. Change any answer to compare alternatives.
-          </p>
-          <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs leading-5 text-white/55">
-            {session ? `Signed in as ${session.email}. ${savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}.` : "Save when you want this view available next time."}` : "Sign in below to save this personalised view and return to it later."}
-          </p>
-        </div>
-        <div className="mt-5 space-y-3">
-          {ranked.slice(0, 3).map((route, index) => (
-            <div key={route.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4">
-              <div><p className="text-sm font-semibold">{route.title}</p><p className="text-xs text-white/40">{route.stream}</p></div>
-              <div className="flex items-center gap-2 text-xs text-white/55"><Star size={14} className="text-cyber" /> {index === 0 ? "Top" : `#${index + 1}`}</div>
+
+        {hasStarted ? (
+          <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/25 p-5">
+            <p className="text-sm text-white/45">Best current signal</p>
+            <h2 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">{active.title}</h2>
+            <p className="mt-3 text-sm leading-6 text-white/60">{active.summary}</p>
+            <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-white/60">
+              <InfoPill icon={Clock} text={active.stress} />
+              <InfoPill icon={Compass} text={active.remote} />
             </div>
-          ))}
-        </div>
+            <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
+              Not a verdict: this is a transparent signal based on your current answers. Change any answer to compare alternatives.
+            </p>
+            <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs leading-5 text-white/55">
+              {session ? `Signed in as ${session.email}. ${savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}.` : "Save when you want this view available next time."}` : "Sign in below to save this personalised view and return to it later."}
+            </p>
+          </div>
+        ) : (
+          <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/25 p-5">
+            <h2 className="font-display text-4xl font-semibold tracking-[-0.04em]">Nothing heavy upfront.</h2>
+            <p className="mt-3 text-sm leading-6 text-white/60">For a Grade 10 learner, the first screen should feel safe: answer one question, then Careerize unlocks routes, tags and reality checks.</p>
+            <div className="mt-5 grid gap-3 text-sm">
+              {["Pick the closest answer", "Add interests if you want", "Open real job cards"].map((item, index) => (
+                <div key={item} className="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-white/65">
+                  <span className="grid h-7 w-7 place-items-center rounded-full bg-cyber text-xs font-bold text-black">{index + 1}</span>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {hasStarted && (
+          <div className="mt-5 space-y-3">
+            {ranked.slice(0, 3).map((route, index) => (
+              <div key={route.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+                <div><p className="text-sm font-semibold">{route.title}</p><p className="text-xs text-white/40">{route.stream}</p></div>
+                <div className="flex items-center gap-2 text-xs text-white/55"><Star size={14} className="text-cyber" /> {index === 0 ? "Top" : `#${index + 1}`}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </GlassCard>
     </motion.div>
+  );
+}
+
+function EmptyGuidanceCard() {
+  return (
+    <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.025] p-5 text-sm leading-6 text-white/55">
+      Answer one quick question first. Careerize will then rank the routes and show the deeper information only when it is useful.
+    </div>
+  );
+}
+
+function StarterPreview({ compact = false }) {
+  return (
+    <GlassCard>
+      <Pill><Sparkles size={14} /> Choice-led experience</Pill>
+      <h3 className={`${compact ? "text-2xl" : "text-4xl md:text-5xl"} mt-5 font-display font-semibold tracking-[-0.04em]`}>
+        Detailed guidance unlocks after the learner starts.
+      </h3>
+      <p className="mt-4 text-sm leading-6 text-white/58">
+        Instead of showing every career detail at once, Careerize waits for learner choices and then reveals matches, reality checks, research links and next actions in context.
+      </p>
+      <a href="#discover" className="mt-6 inline-flex items-center gap-2 rounded-full bg-cyber px-5 py-3 text-sm font-semibold text-black">
+        Start with the first question <ArrowRight size={16} />
+      </a>
+    </GlassCard>
   );
 }
 

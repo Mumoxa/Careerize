@@ -1,6 +1,6 @@
 # Careerize
 
-Careerize is a trusted career discovery experience for South African Grade 10 learners and school leavers who need to compare real work patterns, stress, tools, entry routes and growth paths before making subject, study or first-work decisions.
+Careerize is a trusted, choice-led career discovery experience for South African Grade 10 learners and school leavers who need to compare real work patterns, stress, tools, entry routes and growth paths before making subject, study or first-work decisions.
 
 ## Current stack
 

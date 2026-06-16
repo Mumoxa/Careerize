@@ -16,6 +16,10 @@ It should not become a generic job board, a black-box personality test, a replac
 
 Many learners choose subjects, courses or first jobs from limited family exposure, social pressure, vague prestige and incomplete information. They often know job titles before they understand the day-to-day work, stress, tools, entry route and growth ceiling.
 
+## UX principle: progressive disclosure
+
+The learner-facing home should stay light and emotionally safe. Careerize should ask for a small choice first, then reveal deeper route detail, reality checks and research links based on that learner's answers. This follows the UI/UX Pro Max guidance pattern of using structured design decisions, responsive layouts, accessible hierarchy and context-specific content instead of overwhelming users with every module at once.
+
 ## Trust principles
 
 - Show how route suggestions are produced.
