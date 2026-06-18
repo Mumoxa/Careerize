@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpRight,
+  Award,
+  BookOpen,
   Brain,
   Briefcase,
   Building2,
@@ -13,16 +15,21 @@ import {
   Eye,
   Flag,
   Gauge,
+  GitBranch,
   GraduationCap,
   Heart,
+  Layers,
   Lightbulb,
+  ListChecks,
   Lock,
   LogIn,
   LogOut,
   Map,
   Menu,
+  Milestone,
   RotateCcw,
   Save,
+  School,
   ShieldCheck,
   Sparkles,
   Star,
@@ -35,6 +42,14 @@ import {
   Zap,
 } from "lucide-react";
 import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
+import {
+  ADMISSION_LEVELS,
+  APS_SCALE,
+  NSC_SUBJECTS,
+  SUBJECT_CHOICE_RULES,
+  getFieldsForSubject,
+  getStudyPathForCareer,
+} from "./data/saQualifications";
 import {
   getCurrentSession,
   hasSupabaseConfig,
@@ -60,6 +75,7 @@ const ICONS = {
 const NAV_ITEMS = [
   { id: "discover", label: "Discovery" },
   { id: "reality", label: "Reality Check" },
+  { id: "subjects", label: "Subjects" },
   { id: "pathway", label: "Pathway" },
   { id: "trust", label: "Trust" },
 ];
@@ -419,6 +435,11 @@ export default function App() {
         </div>
       </section>
 
+      <section id="subjects" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
+        <SectionHeading eyebrow="Subjects → Study Path" title="Connect Grade 10 subjects to real qualifications" text="Careerize links school subject choices to the NSC admission levels, the NQF qualification ladder and the careers each route can lead to. This is honest guidance, not an eligibility ruling — always confirm current requirements with the institution." />
+        <div className="mt-9"><SubjectExplorer /></div>
+      </section>
+
       <section id="pathway" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <SectionHeading eyebrow="Pathway" title="Show the route in and the route up" text="A learner needs to know the entry point, the practical ladder and where the career can get stuck." />
         <div className="mt-9 grid gap-5 md:grid-cols-3">
@@ -641,7 +662,190 @@ function CareerCard({ route }) {
         <div className="rounded-3xl border border-pink/25 bg-pink/10 p-5"><div className="flex items-center gap-2 font-semibold"><ThumbsDown size={18} /> Worst part</div><p className="mt-3 text-sm text-white/60">{route.worst}</p></div>
         <div className="rounded-3xl border border-mint/25 bg-mint/10 p-5"><div className="flex items-center gap-2 font-semibold"><ThumbsUp size={18} /> Best part</div><p className="mt-3 text-sm text-white/60">{route.best}</p></div>
       </div>
+      <StudyPathPanel route={route} />
     </GlassCard>
+  );
+}
+
+function StudyStep({ icon: Icon, step, title, children }) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/[0.02] p-4">
+      <div className="flex items-center gap-2.5">
+        <span className="grid h-7 w-7 shrink-0 place-items-center rounded-xl bg-violet/20 text-xs font-semibold text-violet">{step}</span>
+        <span className="flex items-center gap-2 text-sm font-semibold"><Icon size={15} className="shrink-0 text-violet" /> {title}</span>
+      </div>
+      <div className="mt-3">{children}</div>
+    </div>
+  );
+}
+
+function StudyPathPanel({ route }) {
+  const path = getStudyPathForCareer(route);
+  if (!path) return null;
+
+  return (
+    <div className="mt-6 rounded-[1.75rem] border border-violet/25 bg-violet/[0.07] p-5 md:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <span className="rounded-2xl bg-violet/20 p-2 text-violet"><School size={18} /></span>
+          <div>
+            <h4 className="font-display text-xl font-semibold">School subjects → study path</h4>
+            <p className="text-xs text-white/45">From Grade 10 choices to the qualifications that lead to this career.</p>
+          </div>
+        </div>
+        <span className="rounded-full border border-white/12 bg-white/[0.05] px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-white/45">{path.fieldLabel}</span>
+      </div>
+
+      <div className="mt-5 space-y-4">
+        <StudyStep icon={BookOpen} step="1" title="Grade 10 subject choices">
+          <div className="flex flex-wrap gap-2">
+            {path.grade10.map((subject) => (
+              <span key={subject.id} className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs ${subject.importance === "optional" ? "border-white/12 bg-white/[0.04] text-white/70" : "border-cyber/40 bg-cyber/10 text-white"}`}>
+                {subject.name}
+                {subject.designated && <span title="Designated subject for degree admission" className="rounded-full bg-mint/20 px-1.5 text-[10px] text-mint">deg</span>}
+                <span className="text-[10px] uppercase tracking-wide text-white/40">{subject.importance}</span>
+              </span>
+            ))}
+          </div>
+          <p className="mt-3 rounded-2xl border border-white/10 bg-black/20 p-3 text-xs leading-5 text-white/60">{SUBJECT_CHOICE_RULES.mathsNote}</p>
+        </StudyStep>
+
+        <StudyStep icon={ListChecks} step="2" title={`Matric level needed: ${path.admissionLevel.name}`}>
+          <p className="text-sm text-white/70">{path.admissionLevel.minRequirement}</p>
+          <p className="mt-1 text-xs text-white/45">{path.admissionLevel.explanation}</p>
+        </StudyStep>
+
+        <StudyStep icon={Layers} step="3" title="Qualification routes (school-leaving → degree)">
+          <div className="space-y-2">
+            {path.qualifications.map((q) => (
+              <div key={q.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-sm font-semibold">{q.name}</span>
+                  <span className="rounded-full bg-white/8 px-2.5 py-0.5 text-[11px] text-white/55">NQF {q.nqfLevel}{q.duration ? ` · ${q.duration}` : ""}</span>
+                </div>
+                <p className="mt-1.5 text-xs leading-5 text-white/55">{q.entryRequirement ?? q.note}</p>
+                {(q.offeredBy || q.exampleProviders || q.regulator) && (
+                  <p className="mt-1 text-[11px] text-white/40">{q.offeredBy ?? q.exampleProviders}{q.regulator ? ` · Body: ${q.regulator}` : ""}</p>
+                )}
+              </div>
+            ))}
+          </div>
+        </StudyStep>
+
+        {path.progression.length > 0 && (
+          <StudyStep icon={GitBranch} step="4" title="What can follow (postgraduate / professional)">
+            <ul className="space-y-1.5">
+              {path.progression.map((item) => (
+                <li key={item} className="flex items-start gap-2 text-sm text-white/65"><Milestone size={14} className="mt-1 shrink-0 text-violet" /><span>{item}</span></li>
+              ))}
+            </ul>
+          </StudyStep>
+        )}
+
+        <StudyStep icon={Award} step="5" title="Other routes in & registration">
+          {path.registration ? (
+            <p className="text-sm text-white/70"><span className="font-semibold">{path.registration.body}.</span> {path.registration.note}</p>
+          ) : (
+            <p className="text-sm text-white/55">No single professional body controls entry to this field.</p>
+          )}
+          {path.alternativeRoutes.length > 0 && (
+            <p className="mt-2 text-xs text-white/45">Alternative routes: {path.alternativeRoutes.join(", ")}.</p>
+          )}
+          {path.notes.map((note) => (
+            <p key={note} className="mt-2 text-xs leading-5 text-white/55">{note}</p>
+          ))}
+        </StudyStep>
+      </div>
+
+      <p className="mt-4 rounded-2xl border border-cyber/15 bg-cyber/5 p-3 text-[11px] leading-5 text-white/55">
+        Framework guidance based on the NSC subject rules, the statutory minimum admission requirements and the HEQSF/NQF. Exact subjects, APS cut-offs and programme names vary by university, so always confirm current requirements with the institution.
+      </p>
+    </div>
+  );
+}
+
+function SubjectExplorer() {
+  const [activeSubjectId, setActiveSubjectId] = useState("mathematics");
+  const activeSubject = NSC_SUBJECTS.find((subject) => subject.id === activeSubjectId) ?? NSC_SUBJECTS[0];
+  const fields = getFieldsForSubject(activeSubject.id);
+  const fieldIds = new Set(fields.map((field) => field.id));
+  const exampleCareers = CAREER_ROUTES.filter((route) => fieldIds.has(route.studyFieldId)).slice(0, 8);
+  const pickable = NSC_SUBJECTS.filter((subject) => subject.group !== "compulsory");
+
+  return (
+    <div className="grid gap-5 lg:grid-cols-2">
+      <GlassCard>
+        <h3 className="font-display text-2xl font-semibold">How subject choices open doors</h3>
+        <p className="mt-2 text-sm text-white/55">You choose {SUBJECT_CHOICE_RULES.totalSubjects} subjects at the end of Grade 9 and keep them from Grade 10 to matric: {SUBJECT_CHOICE_RULES.compulsory.join(", ")}, plus at least {SUBJECT_CHOICE_RULES.electiveMinimum} electives.</p>
+        <p className="mt-3 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/75">{SUBJECT_CHOICE_RULES.mathsNote}</p>
+        <p className="mt-2 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-xs leading-5 text-white/55">{SUBJECT_CHOICE_RULES.designatedNote}</p>
+
+        <h4 className="mt-6 text-xs font-semibold uppercase tracking-[0.14em] text-white/45">Three matric admission levels</h4>
+        <div className="mt-3 space-y-2">
+          {ADMISSION_LEVELS.map((level) => (
+            <div key={level.id} className="rounded-2xl border border-white/10 bg-white/[0.03] p-3">
+              <p className="text-sm font-semibold">{level.name} <span className="font-normal text-white/40">→ {level.unlocks}</span></p>
+              <p className="mt-1 text-xs leading-5 text-white/55">{level.minRequirement}</p>
+            </div>
+          ))}
+        </div>
+
+        <details className="mt-4 rounded-2xl border border-white/10 bg-white/[0.03] p-3 text-xs text-white/55">
+          <summary className="cursor-pointer font-semibold text-white/70">How the Admission Point Score (APS) works</summary>
+          <p className="mt-2 leading-5">{APS_SCALE.note}</p>
+          <div className="mt-2 flex flex-wrap gap-1.5">
+            {APS_SCALE.levels.map((level) => (
+              <span key={level.code} className="rounded-full bg-white/8 px-2 py-0.5 text-[11px]">{level.code} = {level.range}</span>
+            ))}
+          </div>
+        </details>
+      </GlassCard>
+
+      <GlassCard>
+        <h3 className="font-display text-2xl font-semibold">Pick a subject, see what it unlocks</h3>
+        <p className="mt-2 text-sm text-white/55">Tap a Grade 10 subject to see the career fields it most supports. Subjects tagged <span className="text-mint">deg</span> are on the designated list that counts towards Bachelor's Degree admission.</p>
+        <div className="mt-4 flex flex-wrap gap-2">
+          {pickable.map((subject) => {
+            const on = subject.id === activeSubject.id;
+            return (
+              <button
+                type="button"
+                key={subject.id}
+                onClick={() => setActiveSubjectId(subject.id)}
+                aria-pressed={on}
+                className={`inline-flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs transition ${on ? "border-cyber bg-cyber text-black" : "border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25"}`}
+              >
+                {subject.name}{subject.designated && <span className={on ? "text-black/60" : "text-mint"}>·deg</span>}
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-5 rounded-2xl border border-white/10 bg-black/20 p-4">
+          <p className="text-sm font-semibold">{activeSubject.name}</p>
+          <p className="mt-1 text-xs leading-5 text-white/55">{activeSubject.note}</p>
+          <p className="mt-2 text-[11px] uppercase tracking-[0.14em] text-white/40">{activeSubject.designated ? "Designated subject (counts towards a degree pass)" : "Not on the designated list for degree admission"}</p>
+          {fields.length > 0 ? (
+            <>
+              <p className="mt-4 text-xs font-semibold text-white/70">Career fields it supports</p>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {fields.map((field) => <span key={field.id} className="rounded-full bg-violet/15 px-2.5 py-0.5 text-[11px] text-white/75">{field.label}</span>)}
+              </div>
+              {exampleCareers.length > 0 && (
+                <>
+                  <p className="mt-4 text-xs font-semibold text-white/70">Example careers in those fields</p>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    {exampleCareers.map((career) => <span key={career.id} className="rounded-full bg-white/8 px-2.5 py-0.5 text-[11px] text-white/65">{career.title}</span>)}
+                  </div>
+                </>
+              )}
+            </>
+          ) : (
+            <p className="mt-4 text-xs text-white/45">This subject builds general study skills rather than pointing to one specific career field.</p>
+          )}
+        </div>
+      </GlassCard>
+    </div>
   );
 }
 

@@ -223,6 +223,7 @@ function makeRoute(title, stream, kind, profile) {
     title,
     stream,
     cluster: stream,
+    studyFieldId: kind,
     signalWeights: SIGNAL_PRESETS[kind],
     summary: `You work in ${stream.toLowerCase()} as a ${title.toLowerCase()}, helping people or organisations solve a real problem.`,
     day: `A normal day involves planning work, using the right tools, solving problems, communicating progress and checking quality in ${title.toLowerCase()} work.`,

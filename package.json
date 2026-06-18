@@ -8,7 +8,8 @@
     "build": "vite build",
     "validate:catalog": "node scripts/validateCatalog.mjs",
     "validate:foundation": "node scripts/validateSaFoundation.mjs",
-    "check": "npm run validate:catalog && npm run validate:foundation && npm run build",
+    "validate:studypaths": "node scripts/validateStudyPaths.mjs",
+    "check": "npm run validate:catalog && npm run validate:foundation && npm run validate:studypaths && npm run build",
     "preview": "vite preview"
   },
   "dependencies": {

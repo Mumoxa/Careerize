@@ -39,6 +39,7 @@ The current app includes:
 - Learner-owned saved profile and discovery-result persistence through Supabase when configured.
 - Local-browser demo fallback when Supabase environment variables are absent.
 - South African pathway readiness across NSC, university, TVET, learnership, apprenticeship, short-course, work and pivot routes.
+- Subject-to-qualification-to-career linkage: every career profile shows a "School subjects to study path" panel (Grade 10 subject choices, the matric admission level needed, the NQF qualification ladder, postgraduate progression and professional registration), plus a two-way "Subjects to Study Path" explorer.
 
 ## SA foundation data layer
 
@@ -58,6 +59,31 @@ data/sa-foundation/careerize_sa_repository_manifest.csv
 data/sa-foundation/careerize_sa_top100_build_queue.csv
 data/sa-foundation/careerize_sa_graph_summary.csv
 docs/SA_FOUNDATION_IMPORT_REVIEW.md
+```
+
+## Subject-to-qualification-to-career linkage
+
+Careerize links Grade 10 subject choices to qualifications and careers through a dedicated, source-referenced data layer:
+
+```text
+src/data/saQualifications.js
+```
+
+This module encodes the parts of the South African system that are stable public policy and links them to the catalog:
+
+- The NSC subject framework (compulsory subjects, electives and the designated subject list), with the Mathematics versus Mathematical Literacy decision called out.
+- The statutory minimum admission levels (Higher Certificate, Diploma and Bachelor's Degree passes) and an explanation of the Admission Point Score.
+- The HEQSF/NQF qualification types from National Certificate (Vocational) and occupational/trade routes through to Doctoral degrees, plus a verified set of common named degrees (BSc, BCom, BEng, LLB, MBChB, BEd and more).
+- A study path for every career field, with per-career overrides for higher-priority routes, exposed through `getStudyPathForCareer(route)`.
+
+### Honesty and scope
+
+South Africa registers tens of thousands of qualifications on the NQF. This layer does **not** claim to enumerate every institution programme. It covers every qualification *type* and NQF *level*, the statutory entry rules and a common-degree set, then links every career to its real study path. Specific programme names, exact APS cut-offs and current-year details must always be confirmed with the institution. Every claim carries a source id, an access date, a confidence score and a coverage status, in line with the content rules below. Per-institution programme detail is the next expansion phase and should load into this structure rather than be hand-coded.
+
+Validation lives in:
+
+```text
+scripts/validateStudyPaths.mjs
 ```
 
 ## Current career coverage
@@ -116,7 +142,7 @@ npm run dev
 npm run check
 ```
 
-`npm run check` validates the career catalog, validates the SA foundation workbench and then builds the app.
+`npm run check` validates the career catalog, validates the SA foundation workbench, validates the subject-to-qualification-to-career study-path layer and then builds the app.
 
 ## Supabase saved-profile setup
 
@@ -139,6 +165,12 @@ Career data lives in:
 
 ```text
 src/data/careerCatalog.js
+```
+
+The subject, qualification and study-path data lives in:
+
+```text
+src/data/saQualifications.js
 ```
 
 Scoring logic lives in:

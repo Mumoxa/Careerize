@@ -12,10 +12,10 @@ Full overview note: `docs/FULL_OVERVIEW_REVIEW.md` is the current alignment file
 | Weak career profile pages | Partial | Upgraded career card blueprint into a structured profile-style view. | Improved; next step is a dedicated career profile component/page. |
 | Poor data structure | Partial | Added country, status, lastUpdated, dataConfidence, sourceIds, pathways and source registry fields. | Improved; future DB ingestion still needed. |
 | Weak source tracking | Missing | Added `SOURCE_REGISTRY`, source IDs and confidence display. | Improved; external public source loading still needed. |
-| Weak SA localisation | Partial | Added 8 SA pathway types and mapped starter routes. | Improved; still needs real NSC/NQF/SAQA/TVET/SETA data. |
+| Weak SA localisation | Partial | Added 8 SA pathway types and mapped starter routes. Added the NSC subject framework, statutory minimum admission levels and HEQSF/NQF qualification types plus common degrees in `src/data/saQualifications.js`. | Improved; framework and common-degree data now present. Per-institution programme detail and current-year SAQA/TVET/SETA verification still to load. |
 | Weak earning-potential guidance | Missing | Replaced salary-field direction with qualitative earning-potential insights. | Improved; detailed salary deliberately deferred. |
 | Weak visualisation | Partial | Added confidence badges, route readiness and explicit demand unknown states. | Improved; demand heatmaps deferred until data exists. Salary charts are out of scope for now. |
-| Weak search/discovery | Partial | Preserved discovery questions and interest tags; added audience segmentation and explainability. | Improved; full search/filter page and subject-to-career map still needed. |
+| Weak search/discovery | Partial | Preserved discovery questions and interest tags; added audience segmentation and explainability. Added a two-way subject-to-qualification-to-career linkage (study-path panel on every career profile plus a Subjects explorer). | Improved; subject-to-career map now present. Full search/filter page still needed. |
 | Weak recommendation transparency | Partial | Added matched/missing signals, confidence labels and next-step explanations. | Improved; should expand into action plans next. |
 | Weak mobile UX | Partial | Added low-data mode toggle and reduced visual effects when enabled. | Improved; PWA/offline still needed. |
 | Weak admin/content tooling | Missing | Added schema foundation for public career profiles and sources. | Partial; admin UI deferred. |
