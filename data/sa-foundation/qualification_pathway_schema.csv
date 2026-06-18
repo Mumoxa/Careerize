@@ -1,0 +1,29 @@
+column_name,required,example_value,notes
+qualification_id,yes,qual_bsc_computer_science_provider_slug,Stable internal ID; do not use provider marketing copy as ID
+qualification_name,yes,Bachelor of Science in Computer Science,Use exact provider qualification name only after verification
+qualification_type,yes,Bachelor's Degree,Higher Certificate; Diploma; Advanced Diploma; Bachelor's Degree; Occupational Certificate; NCV; NATED; Learnership; Apprenticeship; Trade Test; Professional Certificate; Vendor Certificate; Short Course; Bridging Programme
+nqf_level,conditional,7,Use where applicable; vendor certificates may be non-NQF
+credits,conditional,360,Use SAQA/provider record where available; leave blank if not confirmed
+duration,yes,3 years,Typical duration; mark varies if provider-specific
+provider_or_awarding_body,yes,Example University / Vendor / Professional Body,Provider-specific; do not infer
+provider_type,yes,public_university,public_university; university_of_technology; tvet_college; private_he_provider; qcto_provider; seta; professional_body; vendor; bootcamp; workplace
+route_type,yes,university_route,university_route; tvet_route; trade_route; occupational_route; learnership_route; professional_body_route; vendor_certification_route; self_study_route; portfolio_route
+career_cluster,yes,Data Science and Analytics,Use Careerize cluster taxonomy
+field_of_study,yes,Computer Science,Use provider or SAQA field where verified
+entry_requirements_text,yes,varies by institution,Plain English; do not invent APS or marks
+required_school_subjects,conditional,Mathematics,Only list as required when source-confirmed or mark route-dependent
+recommended_school_subjects,no,IT; CAT; Physical Sciences,Helpful subjects can be broader but must be labelled recommended
+aps_or_admission_score,conditional,not publicly confirmed,Use exact APS only from provider/prospectus
+maths_requirement,yes,Mathematics required,Allowed values: Mathematics required; Mathematics strongly recommended; Mathematics or Mathematical Literacy accepted; route-dependent; not required; not publicly confirmed; varies by institution
+science_requirement,yes,not publicly confirmed,Allowed values: Physical Sciences required; Life Sciences required; route-dependent; not required; not publicly confirmed; varies by institution
+english_requirement,conditional,varies by institution,Use provider-specific threshold where verified
+availability,yes,national / online / province / campus,Do not infer national availability from one provider
+career_outcomes,yes,Software Developer; Data Analyst,Possible outcomes, not guaranteed employment
+possible_job_titles,yes,Junior Developer; IT Support Technician,Entry job titles should be realistic and non-guaranteed
+further_study_options,no,Honours; Advanced Diploma; Vendor certification,Route progression where verified or clearly broad guidance
+accreditation_requirements,yes,CHE/SAQA provider-specific verification required,State which body must be checked
+source_url,yes,https://example.edu/programme,Must be official source where possible
+access_date,yes,2026-06-18,Date source was checked
+verification_status,yes,needs_manual_verification,verified; source_found_needs_review; varies_by_institution; not_publicly_confirmed; needs_manual_verification; retired_or_discontinued; replaced_by_current_route
+confidence_score,yes,0,0-100; 0 for unverified working row
+cautions,no,Do not treat as final until provider entry requirements are checked,Plain language warning for learners
