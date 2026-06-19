@@ -9,8 +9,9 @@
     "validate:catalog": "node scripts/validateCatalog.mjs",
     "validate:foundation": "node scripts/validateSaFoundation.mjs",
     "validate:academic-pathways": "node scripts/validateAcademicPathways.mjs",
-    "check": "npm run validate:catalog && npm run validate:foundation && npm run validate:academic-pathways && npm run build",
-    "preview": "vite preview"
+    "check": "npm run validate:catalog && npm run validate:foundation && npm run validate:academic-pathways && npm test && npm run build",
+    "preview": "vite preview",
+    "test": "node scripts/validateMvpFlows.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",

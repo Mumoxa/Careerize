@@ -576,3 +576,23 @@ No large product rebuilds were attempted during this QA pass.
 | E2E tests | Not Ready | No e2e setup. |
 | Production content governance | Not Ready | No admin/source workflow. |
 
+
+---
+
+## 20. MVP Blocker Resolution Pass - 2026-06-19
+
+This follow-up pass addressed the next-sprint learner MVP blockers that could be safely improved inside the current frontend architecture without introducing a risky backend rebuild.
+
+| Priority Area | Resolution Applied | Files | Remaining Gap |
+|---|---|---|---|
+| Structured subject/marks onboarding | Added stage select, Mathematics choice, marks band, subject picker and retained free-text other subjects. | `src/App.jsx`, `src/lib/savedDiscovery.js` | Needs provider-specific mark thresholds once verified data exists. |
+| Subject-risk scoring | Added reusable `assessSubjectRisk` engine that returns unknown/green/amber/red route-risk states from learner subjects against pathway template requirements. | `src/lib/subjectRisk.js`, `src/App.jsx` | Needs source-backed provider rules and more detailed subject equivalence rules. |
+| Verified qualification data/statuses | Added visible qualification route cards with explicit `template · needs provider verification` status labels in the pathway map. | `src/App.jsx` | Still not a verified qualification database; provider-level claims remain future work. |
+| Privacy/data-rights flow | Added learner JSON export and saved-data deletion actions for local and Supabase storage modes. | `src/App.jsx`, `src/lib/savedDiscovery.js` | Supabase auth-user deletion still requires a server/admin flow; current client flow deletes app data and signs out. |
+| Search/filter | Added route search and stream filter before the top-10 mind-map so learners can explore beyond the default ranked 10. | `src/App.jsx` | Needs dedicated shareable career routes later. |
+| Browser/e2e/accessibility coverage | Added `npm test` smoke validation for scoring and subject-risk behavior and included it in `npm run check`. | `package.json`, `scripts/validateMvpFlows.mjs` | Still needs true browser automation and axe accessibility checks. |
+| Supabase RLS staging tests | Documented as still requiring a configured staging Supabase project. | `FULL_PRODUCT_QA_MVP_ASSESSMENT.md` | Cannot be completed in local-only mode without staging credentials/test accounts. |
+
+### Updated readiness note
+
+The app is stronger after this pass and now has a first functional subject-risk loop, route search/filter, data export/delete controls and automated smoke validation. It is still **not ready for full MVP launch** until source-backed provider qualification requirements, Supabase RLS staging verification, POPIA-complete account deletion/export policy, browser e2e, and accessibility checks are completed.

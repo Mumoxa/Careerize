@@ -62,6 +62,9 @@ function cleanProfile(profile = {}) {
     stage: String(profile.stage ?? "").trim(),
     location: String(profile.location ?? "").trim(),
     subjects: String(profile.subjects ?? "").trim(),
+    currentSubjects: Array.isArray(profile.currentSubjects) ? profile.currentSubjects.map((item) => String(item).trim()).filter(Boolean) : [],
+    mathsChoice: String(profile.mathsChoice ?? "").trim(),
+    marksBand: String(profile.marksBand ?? "").trim(),
     notes: String(profile.notes ?? "").trim(),
   };
 }
@@ -224,4 +227,39 @@ export async function saveDiscovery(session, discovery) {
     discovery: record,
   });
   return record;
+}
+
+
+export async function exportLearnerData(session) {
+  if (!session) throw new Error("Sign in before exporting your learner data.");
+  const [profile, discovery] = await Promise.all([
+    loadLearnerProfile(session),
+    loadSavedDiscovery(session),
+  ]);
+
+  return {
+    exported_at: new Date().toISOString(),
+    session: { email: session.email, provider: session.provider },
+    profile,
+    discovery,
+  };
+}
+
+export async function deleteLearnerData(session) {
+  if (!session) throw new Error("Sign in before deleting your learner data.");
+  const supabase = await getSupabaseClient();
+
+  if (supabase && session.provider === "supabase") {
+    const tables = ["careerize_discovery_sessions", "careerize_results", "careerize_profiles"];
+    for (const table of tables) {
+      const { error } = await supabase.from(table).delete().eq("user_id", session.id);
+      if (error) throw error;
+    }
+    await signOutLearner();
+    return { deleted: true, provider: "supabase" };
+  }
+
+  window.localStorage.removeItem(localRecordKey(session.email));
+  clearLocalSession();
+  return { deleted: true, provider: "local" };
 }
