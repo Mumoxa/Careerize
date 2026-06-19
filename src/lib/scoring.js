@@ -1,6 +1,12 @@
 export function getSelectedSignals(answers, selectedSignals) {
   const answerSignals = Object.values(answers).filter(Boolean);
-  return [...new Set([...answerSignals, ...selectedSignals])];
+  const explicitSignals = [...answerSignals, ...selectedSignals];
+  const derivedSignals = explicitSignals.flatMap((signal) => {
+    if (signal === "remote") return ["quiet", "technology"];
+    if (signal === "handsOn") return ["practical", "tools"];
+    return [];
+  });
+  return [...new Set([...explicitSignals, ...derivedSignals])];
 }
 
 export function getRouteScore(route, selectedSignals) {
