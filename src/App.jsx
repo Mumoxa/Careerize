@@ -35,6 +35,7 @@ import {
   Zap,
 } from "lucide-react";
 import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
+import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph";
 import {
   getCurrentSession,
   hasSupabaseConfig,
@@ -91,8 +92,9 @@ export default function App() {
     [answers, selectedSignals]
   );
 
-  const bestMatch = ranked[0];
-  const active = ranked.find((route) => route.id === manualActiveId) || bestMatch;
+  const visibleRoutes = ranked.slice(0, 10);
+  const bestMatch = visibleRoutes[0];
+  const active = visibleRoutes.find((route) => route.id === manualActiveId) || bestMatch;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
 
   useEffect(() => {
@@ -309,7 +311,7 @@ export default function App() {
           </div>
         </div>
 
-        <HeroCard ranked={ranked} active={active} progress={progress} session={session} savedAt={savedAt} />
+        <HeroCard ranked={visibleRoutes} active={active} progress={progress} session={session} savedAt={savedAt} selectedSignals={selectedSignals} />
       </section>
 
       <section id="discover" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
@@ -393,21 +395,7 @@ export default function App() {
           <GlassCard>
             <p className="text-sm uppercase tracking-[0.18em] text-white/40">Route signals</p>
             <div className="mt-5 space-y-3">
-              {ranked.map((route, index) => (
-                <button
-                  type="button"
-                  key={route.id}
-                  onClick={() => setManualActiveId(route.id)}
-                  aria-pressed={active.id === route.id}
-                  className={`w-full rounded-3xl border p-4 text-left transition ${active.id === route.id ? "border-cyber bg-cyber text-black" : "border-white/10 bg-white/[0.03] text-white/75 hover:border-white/25"}`}
-                >
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="font-semibold">{index + 1}. {route.title}</span>
-                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% signal</span>
-                  </div>
-                  <p className={`${active.id === route.id ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
-                </button>
-              ))}
+              <RouteMindMap routes={visibleRoutes} active={active} onSelect={setManualActiveId} />
             </div>
           </GlassCard>
 
@@ -426,6 +414,7 @@ export default function App() {
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
           <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
         </div>
+        <PathwayMap route={active} />
         <NextActionPlan route={active} progress={progress} />
       </section>
 
@@ -446,7 +435,7 @@ export default function App() {
   );
 }
 
-function HeroCard({ ranked, active, progress, session, savedAt }) {
+function HeroCard({ ranked, active, progress, session, savedAt, selectedSignals }) {
   return (
     <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65 }} className="relative">
       <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-violet/25 via-mint/10 to-cyber/20 blur-3xl" />
@@ -464,7 +453,7 @@ function HeroCard({ ranked, active, progress, session, savedAt }) {
             <InfoPill icon={Compass} text={active.remote} />
           </div>
           <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
-            Not a verdict: this signal is based only on the answers and tags selected. It should start a better conversation, not end one.
+            Not a verdict: this signal is based on the answers and tags selected. Active tags: {selectedSignals.length ? selectedSignals.join(", ") : "none yet"}.
           </p>
           <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs leading-5 text-white/55">
             {session ? `Signed in as ${session.email}. ${savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}.` : "Save when you want this view available next time."}` : "Sign in below to save this personalised view and return to it later."}
@@ -573,6 +562,91 @@ function ProfileInput({ label, value, onChange, placeholder }) {
       {label}
       <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={value} onChange={(event) => onChange(event.target.value)} placeholder={placeholder} />
     </label>
+  );
+}
+
+function RouteMindMap({ routes, active, onSelect }) {
+  return (
+    <div className="relative rounded-[2rem] border border-white/10 bg-black/20 p-4">
+      <div aria-hidden="true" className="absolute left-1/2 top-8 hidden h-[calc(100%-4rem)] w-px bg-gradient-to-b from-cyber/60 via-white/10 to-mint/60 md:block" />
+      <div className="relative grid gap-3">
+        {routes.map((route, index) => {
+          const selected = active.id === route.id;
+          const side = index % 2 === 0 ? "md:mr-[52%]" : "md:ml-[52%]";
+          return (
+            <button
+              type="button"
+              key={route.id}
+              onClick={() => onSelect(route.id)}
+              aria-pressed={selected}
+              className={`${side} group relative rounded-3xl border p-4 text-left transition ${selected ? "border-cyber bg-cyber text-black shadow-[0_0_40px_-18px_rgba(242,255,73,.9)]" : "border-white/10 bg-white/[0.03] text-white/75 hover:border-white/25"}`}
+            >
+              <span className={`absolute top-1/2 hidden h-px w-8 -translate-y-1/2 bg-white/15 md:block ${index % 2 === 0 ? "-right-8" : "-left-8"}`} />
+              <div className="flex items-center justify-between gap-3">
+                <span className="font-semibold">{index + 1}. {route.title}</span>
+                <span className={`${selected ? "bg-black/10" : "bg-white/8"} rounded-full px-3 py-1 text-xs`}>{route.matchPercent}%</span>
+              </div>
+              <p className={`${selected ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
+              <p className={`${selected ? "text-black/60" : "text-white/35"} mt-2 text-[11px]`}>
+                {route.explanation.matchedSignals.slice(0, 3).map((item) => item.signal).join(" · ") || "Add more tags to strengthen this signal"}
+              </p>
+            </button>
+          );
+        })}
+      </div>
+      <p className="mt-4 text-xs leading-5 text-white/40">Showing the strongest 10 route signals only so the map stays usable instead of becoming cluttered.</p>
+    </div>
+  );
+}
+
+function PathwayMap({ route }) {
+  const pathway = getAcademicPathwayForCareer(route.id)?.academicPathway;
+  if (!pathway) return null;
+
+  const subjectItems = [
+    ["Keep open", pathway.grade10Subjects.requiredOrStronglyRecommended.join(", ")],
+    ["Helpful", pathway.grade10Subjects.recommended.join(", ")],
+    ["Avoid dropping", pathway.grade10Subjects.avoidDropping.join(", ")],
+  ];
+  const ladder = [
+    { label: "Subject choice", text: pathway.grade10StartingPoint[0] },
+    { label: "Grade 12 gate", text: pathway.grade12ExitTarget },
+    { label: "Qualification entry", text: pathway.qualificationRoutes.slice(0, 3).map((item) => item.qualification).join(" · ") },
+    { label: "First work", text: pathway.firstWorkEntry.join(", ") },
+    { label: "Progression", text: route.growth },
+  ];
+
+  return (
+    <GlassCard className="mt-5">
+      <div className="grid gap-6 xl:grid-cols-[0.75fr_1.25fr]">
+        <div>
+          <Pill><GraduationCap size={14} /> Qualification route map</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">{route.title}: from school subjects to first work.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/55">{pathway.academicRequirementRoute}</p>
+          <p className="mt-3 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/60">{pathway.verification.caution}</p>
+        </div>
+        <div className="grid gap-4">
+          <div className="grid gap-3 md:grid-cols-3">
+            {subjectItems.map(([label, text]) => (
+              <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-mint/80">{label}</p>
+                <p className="mt-2 text-sm leading-6 text-white/65">{text}</p>
+              </div>
+            ))}
+          </div>
+          <div className="rounded-[2rem] border border-white/10 bg-black/20 p-4">
+            <div className="grid gap-3">
+              {ladder.map((step, index) => (
+                <div key={step.label} className="grid gap-3 rounded-3xl border border-white/10 bg-white/[0.03] p-4 md:grid-cols-[10rem_1fr]">
+                  <div className="flex items-center gap-3 text-sm font-semibold"><span className="grid h-8 w-8 place-items-center rounded-full bg-cyber text-black">{index + 1}</span>{step.label}</div>
+                  <p className="text-sm leading-6 text-white/60">{step.text}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    </GlassCard>
   );
 }
 
