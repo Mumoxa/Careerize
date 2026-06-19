@@ -1,9 +1,17 @@
-import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "../src/data/careerCatalog.js";
-import { rankCareerRoutes } from "../src/lib/scoring.js";
+import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS, PATHWAY_TYPES, SOURCE_REGISTRY } from "../src/data/careerCatalog.js";
+import { rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
 
 const errors = [];
 const routeIds = new Set();
+const sourceIds = new Set(SOURCE_REGISTRY.map((source) => source.id));
+const pathwayTypes = new Set(PATHWAY_TYPES.map((pathway) => pathway.id));
 const signalValues = new Set(INTEREST_SIGNALS.map((signal) => signal.value));
+
+for (const source of SOURCE_REGISTRY) {
+  if (!source.id || !source.title || !source.type || !source.url || !source.accessedAt || !Number.isFinite(source.confidence)) {
+    errors.push(`Source ${source.id ?? "unknown"} is missing required source registry fields.`);
+  }
+}
 
 for (const question of DISCOVERY_QUESTIONS) {
   if (!question.id || !question.label || !Array.isArray(question.options) || question.options.length === 0) {
@@ -20,14 +28,28 @@ for (const question of DISCOVERY_QUESTIONS) {
 }
 
 for (const route of CAREER_ROUTES) {
-  if (!route.id || !route.title || !route.stream) {
-    errors.push(`Route ${route.id ?? "unknown"} is missing id, title or stream.`);
+  if (!route.id || !route.title || !route.stream || !route.country || !route.status || !route.lastUpdated) {
+    errors.push(`Route ${route.id ?? "unknown"} is missing id, title, stream, country, status or lastUpdated.`);
   }
 
   if (routeIds.has(route.id)) {
     errors.push(`Duplicate route id found: ${route.id}.`);
   }
   routeIds.add(route.id);
+
+  if (!Number.isFinite(route.dataConfidence) || route.dataConfidence < 0 || route.dataConfidence > 100) {
+    errors.push(`Route ${route.id} has invalid dataConfidence.`);
+  }
+
+  if (!Array.isArray(route.sourceIds) || route.sourceIds.length === 0) {
+    errors.push(`Route ${route.id} must reference at least one source.`);
+  } else {
+    for (const sourceId of route.sourceIds) {
+      if (!sourceIds.has(sourceId)) {
+        errors.push(`Route ${route.id} references unknown source: ${sourceId}.`);
+      }
+    }
+  }
 
   const weights = route.signalWeights ?? {};
   const weightEntries = Object.entries(weights);
@@ -52,16 +74,34 @@ for (const route of CAREER_ROUTES) {
     }
   }
 
-  if (route.researchBasis !== undefined) {
-    if (!Array.isArray(route.researchBasis) || route.researchBasis.length === 0) {
-      errors.push(`Route ${route.id} researchBasis must be a non-empty array when provided.`);
-    } else {
-      for (const source of route.researchBasis) {
-        if (!source.label || !source.url || !URL.canParse(source.url)) {
-          errors.push(`Route ${route.id} has an invalid research source.`);
-        }
-      }
+  for (const listField of ["dayInLife", "keyTasks", "toolExamples", "subjects", "qualifications", "pathways", "misconceptions", "fitWarnings"]) {
+    if (!Array.isArray(route[listField]) || route[listField].length === 0) {
+      errors.push(`Route ${route.id} must include a non-empty ${listField} array.`);
     }
+  }
+
+  for (const pathway of route.pathways ?? []) {
+    if (!pathway.type || !pathwayTypes.has(pathway.type) || !pathway.label || !pathway.timeToEntry || !Number.isFinite(pathway.confidence)) {
+      errors.push(`Route ${route.id} contains an invalid pathway entry.`);
+    }
+  }
+
+  if (route.salary) {
+    errors.push(`Route ${route.id} must not carry a salary field. Use qualitative earningPotential instead.`);
+  }
+
+  if (!route.earningPotential?.status || !route.earningPotential?.label || !route.earningPotential?.explanation) {
+    errors.push(`Route ${route.id} must show a qualitative earningPotential insight instead of salary numbers.`);
+  }
+
+  if (!route.demand?.status || !route.demand?.explanation) {
+    errors.push(`Route ${route.id} must show a clear demand data status instead of unsupported demand claims.`);
+  }
+
+  const guidanceText = [route.summary, route.day, route.worst, route.best, route.earningPotential?.label, route.earningPotential?.explanation, ...(route.misconceptions ?? []), ...(route.fitWarnings ?? [])].join(" ");
+  const language = validateGuidanceLanguage(guidanceText);
+  if (!language.valid) {
+    errors.push(`Route ${route.id} uses unsafe guidance language: ${language.reason}`);
   }
 }
 
@@ -74,8 +114,8 @@ if (ranked.length !== CAREER_ROUTES.length) {
   errors.push("Scoring did not return every career route.");
 }
 
-if (ranked.some((route) => !Number.isFinite(route.score) || !Number.isFinite(route.matchPercent))) {
-  errors.push("Scoring produced a non-numeric score or match percentage.");
+if (ranked.some((route) => !Number.isFinite(route.score) || !Number.isFinite(route.matchPercent) || !route.explanation?.confidenceLabel)) {
+  errors.push("Scoring produced an invalid score, match percentage or explanation.");
 }
 
 if (errors.length) {
@@ -86,4 +126,4 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Career catalog validation passed for ${CAREER_ROUTES.length} routes, ${DISCOVERY_QUESTIONS.length} questions and ${INTEREST_SIGNALS.length} interest signals.`);
+console.log(`Career catalog validation passed for ${CAREER_ROUTES.length} routes, ${DISCOVERY_QUESTIONS.length} questions, ${INTEREST_SIGNALS.length} interest signals, ${PATHWAY_TYPES.length} SA pathway types, ${SOURCE_REGISTRY.length} source records and qualitative earning-potential insights.`);

@@ -1,0 +1,15 @@
+summary_type,name,count
+node_type,career,43
+node_type,oihd_occupation,350
+node_type,province,9
+node_type,qualification,45
+node_type,regulator,17
+node_type,regulator_or_route_gate,8
+node_type,specialisation,151
+edge_type,has_specialisation,151
+edge_type,maps_to_official_occupation,47
+edge_type,province_hotspot_primary,131
+edge_type,province_hotspot_secondary,83
+edge_type,qualifies_for,64
+edge_type,requires_registration_or_gate,43
+edge_type,signposted_route_to_oihd,24
