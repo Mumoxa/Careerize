@@ -475,7 +475,126 @@ export default function App() {
       <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <SectionHeading eyebrow="Trust architecture" title="Personalised guidance without turning the learner into a product" text="Careerize may remember a learner profile so the advice becomes more useful over time. It must not become a CV database, employer pipeline, payment system, hidden ranking engine or marketplace." />
         <div className="mt-9 grid gap-5 md:grid-cols-3">
-          <TrustCard icon={ShieldCheck} title="Explainable suggestions" text="Routes are ranked from the answers and tags learners choose. The app shows…13 tokens truncated…ctPicker selected={learnerProfile.currentSubjects} onChange={(subjects) => onProfileChange("currentSubjects", subjects)} />
+          <TrustCard icon={ShieldCheck} title="Explainable suggestions" text="Routes are ranked from the answers and tags learners choose. The app shows reality checks instead of pretending one score can decide a future." />
+          <TrustCard icon={Lock} title="Learner-owned memory" text="Saved profiles are for the learner to return later, compare options and receive better guidance. Supabase records are protected by row-level security and limited to the signed-in owner." />
+          <TrustCard icon={Lightbulb} title="No commercial influence" text="No employers, recruiters, course providers or sponsors can pay to influence career profiles, unlock learners, collect CVs or steer recommendations." />
+        </div>
+      </section>
+
+      <footer className="relative z-10 mx-auto mt-16 flex max-w-7xl flex-col gap-4 border-t border-white/5 px-5 py-10 text-sm text-white/40 md:flex-row md:justify-between">
+        <div className="flex items-center gap-3"><LogoMark small /> <span>© 2026 Careerize · Made in South Africa</span></div>
+        <div className="flex gap-6"><a href="#trust">Privacy</a><a href="#trust">Independence</a><a href="#top">Back to top</a></div>
+      </footer>
+    </main>
+  );
+}
+
+function HeroCard({ ranked, active, progress, session, savedAt, selectedSignals }) {
+  return (
+    <motion.div initial={{ opacity: 0, scale: 0.96 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 0.65 }} className="relative">
+      <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-violet/25 via-mint/10 to-cyber/20 blur-3xl" />
+      <GlassCard className="relative min-h-[520px] overflow-hidden">
+        <div className="flex items-center justify-between">
+          <Pill><Eye size={14} /> Live learner profile</Pill>
+          <span className="rounded-full bg-white/10 px-3 py-1 text-xs text-white/55">{progress}% complete</span>
+        </div>
+        <div className="mt-8 rounded-[2rem] border border-white/10 bg-black/25 p-5">
+          <p className="text-sm text-white/45">Strongest current signal</p>
+          <h2 className="mt-2 font-display text-4xl font-semibold tracking-[-0.04em]">{active.title}</h2>
+          <p className="mt-3 text-sm leading-6 text-white/60">{active.summary}</p>
+          <div className="mt-5 grid grid-cols-2 gap-3 text-xs text-white/60">
+            <InfoPill icon={Clock} text={active.stress} />
+            <InfoPill icon={Compass} text={active.remote} />
+          </div>
+          <p className="mt-4 rounded-2xl border border-cyber/20 bg-cyber/10 p-3 text-xs leading-5 text-white/70">
+            Not a verdict: this signal is based on the answers and tags selected. Active tags: {selectedSignals.length ? selectedSignals.join(", ") : "none yet"}.
+          </p>
+          <p className="mt-3 rounded-2xl border border-white/10 bg-white/[0.04] p-3 text-xs leading-5 text-white/55">
+            {session ? `Signed in as ${session.email}. ${savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}.` : "Save when you want this view available next time."}` : "Sign in below to save this personalised view and return to it later."}
+          </p>
+        </div>
+        <div className="mt-5 space-y-3">
+          {ranked.slice(0, 3).map((route, index) => (
+            <div key={route.id} className="flex items-center justify-between rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <div><p className="text-sm font-semibold">{route.title}</p><p className="text-xs text-white/40">{route.stream}</p></div>
+              <div className="flex items-center gap-2 text-xs text-white/55"><Star size={14} className="text-cyber" /> {index === 0 ? "Top signal" : `#${index + 1}`}</div>
+            </div>
+          ))}
+        </div>
+      </GlassCard>
+    </motion.div>
+  );
+}
+
+function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError, isAuthLoading, isSaving, onProfileChange, onSignIn, onSave, onExportData, onDeleteData, onSignOut }) {
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+
+  function update(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+  }
+
+  function submit(event) {
+    event.preventDefault();
+    onSignIn(form);
+  }
+
+  return (
+    <GlassCard className="lg:col-span-2">
+      <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr] lg:items-start">
+        <div>
+          <Pill><Lock size={14} /> Saved learner profile</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Save your context and come back smarter.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/55">
+            Careerize can remember a lightweight learner profile, discovery answers and route signals so future guidance can refer back to what the learner already explored.
+          </p>
+          <p className="mt-3 text-xs leading-5 text-white/40">
+            {hasSupabaseConfig ? "Supabase auth is active. Saved profiles are protected by row-level security and belong to the signed-in learner." : "Local demo mode is active because Supabase environment variables are not configured. Records are saved only in this browser."}
+          </p>
+        </div>
+
+        {session ? (
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5">
+            <p className="text-sm text-white/45">Current learner</p>
+            <p className="mt-2 font-semibold">{session.email}</p>
+            <p className="mt-2 text-xs leading-5 text-white/45">{savedAt ? `Last saved ${new Date(savedAt).toLocaleString()}` : "No saved profile yet for this account."}</p>
+
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">
+              <ProfileInput label="Preferred name" value={learnerProfile.preferredName} onChange={(value) => onProfileChange("preferredName", value)} placeholder="What should Careerize call you?" />
+              <label className="text-sm text-white/60">
+                Grade or stage
+                <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={learnerProfile.stage} onChange={(event) => onProfileChange("stage", event.target.value)}>
+                  <option value="">Select a stage</option>
+                  <option>Grade 9</option>
+                  <option>Grade 10</option>
+                  <option>Grade 11</option>
+                  <option>Grade 12</option>
+                  <option>School leaver</option>
+                  <option>Gap year</option>
+                </select>
+              </label>
+              <ProfileInput label="Town or suburb" value={learnerProfile.location} onChange={(value) => onProfileChange("location", value)} placeholder="For local route context" />
+              <label className="text-sm text-white/60">
+                Mathematics choice
+                <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={learnerProfile.mathsChoice} onChange={(event) => onProfileChange("mathsChoice", event.target.value)}>
+                  <option value="">Not sure yet</option>
+                  <option>Mathematics</option>
+                  <option>Mathematical Literacy</option>
+                  <option>Technical Mathematics</option>
+                </select>
+              </label>
+              <label className="text-sm text-white/60">
+                Current marks band
+                <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={learnerProfile.marksBand} onChange={(event) => onProfileChange("marksBand", event.target.value)}>
+                  <option value="">Prefer not to say yet</option>
+                  <option>Mostly 70%+</option>
+                  <option>Mostly 60-69%</option>
+                  <option>Mostly 50-59%</option>
+                  <option>Mostly below 50%</option>
+                </select>
+              </label>
+              <ProfileInput label="Other subjects" value={learnerProfile.subjects} onChange={(value) => onProfileChange("subjects", value)} placeholder="Accounting, Life Sciences, CAT..." />
+            </div>
+            <SubjectPicker selected={learnerProfile.currentSubjects} onChange={(subjects) => onProfileChange("currentSubjects", subjects)} />
             <label className="mt-3 block text-sm text-white/60">
               Notes for future guidance
               <textarea className="mt-2 min-h-24 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={learnerProfile.notes} onChange={(event) => onProfileChange("notes", event.target.value)} placeholder="Questions, worries, careers you want to compare, or things you want Careerize to remember." />
@@ -620,7 +739,7 @@ function RouteMindMap({ routes, active, onSelect }) {
               </div>
               <p className={`${selected ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
               <p className={`${selected ? "text-black/60" : "text-white/35"} mt-2 text-[11px]`}>
-                {route.explanation.matchedSignals.slice(0, 3).map((item) => item.signal).join(" Ã‚Â· ") || "Add more tags to strengthen this signal"}
+                {route.explanation.matchedSignals.slice(0, 3).map((item) => item.signal).join(" · ") || "Add more tags to strengthen this signal"}
               </p>
             </button>
           );
@@ -650,7 +769,7 @@ function PathwayMap({ route, learnerProfile }) {
   const ladder = [
     { label: "Subject choice", text: pathway.grade10StartingPoint[0] },
     { label: "Grade 12 gate", text: pathway.grade12ExitTarget },
-    { label: "Qualification entry", text: pathway.qualificationRoutes.slice(0, 3).map((item) => item.qualification).join(" Ã‚Â· ") },
+    { label: "Qualification entry", text: pathway.qualificationRoutes.slice(0, 3).map((item) => item.qualification).join(" · ") },
     { label: "First work", text: pathway.firstWorkEntry.join(", ") },
     { label: "Progression", text: route.growth },
   ];
@@ -694,7 +813,7 @@ function PathwayMap({ route, learnerProfile }) {
                 <p className="text-xs uppercase tracking-[0.16em] text-cyber/80">{option.type.replaceAll("_", " ")}</p>
                 <p className="mt-2 text-sm font-semibold leading-5 text-white/80">{option.qualification}</p>
                 <p className="mt-2 text-xs leading-5 text-white/50">{option.gate}</p>
-                <p className="mt-2 inline-flex rounded-full border border-cyber/25 bg-cyber/10 px-3 py-1 text-[11px] text-cyber">template Ã‚Â· needs provider verification</p>
+                <p className="mt-2 inline-flex rounded-full border border-cyber/25 bg-cyber/10 px-3 py-1 text-[11px] text-cyber">template · needs provider verification</p>
               </div>
             ))}
           </div>
@@ -823,7 +942,3 @@ function BgAurora() {
     </div>
   );
 }
-
-
-
-
