@@ -4,8 +4,8 @@ export default {
   theme: {
     extend: {
       fontFamily: {
-        display: ['"Space Grotesk"', "Inter", "ui-sans-serif", "system-ui"],
-        sans: ["Inter", "ui-sans-serif", "system-ui"],
+        display: ['"Manrope"', "Inter", "ui-sans-serif", "system-ui"],
+        sans: ["Manrope", "Inter", "ui-sans-serif", "system-ui"],
       },
       colors: {
         ink: "#05060A",

@@ -3,6 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpRight,
+  BarChart3,
+  BookOpen,
   Brain,
   Briefcase,
   Building2,
@@ -16,6 +18,7 @@ import {
   GraduationCap,
   Heart,
   Lightbulb,
+  Leaf,
   Lock,
   LogIn,
   LogOut,
@@ -23,6 +26,7 @@ import {
   Menu,
   RotateCcw,
   Save,
+  Search,
   ShieldCheck,
   Sparkles,
   Star,
@@ -34,6 +38,10 @@ import {
   X,
   Zap,
 } from "lucide-react";
+import softwareLearner from "./assets/software-learner.png";
+import environmentLearner from "./assets/environment-learner.png";
+import dataLearner from "./assets/data-learner.png";
+import learnersCollaborating from "./assets/learners-collaborating.png";
 import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
 import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph.js";
 import {
@@ -82,6 +90,7 @@ const EMPTY_PROFILE = {
 
 export default function App() {
   const [open, setOpen] = useState(false);
+  const [questionStep, setQuestionStep] = useState(0);
   const [answers, setAnswers] = useState({});
   const [selectedSignals, setSelectedSignals] = useState(DEFAULT_SIGNALS);
   const [manualActiveId, setManualActiveId] = useState(null);
@@ -108,7 +117,10 @@ export default function App() {
     return matchesSearch && matchesStream;
   });
   const visibleRoutes = filteredRanked.slice(0, 10);
-  const bestMatch = visibleRoutes[0] ?? ranked[0];
+  const hasDiscoveryInput = Object.keys(answers).length > 0 || selectedSignals.length > 0;
+  const starterRouteIds = ["software-developer", "environmental-scientist", "data-analyst"];
+  const starterRoutes = starterRouteIds.map((id) => ranked.find((route) => route.id === id)).filter(Boolean);
+  const bestMatch = hasDiscoveryInput ? (visibleRoutes[0] ?? ranked[0]) : (starterRoutes[0] ?? ranked[0]);
   const active = visibleRoutes.find((route) => route.id === manualActiveId) || ranked.find((route) => route.id === manualActiveId) || bestMatch;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
 
@@ -286,208 +298,111 @@ export default function App() {
     }
   }
 
+  const currentQuestion = DISCOVERY_QUESTIONS[questionStep];
+  const pathway = getAcademicPathwayForCareer(active.id)?.academicPathway;
+  const routeImages = [softwareLearner, environmentLearner, dataLearner];
+  const heroRoutes = starterRoutes;
+
   return (
-    <main id="top" className="relative min-h-screen overflow-x-clip bg-ink text-white">
-      <BgAurora />
-
-      <header className="sticky top-0 z-50 border-b border-white/5 bg-ink/75 backdrop-blur-xl">
-        <div className="mx-auto flex max-w-7xl items-center justify-between px-5 py-4">
-          <a href="#top" className="flex items-center gap-3" aria-label="Careerize home">
-            <LogoMark />
-            <div>
-              <div className="text-sm font-semibold tracking-tight">Careerize</div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-white/40">Free career intelligence</div>
-            </div>
-          </a>
-
-          <nav className="hidden items-center gap-8 text-sm text-white/60 md:flex" aria-label="Primary navigation">
-            {NAV_ITEMS.map((item) => (
-              <a key={item.id} href={`#${item.id}`} className="hover:text-white">
-                {item.label}
-              </a>
-            ))}
+    <main id="top" className="min-h-screen bg-white text-slate-950">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-[1240px] items-center justify-between px-5 py-5">
+          <a href="#top" className="brand-wordmark" aria-label="Careerize home">Careerize</a>
+          <nav className="hidden items-center gap-8 text-sm font-medium md:flex" aria-label="Primary navigation">
+            <a href="#discover">Discover</a><a href="#reality">Career reality</a><a href="#pathway">Pathways</a><a href="#trust">Trust</a>
           </nav>
-
-          <div className="hidden items-center gap-3 md:flex">
-            <a href="#discover" className="rounded-full border border-white/15 px-4 py-2 text-sm text-white/80 hover:border-white/40">Try demo</a>
-            <a href="#trust" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Read principles</a>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setOpen((current) => !current)}
-            aria-expanded={open}
-            aria-controls="mobile-navigation"
-            aria-label={open ? "Close navigation" : "Open navigation"}
-            className="rounded-xl border border-white/10 p-2 md:hidden"
-          >
-            {open ? <X size={20} /> : <Menu size={20} />}
-          </button>
+          <a href="#discover" className="primary-button hidden md:inline-flex">Start exploring</a>
+          <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-controls="mobile-navigation" aria-label={open ? "Close navigation" : "Open navigation"} className="icon-button md:hidden">{open ? <X size={20} /> : <Menu size={20} />}</button>
         </div>
-
-        {open && (
-          <div id="mobile-navigation" className="border-t border-white/5 bg-ink px-5 py-5 md:hidden">
-            <nav className="flex flex-col gap-4 text-sm text-white/80" aria-label="Mobile navigation">
-              {NAV_ITEMS.map((item) => (
-                <a key={item.id} href={`#${item.id}`} onClick={() => setOpen(false)}>
-                  {item.label}
-                </a>
-              ))}
-            </nav>
-          </div>
-        )}
+        {open ? <nav id="mobile-navigation" className="grid gap-4 border-t border-slate-200 px-5 py-5 text-sm font-semibold md:hidden"><a href="#discover" onClick={() => setOpen(false)}>Discover</a><a href="#reality" onClick={() => setOpen(false)}>Career reality</a><a href="#pathway" onClick={() => setOpen(false)}>Pathways</a><a href="#trust" onClick={() => setOpen(false)}>Trust</a></nav> : null}
       </header>
 
-      <section className="relative mx-auto grid max-w-7xl gap-12 px-5 pb-14 pt-12 md:grid-cols-[1.05fr_0.95fr] md:pb-20 md:pt-20">
-        <div className="flex flex-col justify-center">
-          <Pill><span className="h-2 w-2 rounded-full bg-mint" /> Independent career intelligence</Pill>
-          <motion.h1
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.65 }}
-            className="mt-6 font-display text-[44px] font-semibold leading-[0.95] tracking-[-0.04em] md:text-[88px]"
-          >
-            Know the real work <span className="bg-gradient-to-br from-cyber via-mint to-violet bg-clip-text text-transparent">before you choose.</span>
-          </motion.h1>
-          <p className="mt-7 max-w-xl text-base leading-7 text-white/65 md:text-lg">
-            Careerize helps South African learners compare what careers actually involve: day-to-day work, tools, stress, environment, entry routes, growth paths, worst parts, best parts and related careers they may not know exist.
-          </p>
-          <div className="mt-9 flex flex-wrap gap-3">
-            <a href="#discover" className="inline-flex items-center gap-2 rounded-full bg-cyber px-6 py-3 font-semibold text-black shadow-[0_0_55px_-14px_rgba(242,255,73,.9)]">Start discovery <ArrowRight size={18} /></a>
-            <a href="#reality" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-white/80 hover:border-white/40">See reality checks <ArrowUpRight size={18} /></a>
+      <section className="mx-auto grid max-w-[1240px] gap-14 px-5 py-14 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:py-20">
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+          <h1 className="max-w-[650px] text-5xl font-extrabold leading-[1.02] tracking-[-0.045em] sm:text-6xl lg:text-[76px]">Find careers that fit how you think, work and live.</h1>
+          <div className="accent-stroke mt-4" />
+          <p className="mt-8 max-w-xl text-lg leading-8 text-slate-600">Answer a few quick questions, explore real career routes and see the subjects that can take you there. You choose. We’ll show you how.</p>
+          <div className="mt-9 flex flex-wrap gap-3"><a href="#discover" className="primary-button">Start exploring <ArrowRight size={18} /></a><a href="#reality" className="secondary-button">See real careers</a></div>
+          <p className="mt-6 flex items-center gap-2 text-sm font-medium text-slate-600"><Map size={18} className="text-blue-700" /> Made for South African learners</p>
+        </motion.div>
+
+        <div>
+          <p className="mb-4 inline-flex bg-[#ff6258] px-4 py-2 text-sm font-semibold text-white">These are suggestions, not verdicts.</p>
+          <div className="grid gap-3 sm:grid-cols-3">
+            {heroRoutes.map((route, index) => <RoutePreview key={route.id} route={route} image={routeImages[index]} selected={active.id === route.id} onSelect={setManualActiveId} />)}
           </div>
-          <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-            <MiniStat value={CAREER_ROUTES.length} label="starter routes" />
-            <MiniStat value={`${progress}%`} label="profile complete" />
-            <MiniStat value="Learner" label="owns the choice" />
+          <button type="button" onClick={() => document.querySelector("#reality")?.scrollIntoView({ behavior: "smooth" })} className="mx-auto mt-5 flex items-center gap-2 text-sm font-semibold text-blue-700">See more suggestions <ChevronRight size={16} /></button>
+        </div>
+      </section>
+
+      <section id="discover" className="section-border bg-slate-50/70">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
+          <SectionIntro title="Quick discovery" text="Answer honestly. There are no right or wrong answers." />
+          <div>
+            <div className="flex items-center justify-between gap-4"><h2 className="text-xl font-bold">{currentQuestion.label}</h2><span className="text-sm text-slate-500">Question {questionStep + 1} of {DISCOVERY_QUESTIONS.length}</span></div>
+            <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {currentQuestion.options.map((option) => { const selected = answers[currentQuestion.id] === option.value; return <button type="button" key={option.value} onClick={() => choose(currentQuestion.id, option.value)} aria-pressed={selected} className={`answer-card ${selected ? "answer-card-selected" : ""}`}><span>{option.label}</span><span className="selection-dot">{selected ? <Check size={14} /> : null}</span></button>; })}
+            </div>
+            <div className="mt-7 flex justify-between"><button type="button" className="secondary-button" disabled={questionStep === 0} onClick={() => setQuestionStep((step) => Math.max(0, step - 1))}>Back</button><button type="button" className="primary-button" onClick={() => setQuestionStep((step) => Math.min(DISCOVERY_QUESTIONS.length - 1, step + 1))}>Next question <ArrowRight size={17} /></button></div>
           </div>
         </div>
-
-        <HeroCard ranked={visibleRoutes} active={active} progress={progress} session={session} savedAt={savedAt} selectedSignals={selectedSignals} />
       </section>
 
-      <section id="discover" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Discovery" title="Start with behaviour, not job titles" text="The learner answers simple questions and Careerize turns the answers into transparent career-route signals. This is guidance for exploration, not a personality label, hiring decision or suitability verdict." />
-        <div className="mt-9 grid gap-5 lg:grid-cols-[0.9fr_1.1fr]">
-          <AccountPanel
-            session={session}
-            savedAt={savedAt}
-            learnerProfile={learnerProfile}
-            authNotice={authNotice}
-            authError={authError}
-            isAuthLoading={isAuthLoading}
-            isSaving={isSaving}
-            onProfileChange={updateLearnerProfile}
-            onSignIn={handleSignIn}
-            onSave={handleSave}
-            onExportData={handleExportData}
-            onDeleteData={handleDeleteData}
-            onSignOut={handleSignOut}
-          />
-
-          <GlassCard>
-            <div className="flex items-center justify-between gap-4">
-              <div>
-                <h3 className="font-display text-2xl font-semibold">Quick signal questions</h3>
-                <p className="mt-2 text-sm text-white/55">Simple enough for an uninformed learner, but useful enough to open a better career conversation.</p>
-              </div>
-              <button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-4 py-2 text-sm text-white/70 hover:border-white/30"><RotateCcw size={16} /> Reset</button>
-            </div>
-            <div className="mt-7 space-y-6">
-              {DISCOVERY_QUESTIONS.map((question) => (
-                <fieldset key={question.id}>
-                  <legend className="text-sm font-semibold text-white/85">{question.label}</legend>
-                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                    {question.options.map((option) => {
-                      const activeChoice = answers[question.id] === option.value;
-                      return (
-                        <button
-                          type="button"
-                          key={option.value}
-                          onClick={() => choose(question.id, option.value)}
-                          aria-pressed={activeChoice}
-                          className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${activeChoice ? "border-cyber bg-cyber text-black" : "border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25"}`}
-                        >
-                          {option.label}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </fieldset>
-              ))}
-            </div>
-          </GlassCard>
-
-          <GlassCard>
-            <h3 className="font-display text-2xl font-semibold">Interest tags</h3>
-            <p className="mt-2 text-sm text-white/55">Tags add texture without pretending to measure personality, worth or future potential.</p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2">
-              {INTEREST_SIGNALS.map((signal) => {
-                const Icon = ICONS[signal.icon] ?? Sparkles;
-                const activeSignal = selectedSignals.includes(signal.value);
-                return (
-                  <button
-                    type="button"
-                    key={signal.value}
-                    onClick={() => toggleInterestSignal(signal.value)}
-                    aria-pressed={activeSignal}
-                    className={`group flex items-center justify-between rounded-3xl border p-4 text-left transition ${activeSignal ? "border-mint bg-mint/12" : "border-white/10 bg-white/[0.03] hover:border-white/25"}`}
-                  >
-                    <span className="flex items-center gap-3"><span className="rounded-2xl bg-white/8 p-3"><Icon size={18} /></span><span className="text-sm font-medium text-white/80">{signal.label}</span></span>
-                    {activeSignal ? <Check size={18} className="text-mint" /> : <ChevronRight size={18} className="text-white/25" />}
-                  </button>
-                );
-              })}
-            </div>
-          </GlassCard>
+      <section className="section-border">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
+          <SectionIntro title="What interests you?" text="Pick any that excite you. You can choose more than one." />
+          <div><div className="relative max-w-sm"><Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} /><input className="w-full rounded-xl border border-slate-300 py-3 pl-11 pr-4 text-sm" placeholder="Search interests" aria-label="Search interests" /></div><div className="mt-6 flex flex-wrap gap-3">{INTEREST_SIGNALS.map((signal) => { const selected = selectedSignals.includes(signal.value); return <button type="button" key={signal.value} onClick={() => toggleInterestSignal(signal.value)} aria-pressed={selected} className={`interest-chip ${selected ? "interest-chip-selected" : ""}`}>{signal.label}{selected ? <Check size={15} /> : null}</button>; })}</div><div className="mt-7 flex items-center justify-between"><button type="button" onClick={reset} className="text-sm font-semibold text-blue-700 underline">Clear all</button><span className="text-sm text-slate-500">{selectedSignals.length} selected</span></div></div>
         </div>
       </section>
 
-      <section id="reality" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Reality Check" title="Every career card must show the real job" text="The point is not to make careers sound glamorous. The point is to help learners make better choices before they commit years and money." />
-        <div className="mt-9 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
-          <GlassCard>
-            <p className="text-sm uppercase tracking-[0.18em] text-white/40">Route signals</p>
-            <div className="mt-5 space-y-3">
-              <RouteExplorer routes={visibleRoutes} active={active} onSelect={setManualActiveId} routeSearch={routeSearch} onSearchChange={setRouteSearch} streamFilter={streamFilter} onStreamChange={setStreamFilter} routeStreams={routeStreams} totalMatches={filteredRanked.length} />
-            </div>
-          </GlassCard>
-
-          <AnimatePresence mode="wait">
-            <motion.div key={active.id} initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -12 }} transition={{ duration: 0.25 }}>
-              <CareerCard route={active} />
-            </motion.div>
-          </AnimatePresence>
+      <section id="reality" className="section-border bg-slate-50/70">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
+          <SectionIntro title="Compare real careers" text="See day-to-day work, skills, study options and where these careers can take you." />
+          <div className="grid gap-4 md:grid-cols-3">{visibleRoutes.slice(0, 3).map((route) => <CareerCompareCard key={route.id} route={route} selected={active.id === route.id} onSelect={setManualActiveId} />)}</div>
         </div>
       </section>
 
-      <section id="pathway" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Pathway" title="Show the route in and the route up" text="A learner needs to know the entry point, the practical ladder and where the career can get stuck." />
-        <div className="mt-9 grid gap-5 md:grid-cols-3">
-          <PathStep icon={GraduationCap} title="1. Entry" text="School subjects, TVET, diploma, degree, internship, apprenticeship, portfolio, work exposure or practical project." />
-          <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
-          <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
-        </div>
-        <PathwayMap route={active} learnerProfile={learnerProfile} />
-        <NextActionPlan route={active} progress={progress} />
-      </section>
-
-      <section id="trust" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Trust architecture" title="Personalised guidance without turning the learner into a product" text="Careerize may remember a learner profile so the advice becomes more useful over time. It must not become a CV database, employer pipeline, payment system, hidden ranking engine or marketplace." />
-        <div className="mt-9 grid gap-5 md:grid-cols-3">
-          <TrustCard icon={ShieldCheck} title="Explainable suggestions" text="Routes are ranked from the answers and tags learners choose. The app shows reality checks instead of pretending one score can decide a future." />
-          <TrustCard icon={Lock} title="Learner-owned memory" text="Saved profiles are for the learner to return later, compare options and receive better guidance. Supabase records are protected by row-level security and limited to the signed-in owner." />
-          <TrustCard icon={Lightbulb} title="No commercial influence" text="No employers, recruiters, course providers or sponsors can pay to influence career profiles, unlock learners, collect CVs or steer recommendations." />
+      <section id="pathway" className="section-border bg-[#f4f6ff]">
+        <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
+          <SectionIntro title="From school subjects to your first job" text="See one possible path. There are many ways to get there." />
+          <PathwayJourney route={active} pathway={pathway} />
         </div>
       </section>
 
-      <footer className="relative z-10 mx-auto mt-16 flex max-w-7xl flex-col gap-4 border-t border-white/5 px-5 py-10 text-sm text-white/40 md:flex-row md:justify-between">
-        <div className="flex items-center gap-3"><LogoMark small /> <span>© 2026 Careerize · Made in South Africa</span></div>
-        <div className="flex gap-6"><a href="#trust">Privacy</a><a href="#trust">Independence</a><a href="#top">Back to top</a></div>
-      </footer>
+      <section id="trust" className="section-border overflow-hidden">
+        <div className="mx-auto grid max-w-[1240px] lg:grid-cols-[1fr_1.05fr] lg:items-stretch">
+          <div className="px-5 py-16 lg:pr-14"><SectionIntro title="Your privacy. Our promise." text="Careerize is a safe space to explore and grow." /><div className="mt-10 grid gap-7 sm:grid-cols-3"><TrustPoint icon={Lock} title="Your data is yours" text="We don’t sell your data. Ever." /><TrustPoint icon={ShieldCheck} title="Safe and secure" text="You control what gets saved." /><TrustPoint icon={Users} title="Built for learners" text="Made for young South Africans." /></div></div>
+          <img src={learnersCollaborating} alt="South African learners exploring careers together" className="h-full min-h-[360px] w-full object-cover" />
+        </div>
+      </section>
+
+      <footer className="border-t border-slate-200"><div className="mx-auto flex max-w-[1240px] flex-col gap-6 px-5 py-10 text-sm text-slate-500 md:flex-row md:items-center md:justify-between"><a href="#top" className="brand-wordmark">Careerize</a><p>Explore. Understand. Choose.</p><p>© 2026 Careerize · South Africa</p></div></footer>
     </main>
   );
 }
+
+function RoutePreview({ route, image, selected, onSelect }) {
+  const signalLabel = route.matchPercent > 0 ? `${route.matchPercent}% signal` : "Starter route";
+  return <button type="button" onClick={() => onSelect(route.id)} aria-pressed={selected} className={`route-preview ${selected ? "route-preview-selected" : ""}`}><img src={image} alt="" className="aspect-[4/5] w-full object-cover" /><div className="p-4 text-left"><h2 className="text-base font-bold">{route.title}</h2><p className="mt-2 line-clamp-3 text-sm leading-6 text-slate-600">{route.summary}</p><span className="mt-4 flex items-center justify-between text-xs font-semibold text-slate-500">{signalLabel} <ChevronRight size={16} /></span></div></button>;
+}
+
+function SectionIntro({ title, text }) {
+  return <div><h2 className="text-3xl font-extrabold tracking-[-0.035em]">{title}</h2><div className="accent-stroke mt-3 w-24" /><p className="mt-5 max-w-[240px] leading-7 text-slate-600">{text}</p></div>;
+}
+
+function CareerCompareCard({ route, selected, onSelect }) {
+  const dayToDay = Array.isArray(route.dayToDay) ? route.dayToDay[0] : route.dayToDay;
+  const tools = Array.isArray(route.tools) ? route.tools.slice(0, 2).join(" · ") : route.tools;
+  const subjects = Array.isArray(route.subjects) ? route.subjects.slice(0, 3).join(" · ") : route.subjects;
+  return <button type="button" onClick={() => onSelect(route.id)} aria-pressed={selected} className={`career-compare-card ${selected ? "career-compare-selected" : ""}`}><div className="flex items-start justify-between gap-3"><div><h3 className="font-bold">{route.title}</h3><p className="mt-1 text-xs text-slate-500">{route.stream}</p></div><span className="selection-dot">{selected ? <Check size={14} /> : null}</span></div><ul className="mt-6 space-y-3 text-left text-sm text-slate-600"><li>{dayToDay || route.summary}</li><li>{tools || route.environment}</li><li>{subjects || route.entry}</li></ul><span className="mt-auto flex items-center justify-between pt-7 text-sm font-semibold text-blue-700">View details <ArrowRight size={16} /></span></button>;
+}
+
+function PathwayJourney({ route, pathway }) {
+  const steps = [{ icon: BookOpen, label: "Now", title: "Grade 10–12", text: pathway?.grade10Subjects?.requiredOrStronglyRecommended?.slice(0, 2).join(", ") || "Choose subjects that keep options open." }, { icon: GraduationCap, label: "Next step", title: "Study", text: pathway?.qualificationRoutes?.[0]?.qualification || route.entry }, { icon: Briefcase, label: "First opportunities", title: "Gain experience", text: pathway?.firstWorkEntry?.slice(0, 2).join(", ") || "Projects, internships or practical work." }, { icon: ArrowUpRight, label: "Where it can lead", title: "Your first job", text: route.growth }];
+  return <div><p className="mb-8 text-lg font-bold">Example path for <span className="text-blue-700">{route.title}</span></p><div className="grid gap-6 md:grid-cols-4">{steps.map((step, index) => { const Icon = step.icon; return <div key={step.label} className="relative"><span className="grid h-14 w-14 place-items-center rounded-full border-2 border-white bg-white text-blue-700 shadow-[0_0_0_1px_#cbd5e1]"><Icon size={23} /></span>{index < steps.length - 1 ? <ArrowRight className="absolute left-[72px] top-4 hidden text-slate-400 md:block" size={20} /> : null}<p className="mt-4 text-xs text-slate-500">{step.label}</p><h3 className="mt-1 font-bold">{step.title}</h3><p className="mt-2 text-sm leading-6 text-slate-600">{step.text}</p></div>; })}</div></div>;
+}
+
+function TrustPoint({ icon: Icon, title, text }) { return <div><span className="grid h-11 w-11 place-items-center rounded-full bg-blue-700 text-white"><Icon size={20} /></span><h3 className="mt-4 text-sm font-bold">{title}</h3><p className="mt-2 text-xs leading-5 text-slate-600">{text}</p></div>; }
 
 function HeroCard({ ranked, active, progress, session, savedAt, selectedSignals }) {
   return (
