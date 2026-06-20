@@ -34,18 +34,21 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
-import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph";
+import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
+import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph.js";
 import {
   getCurrentSession,
   hasSupabaseConfig,
+  deleteLearnerData,
+  exportLearnerData,
   loadLearnerProfile,
   loadSavedDiscovery,
   saveDiscovery,
   signInOrCreateLearner,
   signOutLearner,
 } from "./lib/savedDiscovery";
-import { getProfileProgress, rankCareerRoutes, toggleSignal } from "./lib/scoring";
+import { assessSubjectRisk } from "./lib/subjectRisk.js";
+import { getProfileProgress, rankCareerRoutes, toggleSignal } from "./lib/scoring.js";
 
 const ICONS = {
   Brain,
@@ -71,6 +74,9 @@ const EMPTY_PROFILE = {
   stage: "",
   location: "",
   subjects: "",
+  currentSubjects: [],
+  mathsChoice: "",
+  marksBand: "",
   notes: "",
 };
 
@@ -86,15 +92,24 @@ export default function App() {
   const [authError, setAuthError] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(true);
+  const [routeSearch, setRouteSearch] = useState("");
+  const [streamFilter, setStreamFilter] = useState("all");
 
   const ranked = useMemo(
     () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals),
     [answers, selectedSignals]
   );
 
-  const visibleRoutes = ranked.slice(0, 10);
-  const bestMatch = visibleRoutes[0];
-  const active = visibleRoutes.find((route) => route.id === manualActiveId) || bestMatch;
+  const routeStreams = useMemo(() => [...new Set(CAREER_ROUTES.map((route) => route.stream))].sort(), []);
+  const routeSearchTerm = routeSearch.trim().toLowerCase();
+  const filteredRanked = ranked.filter((route) => {
+    const matchesSearch = !routeSearchTerm || [route.title, route.stream, route.summary, ...(route.subjects ?? [])].join(" ").toLowerCase().includes(routeSearchTerm);
+    const matchesStream = streamFilter === "all" || route.stream === streamFilter;
+    return matchesSearch && matchesStream;
+  });
+  const visibleRoutes = filteredRanked.slice(0, 10);
+  const bestMatch = visibleRoutes[0] ?? ranked[0];
+  const active = visibleRoutes.find((route) => route.id === manualActiveId) || ranked.find((route) => route.id === manualActiveId) || bestMatch;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
   const shouldReduceMotion = useReducedMotion();
 
@@ -218,6 +233,43 @@ export default function App() {
     }
   }
 
+  async function handleExportData() {
+    setAuthError("");
+    setAuthNotice("");
+
+    try {
+      const data = await exportLearnerData(session);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `careerize-learner-data-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+      setAuthNotice("Your learner data export has been prepared as a JSON download.");
+    } catch (error) {
+      setAuthError(error.message || "We could not export your learner data.");
+    }
+  }
+
+  async function handleDeleteData() {
+    setAuthError("");
+    setAuthNotice("");
+
+    try {
+      await deleteLearnerData(session);
+      setSession(null);
+      setSavedAt(null);
+      setLearnerProfile(EMPTY_PROFILE);
+      setAnswers({});
+      setSelectedSignals(DEFAULT_SIGNALS);
+      setManualActiveId(null);
+      setAuthNotice("Your saved learner data has been deleted from this Careerize storage mode.");
+    } catch (error) {
+      setAuthError(error.message || "We could not delete your learner data.");
+    }
+  }
+
   async function handleSignOut() {
     setAuthError("");
     setAuthNotice("");
@@ -338,6 +390,8 @@ export default function App() {
             onProfileChange={updateLearnerProfile}
             onSignIn={handleSignIn}
             onSave={handleSave}
+            onExportData={handleExportData}
+            onDeleteData={handleDeleteData}
             onSignOut={handleSignOut}
           />
 
@@ -405,7 +459,7 @@ export default function App() {
           <GlassCard>
             <p className="text-sm uppercase tracking-[0.18em] text-textQuiet">Route signals</p>
             <div className="mt-5 space-y-3">
-              <RouteMindMap routes={visibleRoutes} active={active} onSelect={setManualActiveId} />
+              <RouteExplorer routes={visibleRoutes} active={active} onSelect={setManualActiveId} routeSearch={routeSearch} onSearchChange={setRouteSearch} streamFilter={streamFilter} onStreamChange={setStreamFilter} routeStreams={routeStreams} totalMatches={filteredRanked.length} />
             </div>
           </GlassCard>
 
@@ -424,7 +478,7 @@ export default function App() {
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
           <PathStep icon={Trophy} title="3. Growth" text="Specialist, senior, supervisor, manager, consultant, contractor or business-owner options." />
         </div>
-        <PathwayMap route={active} />
+        <PathwayMap route={active} learnerProfile={learnerProfile} />
         <NextActionPlan route={active} progress={progress} />
       </section>
 
@@ -482,7 +536,7 @@ function HeroCard({ ranked, active, progress, session, savedAt, selectedSignals,
   );
 }
 
-function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError, isAuthLoading, isSaving, onProfileChange, onSignIn, onSave, onSignOut }) {
+function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError, isAuthLoading, isSaving, onProfileChange, onSignIn, onSave, onExportData, onDeleteData, onSignOut }) {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
   function update(field, value) {
@@ -516,10 +570,42 @@ function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError,
 
             <div className="mt-5 grid gap-3 sm:grid-cols-2">
               <ProfileInput label="Preferred name" value={learnerProfile.preferredName} onChange={(value) => onProfileChange("preferredName", value)} placeholder="What should Careerize call you?" />
-              <ProfileInput label="Stage" value={learnerProfile.stage} onChange={(value) => onProfileChange("stage", value)} placeholder="Grade 10, Grade 12, gap year..." />
+              <label className="text-sm text-white/60">
+                Grade or stage
+                <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={learnerProfile.stage} onChange={(event) => onProfileChange("stage", event.target.value)}>
+                  <option value="">Select a stage</option>
+                  <option>Grade 9</option>
+                  <option>Grade 10</option>
+                  <option>Grade 11</option>
+                  <option>Grade 12</option>
+                  <option>School leaver</option>
+                  <option>Gap year</option>
+                </select>
+              </label>
               <ProfileInput label="Town or suburb" value={learnerProfile.location} onChange={(value) => onProfileChange("location", value)} placeholder="For local route context" />
-              <ProfileInput label="Subjects or interests" value={learnerProfile.subjects} onChange={(value) => onProfileChange("subjects", value)} placeholder="Maths, tourism, art, computers..." />
+              <label className="text-sm text-white/60">
+                Mathematics choice
+                <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={learnerProfile.mathsChoice} onChange={(event) => onProfileChange("mathsChoice", event.target.value)}>
+                  <option value="">Not sure yet</option>
+                  <option>Mathematics</option>
+                  <option>Mathematical Literacy</option>
+                  <option>Technical Mathematics</option>
+                </select>
+              </label>
+              <label className="text-sm text-white/60">
+                Current marks band
+                <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={learnerProfile.marksBand} onChange={(event) => onProfileChange("marksBand", event.target.value)}>
+                  <option value="">Prefer not to say yet</option>
+                  <option>Mostly 70%+</option>
+                  <option>Mostly 60-69%</option>
+                  <option>Mostly 50-59%</option>
+                  <option>Mostly below 50%</option>
+                </select>
+              </label>
+              <ProfileInput label="Other subjects" value={learnerProfile.subjects} onChange={(value) => onProfileChange("subjects", value)} placeholder="Accounting, Life Sciences, CAT..." />
             </div>
+            <SubjectPicker selected={learnerProfile.currentSubjects} onChange={(subjects) => onProfileChange("currentSubjects", subjects)} />
+            <label className="mt-3 block text-sm text-white/60">
             <label className="mt-3 block text-sm text-textSubtle">
               Notes for future guidance
               <textarea className="mt-2 min-h-24 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-textQuiet focus:border-interactionPrimary" value={learnerProfile.notes} onChange={(event) => onProfileChange("notes", event.target.value)} placeholder="Questions, worries, careers you want to compare, or things you want Careerize to remember." />
@@ -528,6 +614,12 @@ function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError,
             <div className="mt-5 flex flex-wrap gap-3">
               <button type="button" onClick={onSave} disabled={isSaving || isAuthLoading} className="inline-flex items-center gap-2 rounded-full bg-interactionPrimary px-5 py-3 text-sm font-semibold text-black disabled:cursor-not-allowed disabled:opacity-60">
                 <Save size={16} /> {isSaving ? "Saving..." : "Save learner profile"}
+              </button>
+              <button type="button" onClick={onExportData} disabled={isAuthLoading} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-textMuted disabled:cursor-not-allowed disabled:opacity-60">
+                Export data
+              </button>
+              <button type="button" onClick={onDeleteData} disabled={isAuthLoading} className="inline-flex items-center gap-2 rounded-full border border-feedbackRisk/30 px-5 py-3 text-sm text-textMuted disabled:cursor-not-allowed disabled:opacity-60">
+                Delete saved data
               </button>
               <button type="button" onClick={onSignOut} disabled={isAuthLoading} className="inline-flex items-center gap-2 rounded-full border border-white/15 px-5 py-3 text-sm text-textMuted disabled:cursor-not-allowed disabled:opacity-60">
                 <LogOut size={16} /> Log out
@@ -575,6 +667,66 @@ function ProfileInput({ label, value, onChange, placeholder }) {
   );
 }
 
+const SUBJECT_OPTIONS = ["Mathematics", "Mathematical Literacy", "Physical Sciences", "Life Sciences", "Accounting", "Business Studies", "Economics", "Geography", "Information Technology", "Computer Applications Technology", "Engineering Graphics and Design", "Agricultural Sciences", "Tourism", "Hospitality Studies", "Visual Arts", "Design"];
+
+function SubjectPicker({ selected = [], onChange }) {
+  function toggle(subject) {
+    if (selected.includes(subject)) onChange(selected.filter((item) => item !== subject));
+    else onChange([...selected, subject]);
+  }
+
+  return (
+    <div className="mt-5 rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+      <p className="text-sm font-semibold text-white/80">Current or planned subjects</p>
+      <p className="mt-1 text-xs leading-5 text-white/45">Pick known subjects so Careerize can flag green, amber or red route risk. Exact provider requirements still need verification.</p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {SUBJECT_OPTIONS.map((subject) => {
+          const active = selected.includes(subject);
+          return (
+            <button
+              key={subject}
+              type="button"
+              onClick={() => toggle(subject)}
+              aria-pressed={active}
+              className={`rounded-full border px-3 py-2 text-xs transition ${active ? "border-mint bg-mint/15 text-white" : "border-white/10 bg-black/20 text-white/55 hover:border-white/25"}`}
+            >
+              {subject}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+function RouteExplorer({ routes, active, onSelect, routeSearch, onSearchChange, streamFilter, onStreamChange, routeStreams, totalMatches }) {
+  return (
+    <div>
+      <div className="grid gap-3 md:grid-cols-[1fr_0.9fr]">
+        <label className="text-sm text-white/60">
+          Search all career routes
+          <input className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none placeholder:text-white/25 focus:border-cyber" value={routeSearch} onChange={(event) => onSearchChange(event.target.value)} placeholder="Search data, nursing, plumbing, tourism..." />
+        </label>
+        <label className="text-sm text-white/60">
+          Filter stream
+          <select className="mt-2 w-full rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-white outline-none focus:border-cyber" value={streamFilter} onChange={(event) => onStreamChange(event.target.value)}>
+            <option value="all">All streams</option>
+            {routeStreams.map((stream) => <option key={stream}>{stream}</option>)}
+          </select>
+        </label>
+      </div>
+      <p className="mt-3 text-xs leading-5 text-white/40">{totalMatches} matching routes. Showing the strongest 10 so the map stays usable.</p>
+      <div className="mt-4">
+        {routes.length > 0 ? (
+          <RouteMindMap routes={routes} active={active} onSelect={onSelect} />
+        ) : (
+          <div className="rounded-3xl border border-white/10 bg-black/20 p-5 text-sm text-white/55">No routes match that search yet. Try a broader title, subject or stream.</div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 function RouteMindMap({ routes, active, onSelect }) {
   return (
     <div className="relative rounded-[2rem] border border-white/10 bg-black/20 p-4">
@@ -609,9 +761,16 @@ function RouteMindMap({ routes, active, onSelect }) {
   );
 }
 
-function PathwayMap({ route }) {
+function PathwayMap({ route, learnerProfile }) {
   const pathway = getAcademicPathwayForCareer(route.id)?.academicPathway;
   if (!pathway) return null;
+  const subjectRisk = assessSubjectRisk(pathway, learnerProfile);
+  const riskStyles = {
+    green: "border-mint/35 bg-mint/10 text-mint",
+    amber: "border-cyber/35 bg-cyber/10 text-cyber",
+    red: "border-pink/35 bg-pink/10 text-pink",
+    unknown: "border-white/15 bg-white/[0.04] text-white/65",
+  };
 
   const subjectItems = [
     ["Keep open", pathway.grade10Subjects.requiredOrStronglyRecommended.join(", ")],
@@ -634,6 +793,11 @@ function PathwayMap({ route }) {
           <h3 className="mt-4 font-display text-3xl font-semibold">{route.title}: from school subjects to first work.</h3>
           <p className="mt-3 text-sm leading-6 text-textQuiet">{pathway.academicRequirementRoute}</p>
           <p className="mt-3 rounded-2xl border border-interactionPrimary/20 bg-interactionPrimary/10 p-3 text-xs leading-5 text-textSubtle">{pathway.verification.caution}</p>
+          <div className={`mt-3 rounded-2xl border p-4 ${riskStyles[subjectRisk.level] ?? riskStyles.unknown}`}>
+            <p className="text-xs uppercase tracking-[0.16em]">Subject risk: {subjectRisk.label}</p>
+            <p className="mt-2 text-sm leading-6 text-textMuted">{subjectRisk.summary}</p>
+            <p className="mt-2 text-xs leading-5 text-textQuiet">{subjectRisk.nextStep}</p>
+          </div>
         </div>
         <div className="grid gap-4">
           <div className="grid gap-3 md:grid-cols-3">
@@ -653,6 +817,16 @@ function PathwayMap({ route }) {
                 </div>
               ))}
             </div>
+          </div>
+          <div className="grid gap-3 md:grid-cols-3">
+            {pathway.qualificationRoutes.slice(0, 3).map((option) => (
+              <div key={`${option.type}-${option.qualification}`} className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+                <p className="text-xs uppercase tracking-[0.16em] text-cyber/80">{option.type.replaceAll("_", " ")}</p>
+                <p className="mt-2 text-sm font-semibold leading-5 text-white/80">{option.qualification}</p>
+                <p className="mt-2 text-xs leading-5 text-white/50">{option.gate}</p>
+                <p className="mt-2 inline-flex rounded-full border border-cyber/25 bg-cyber/10 px-3 py-1 text-[11px] text-cyber">template · needs provider verification</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
