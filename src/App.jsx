@@ -243,7 +243,7 @@ export default function App() {
             <LogoMark />
             <div>
               <div className="text-sm font-semibold tracking-tight">Careerize</div>
-              <div className="text-[10px] uppercase tracking-[0.18em] text-textQuiet">Free career intelligence</div>
+              <div className="text-[10px] uppercase tracking-[0.18em] text-textQuiet">Work-first career maps</div>
             </div>
           </a>
 
@@ -256,8 +256,8 @@ export default function App() {
           </nav>
 
           <div className="hidden items-center gap-3 md:flex">
-            <a href="#discover" className="rounded-full border border-white/15 px-4 py-2 text-sm text-textMuted hover:border-white/40">Try demo</a>
-            <a href="#trust" className="rounded-full bg-white px-5 py-2 text-sm font-semibold text-black shadow-[0_0_40px_-10px_rgba(242,255,73,.8)]">Read principles</a>
+            <a href="#discover" className="rounded-[1rem] border border-line px-4 py-2 text-sm text-textMuted hover:border-textEmphasis/35">Open discovery</a>
+            <a href="#reality" className="rounded-[1rem] bg-interactionPrimary px-5 py-2 text-sm font-bold text-surfacePrimary">Inspect a route</a>
           </div>
 
           <button
@@ -287,8 +287,13 @@ export default function App() {
 
       <section className="relative min-h-[calc(100vh-73px)] overflow-hidden border-b border-line/70">
         <div className="absolute inset-0">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2200&q=80')] bg-cover bg-[62%_center] grayscale" />
-          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,22,20,.94)_0%,rgba(18,22,20,.84)_36%,rgba(18,22,20,.36)_64%,rgba(18,22,20,.72)_100%)]" />
+          <img
+            src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=2200&q=80"
+            alt=""
+            aria-hidden="true"
+            className="h-full w-full object-cover object-[62%_center] grayscale"
+          />
+          <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(18,22,20,.96)_0%,rgba(18,22,20,.88)_34%,rgba(18,22,20,.38)_64%,rgba(18,22,20,.76)_100%)]" />
           <div className="absolute bottom-0 left-0 h-1/3 w-full bg-gradient-to-t from-surfacePrimary to-transparent" />
         </div>
 
@@ -299,12 +304,13 @@ export default function App() {
             transition={{ duration: 0.42, ease: [0.22, 1, 0.36, 1] }}
             className="max-w-[38rem] self-end md:pt-28"
           >
-            <p className="text-[clamp(3.8rem,12vw,10rem)] font-display font-black uppercase leading-[0.78] tracking-[-0.085em] text-textEmphasis">Careerize</p>
+            <p className="text-xs font-bold uppercase tracking-[0.28em] text-interactionPrimary">Updated live direction · Work-first guidance</p>
+            <p className="mt-5 text-[clamp(3.8rem,12vw,10rem)] font-display font-black uppercase leading-[0.78] tracking-[-0.085em] text-textEmphasis">Careerize</p>
             <h1 className="mt-7 max-w-[12ch] text-balance font-display text-[clamp(2.35rem,5.3vw,5.9rem)] font-black leading-[0.9] tracking-[-0.065em] text-textEmphasis">
-              Choose with the work in view.
+              See the job before the dream.
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-8 text-textMuted md:text-xl">
-              Compare South African career routes by the actual day: tools, pressure, entry gates, growth paths and the parts nobody puts on a poster.
+              Careerize shows South African learners the actual work behind each route: tools, pressure, entry gates, rough parts, growth ceilings and next experiments.
             </p>
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <a href="#discover" className="group inline-flex items-center gap-3 rounded-[1.15rem] bg-interactionPrimary px-6 py-3.5 font-bold text-surfacePrimary transition duration-150 ease-[cubic-bezier(.2,.8,.2,1)] hover:-translate-y-0.5 hover:bg-textEmphasis">Start the discovery <ArrowRight size={18} className="transition-transform duration-150 group-hover:translate-x-1" /></a>
@@ -312,7 +318,7 @@ export default function App() {
             </div>
           </motion.div>
 
-          <div className="relative hidden min-h-[620px] md:block">
+          <div className="relative min-h-[560px] md:min-h-[620px]">
             <HeroCard ranked={visibleRoutes} active={active} progress={progress} session={session} savedAt={savedAt} selectedSignals={selectedSignals} reduceMotion={shouldReduceMotion} />
           </div>
         </div>
@@ -441,7 +447,7 @@ export default function App() {
 
 function HeroCard({ ranked, active, progress, session, savedAt, selectedSignals, reduceMotion = false }) {
   return (
-    <motion.div initial={reduceMotion ? false : { opacity: 0, x: 28, rotate: 1.2 }} animate={reduceMotion ? undefined : { opacity: 1, x: 0, rotate: -1 }} transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-8 right-0 w-[min(32rem,46vw)]">
+    <motion.div initial={reduceMotion ? false : { opacity: 0, x: 28, rotate: 1.2 }} animate={reduceMotion ? undefined : { opacity: 1, x: 0, rotate: -1 }} transition={{ duration: 0.46, ease: [0.22, 1, 0.36, 1] }} className="absolute bottom-0 right-0 w-full max-w-[32rem] md:bottom-8 md:w-[min(32rem,46vw)]">
       <div className="absolute -inset-8 rounded-[3rem] bg-gradient-to-br from-clay/20 via-feedbackSuccess/10 to-interactionPrimary/15 blur-3xl" />
       <GlassCard className="relative min-h-[520px] overflow-hidden">
         <div className="flex items-center justify-between">
