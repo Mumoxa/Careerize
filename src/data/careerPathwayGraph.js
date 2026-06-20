@@ -1,9 +1,9 @@
-import { CAREER_ROUTES, CAREER_COVERAGE_SUMMARY } from "./careerCatalog";
+import { CAREER_ROUTES, CAREER_COVERAGE_SUMMARY } from "./careerCatalog.js";
 import {
   ACADEMIC_PATHWAY_TEMPLATE_SUMMARY,
   STREAM_TO_PATHWAY_TEMPLATE,
   getAcademicPathwayPlan,
-} from "./academicPathwayTemplates";
+} from "./academicPathwayTemplates.js";
 
 function resolveTemplateMeta(route) {
   return STREAM_TO_PATHWAY_TEMPLATE[route.stream] ?? { kind: "people", profile: "mixed" };
