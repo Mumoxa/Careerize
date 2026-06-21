@@ -80,11 +80,11 @@ export function assessSubjectRisk(pathway, profile = {}) {
   if (!pathway?.grade10Subjects) {
     return {
       level: "unknown",
-      label: "Subject risk unknown",
-      summary: "No subject pathway is available for this career yet.",
+      label: "Subject guidance unavailable",
+      summary: "No starter subject template is available for this career yet.",
       matched: [],
       missing: [],
-      nextStep: "Compare this route with at least two alternatives and verify requirements with a provider.",
+      nextStep: "Compare this route with alternatives and verify subject and entry requirements with each provider.",
     };
   }
 
@@ -97,42 +97,42 @@ export function assessSubjectRisk(pathway, profile = {}) {
   if (selectedSubjects.length === 0) {
     return {
       level: "unknown",
-      label: "Add subjects to check risk",
-      summary: "Careerize needs the learner's current or planned subjects before it can flag route risk.",
+      label: "Add subjects for a template check",
+      summary: "Add current or planned subjects to compare them with this starter template. This does not check provider admission requirements.",
       matched,
       missing: required,
-      nextStep: "Add Grade, Mathematics choice and current/planned subjects in the learner profile panel.",
+      nextStep: "Add a Mathematics choice and current or planned subjects before comparing the template.",
     };
   }
 
   if (missing.length === 0) {
     return {
       level: "green",
-      label: "Route appears open",
-      summary: "The learner's captured subjects cover the strongest template subject signals for this route.",
+      label: "No template subject gap found",
+      summary: "The selected subjects overlap with the strongest signals in this starter template. Careerize has not checked provider admission requirements.",
       matched,
       missing,
-      nextStep: "Keep marks strong and verify exact provider APS, subject percentages and accreditation before applying.",
+      nextStep: "Requirements vary by provider. Verify exact subjects, marks, APS, accreditation and availability before applying or making subject choices.",
     };
   }
 
   if (missing.length < required.length) {
     return {
       level: "amber",
-      label: "Route may narrow",
-      summary: "Some important template subjects are missing, so the learner should check alternatives before final subject choices.",
+      label: "Some template subject signals are missing",
+      summary: "The selected subjects match part of this starter template. Missing signals are prompts for provider checks, not an admission decision.",
       matched,
       missing,
-      nextStep: `Discuss whether ${missing.slice(0, 2).join(" and ")} should be added, kept or verified with a teacher/advisor.`,
+      nextStep: `Ask a teacher or advisor about ${missing.slice(0, 2).join(" and ")}, then verify exact requirements with each provider.`,
     };
   }
 
   return {
     level: "red",
-    label: "Major subject gate risk",
-    summary: "The captured subjects do not cover the strongest template subject signals for this route.",
+    label: "Provider check needed before subject decisions",
+    summary: "The selected subjects do not match the strongest signals in this starter template. This does not determine admission eligibility.",
     matched,
     missing,
-    nextStep: `Before committing to this route, verify whether ${missing.slice(0, 2).join(" and ")} are required or whether TVET/workplace alternatives are more realistic.`,
+    nextStep: `Before changing subjects or choosing this route, ask a teacher or advisor about ${missing.slice(0, 2).join(" and ")} and verify alternatives with each provider.`,
   };
 }

@@ -118,6 +118,19 @@ if (ranked.some((route) => !Number.isFinite(route.score) || !Number.isFinite(rou
   errors.push("Scoring produced an invalid score, match percentage or explanation.");
 }
 
+for (const phrase of ["You qualify for this route", "You are eligible for this pathway", "Best route for you", "Recommended career", "Route appears open"]) {
+  if (validateGuidanceLanguage(phrase).valid) {
+    errors.push(`Guidance language guard failed to reject: ${phrase}`);
+  }
+}
+
+for (const phrase of ["Possible route to explore", "Needs provider verification", "Requirements vary by provider", "Admission is not guaranteed", "Recommended subjects need provider checks"]) {
+  const language = validateGuidanceLanguage(phrase);
+  if (!language.valid) {
+    errors.push(`Guidance language guard rejected safe copy: ${phrase} (${language.reason})`);
+  }
+}
+
 if (errors.length) {
   console.error("Career catalog validation failed:\n");
   for (const error of errors) {

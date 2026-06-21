@@ -107,6 +107,10 @@ on public.careerize_profiles for update
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+create policy "Careerize profile owner delete"
+on public.careerize_profiles for delete
+using (auth.uid() = user_id);
+
 create policy "Careerize result owner select"
 on public.careerize_results for select
 using (auth.uid() = user_id);
@@ -120,6 +124,10 @@ on public.careerize_results for update
 using (auth.uid() = user_id)
 with check (auth.uid() = user_id);
 
+create policy "Careerize result owner delete"
+on public.careerize_results for delete
+using (auth.uid() = user_id);
+
 create policy "Careerize session owner select"
 on public.careerize_discovery_sessions for select
 using (auth.uid() = user_id);
@@ -127,6 +135,10 @@ using (auth.uid() = user_id);
 create policy "Careerize session owner insert"
 on public.careerize_discovery_sessions for insert
 with check (auth.uid() = user_id);
+
+create policy "Careerize session owner delete"
+on public.careerize_discovery_sessions for delete
+using (auth.uid() = user_id);
 
 create policy "Careerize countries public read"
 on public.careerize_countries for select

@@ -12,18 +12,24 @@
     "validate:catalog": "node scripts/validateCatalog.mjs",
     "validate:foundation": "node scripts/validateSaFoundation.mjs",
     "validate:academic-pathways": "node scripts/validateAcademicPathways.mjs",
-    "check": "npm run validate:catalog && npm run validate:foundation && npm run validate:academic-pathways && npm test && npm run build",
+    "validate:public-copy": "node scripts/validatePublicLaunchCopy.mjs",
+    "check": "npm run validate:catalog && npm run validate:foundation && npm run validate:academic-pathways && npm run validate:public-copy && npm test && npm run build",
+    "check:launch": "npm run check && npm run test:browser",
     "preview": "vite preview",
-    "test": "node scripts/validateMvpFlows.mjs"
+    "test": "node scripts/validateMvpFlows.mjs",
+    "test:browser": "playwright test",
+    "test:smoke": "playwright test tests/e2e/public-launch.smoke.spec.js",
+    "test:a11y": "playwright test tests/e2e/accessibility.spec.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.45.4",
-    "framer-motion": "^11.11.17",
     "lucide-react": "^0.460.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.3",
+    "@playwright/test": "^1.61.0",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.20",
     "postcss": "^8.4.47",

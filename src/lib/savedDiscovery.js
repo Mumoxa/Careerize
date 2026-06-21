@@ -1,10 +1,19 @@
 const LOCAL_SESSION_KEY = "careerize.localSession";
 const LOCAL_RECORD_PREFIX = "careerize.discovery.";
+const COMPACT_RESULT_LIMIT = 10;
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+const runtimeEnv = import.meta.env ?? {};
+const supabaseUrl = runtimeEnv.VITE_SUPABASE_URL;
+const supabaseAnonKey = runtimeEnv.VITE_SUPABASE_ANON_KEY;
 
 export const hasSupabaseConfig = Boolean(supabaseUrl && supabaseAnonKey);
+export const isLocalDemoMode = !hasSupabaseConfig && Boolean(runtimeEnv.DEV);
+export const learnerPersistenceMode = hasSupabaseConfig
+  ? "supabase"
+  : isLocalDemoMode
+    ? "local-demo"
+    : "unavailable";
+export const canPersistLearnerData = hasSupabaseConfig || isLocalDemoMode;
 
 let supabaseClientPromise = null;
 
@@ -56,6 +65,12 @@ function clearLocalSession() {
   window.localStorage.removeItem(LOCAL_SESSION_KEY);
 }
 
+function assertLocalDemoSession(session) {
+  if (!isLocalDemoMode || session?.provider !== "local") {
+    throw new Error("Saved learner profiles are unavailable in this deployment.");
+  }
+}
+
 function cleanProfile(profile = {}) {
   return {
     preferredName: String(profile.preferredName ?? "").trim(),
@@ -69,6 +84,54 @@ function cleanProfile(profile = {}) {
   };
 }
 
+function compactMatchedSignals(matchedSignals) {
+  if (!Array.isArray(matchedSignals)) return [];
+  return matchedSignals
+    .map((item) => (typeof item === "string" ? item : item?.signal))
+    .map((item) => String(item ?? "").trim())
+    .filter(Boolean)
+    .slice(0, 12);
+}
+
+function compactResult(route = {}) {
+  return {
+    id: String(route.id ?? "").trim(),
+    title: String(route.title ?? "").trim(),
+    stream: String(route.stream ?? "").trim(),
+    score: Number.isFinite(route.score) ? route.score : 0,
+    match_percent: Number.isFinite(route.matchPercent) ? route.matchPercent : 0,
+    matched_signals: compactMatchedSignals(route.explanation?.matchedSignals),
+  };
+}
+
+export function compactRankedResults(rankedResults = [], bestMatch = null) {
+  if (!Array.isArray(rankedResults)) return [];
+
+  const compact = rankedResults.slice(0, COMPACT_RESULT_LIMIT).map(compactResult);
+  const selectedRoute = bestMatch
+    ? rankedResults.find((route) => route?.id === bestMatch)
+    : null;
+
+  if (selectedRoute && !compact.some((route) => route.id === bestMatch)) {
+    compact.push(compactResult(selectedRoute));
+  }
+
+  return compact.filter((route) => route.id);
+}
+
+function makeHistoryRecord(profile, record, discovery) {
+  return {
+    profile_snapshot: profile,
+    answers: record.answers,
+    selected_signals: record.selected_signals,
+    ranked_results: record.ranked_results,
+    best_match: record.best_match,
+    match_percent: Number.isFinite(discovery.matchPercent) ? discovery.matchPercent : null,
+    assessment_version: "v1.3",
+    created_at: record.updated_at,
+  };
+}
+
 export async function getCurrentSession() {
   const supabase = await getSupabaseClient();
 
@@ -79,7 +142,7 @@ export async function getCurrentSession() {
     return user ? { id: user.id, email: user.email, provider: "supabase" } : null;
   }
 
-  return getLocalSession();
+  return isLocalDemoMode ? getLocalSession() : null;
 }
 
 export async function signInOrCreateLearner({ email, password, name }) {
@@ -92,8 +155,9 @@ export async function signInOrCreateLearner({ email, password, name }) {
       password,
     });
 
-    if (!error && data.user) {
-      return { id: data.user.id, email: data.user.email, provider: "supabase" };
+    if (!error && data.session?.user) {
+      const user = data.session.user;
+      return { id: user.id, email: user.email, provider: "supabase" };
     }
 
     const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
@@ -104,11 +168,16 @@ export async function signInOrCreateLearner({ email, password, name }) {
 
     if (signUpError) throw signUpError;
 
-    if (!signUpData.user) {
-      throw new Error("Check your inbox to confirm your email, then log in again.");
+    if (!signUpData.session?.user) {
+      throw new Error("Check your inbox to confirm your email. This browser is not signed in until confirmation is complete.");
     }
 
-    return { id: signUpData.user.id, email: signUpData.user.email, provider: "supabase" };
+    const user = signUpData.session.user;
+    return { id: user.id, email: user.email, provider: "supabase" };
+  }
+
+  if (!isLocalDemoMode) {
+    throw new Error("Saved learner profiles are unavailable in this deployment. You can continue exploring without an account.");
   }
 
   const session = {
@@ -129,36 +198,40 @@ export async function signOutLearner() {
     if (error) throw error;
   }
 
-  clearLocalSession();
+  if (isLocalDemoMode) clearLocalSession();
 }
 
 export async function loadLearnerProfile(session) {
   if (!session) return null;
   const supabase = await getSupabaseClient();
 
-  if (supabase && session.provider === "supabase") {
+  if (session.provider === "supabase") {
+    if (!supabase) throw new Error("Supabase learner persistence is not configured.");
     const { data, error } = await supabase
       .from("careerize_profiles")
-      .select("profile, updated_at")
+      .select("profile, created_at, updated_at")
       .eq("user_id", session.id)
       .maybeSingle();
 
     if (error) throw error;
-    return data?.profile ? { ...data.profile, updated_at: data.updated_at } : null;
+    return data?.profile
+      ? { ...data.profile, created_at: data.created_at, updated_at: data.updated_at }
+      : null;
   }
 
-  const stored = readLocalRecord(session.email);
-  return stored?.profile ?? null;
+  assertLocalDemoSession(session);
+  return readLocalRecord(session.email)?.profile ?? null;
 }
 
 export async function loadSavedDiscovery(session) {
   if (!session) return null;
   const supabase = await getSupabaseClient();
 
-  if (supabase && session.provider === "supabase") {
+  if (session.provider === "supabase") {
+    if (!supabase) throw new Error("Supabase learner persistence is not configured.");
     const { data, error } = await supabase
       .from("careerize_results")
-      .select("answers, selected_signals, ranked_results, best_match, updated_at")
+      .select("answers, selected_signals, ranked_results, best_match, created_at, updated_at")
       .eq("user_id", session.id)
       .maybeSingle();
 
@@ -166,8 +239,30 @@ export async function loadSavedDiscovery(session) {
     return data;
   }
 
+  assertLocalDemoSession(session);
   const stored = readLocalRecord(session.email);
-  return stored?.discovery ?? stored ?? null;
+  return stored?.discovery ?? (stored?.answers ? stored : null);
+}
+
+export async function loadDiscoveryHistory(session) {
+  if (!session) return [];
+  const supabase = await getSupabaseClient();
+
+  if (session.provider === "supabase") {
+    if (!supabase) throw new Error("Supabase learner persistence is not configured.");
+    const { data, error } = await supabase
+      .from("careerize_discovery_sessions")
+      .select("id, profile_snapshot, answers, selected_signals, ranked_results, best_match, match_percent, assessment_version, created_at")
+      .eq("user_id", session.id)
+      .order("created_at", { ascending: true });
+
+    if (error) throw error;
+    return data ?? [];
+  }
+
+  assertLocalDemoSession(session);
+  const history = readLocalRecord(session.email)?.history;
+  return Array.isArray(history) ? history : [];
 }
 
 export async function saveDiscovery(session, discovery) {
@@ -178,12 +273,14 @@ export async function saveDiscovery(session, discovery) {
   const record = {
     answers: discovery.answers,
     selected_signals: discovery.selectedSignals,
-    ranked_results: discovery.rankedResults,
+    ranked_results: compactRankedResults(discovery.rankedResults, discovery.bestMatch),
     best_match: discovery.bestMatch,
     updated_at: new Date().toISOString(),
   };
+  const historyRecord = makeHistoryRecord(profile, record, discovery);
 
-  if (supabase && session.provider === "supabase") {
+  if (session.provider === "supabase") {
+    if (!supabase) throw new Error("Supabase learner persistence is not configured.");
     const { error: profileError } = await supabase
       .from("careerize_profiles")
       .upsert(
@@ -209,22 +306,20 @@ export async function saveDiscovery(session, discovery) {
 
     const { error: sessionError } = await supabase.from("careerize_discovery_sessions").insert({
       user_id: session.id,
-      profile_snapshot: profile,
-      answers: record.answers,
-      selected_signals: record.selected_signals,
-      ranked_results: record.ranked_results,
-      best_match: record.best_match,
-      match_percent: discovery.matchPercent,
-      assessment_version: "v1.3",
+      ...historyRecord,
     });
     if (sessionError) throw sessionError;
 
     return record;
   }
 
+  assertLocalDemoSession(session);
+  const previousRecord = readLocalRecord(session.email);
+  const history = Array.isArray(previousRecord?.history) ? previousRecord.history : [];
   writeLocalRecord(session.email, {
     profile,
     discovery: record,
+    history: [...history, historyRecord],
   });
   return record;
 }
@@ -232,9 +327,10 @@ export async function saveDiscovery(session, discovery) {
 
 export async function exportLearnerData(session) {
   if (!session) throw new Error("Sign in before exporting your learner data.");
-  const [profile, discovery] = await Promise.all([
+  const [profile, discovery, discoveryHistory] = await Promise.all([
     loadLearnerProfile(session),
     loadSavedDiscovery(session),
+    loadDiscoveryHistory(session),
   ]);
 
   return {
@@ -242,6 +338,7 @@ export async function exportLearnerData(session) {
     session: { email: session.email, provider: session.provider },
     profile,
     discovery,
+    discovery_history: discoveryHistory,
   };
 }
 
@@ -249,17 +346,39 @@ export async function deleteLearnerData(session) {
   if (!session) throw new Error("Sign in before deleting your learner data.");
   const supabase = await getSupabaseClient();
 
-  if (supabase && session.provider === "supabase") {
+  if (session.provider === "supabase") {
+    if (!supabase) throw new Error("Supabase learner persistence is not configured.");
     const tables = ["careerize_discovery_sessions", "careerize_results", "careerize_profiles"];
     for (const table of tables) {
       const { error } = await supabase.from(table).delete().eq("user_id", session.id);
       if (error) throw error;
     }
+
+    for (const table of tables) {
+      const { count, error } = await supabase
+        .from(table)
+        .select("id", { count: "exact", head: true })
+        .eq("user_id", session.id);
+      if (error) throw error;
+      if (count !== 0) throw new Error(`Saved learner data could not be deleted from ${table}.`);
+    }
+
     await signOutLearner();
-    return { deleted: true, provider: "supabase" };
+    return {
+      deleted: true,
+      provider: "supabase",
+      deleted_scope: ["profile", "latest_discovery", "discovery_history"],
+      auth_account_deleted: false,
+    };
   }
 
+  assertLocalDemoSession(session);
   window.localStorage.removeItem(localRecordKey(session.email));
   clearLocalSession();
-  return { deleted: true, provider: "local" };
+  return {
+    deleted: true,
+    provider: "local",
+    deleted_scope: ["profile", "latest_discovery", "discovery_history", "local_session"],
+    auth_account_deleted: false,
+  };
 }
