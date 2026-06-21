@@ -84,12 +84,26 @@ export function toggleSignal(currentSignals, signal) {
 }
 
 export function validateGuidanceLanguage(text) {
-  const bannedPhrases = ["perfect match", "guaranteed", "100% accurate", "certain to", "always will"];
-  const lowerText = String(text ?? "").toLowerCase();
-  const bannedPhrase = bannedPhrases.find((phrase) => lowerText.includes(phrase));
+  const normalizedText = String(text ?? "").toLowerCase().replace(/\s+/g, " ").trim();
+  const textWithoutGuaranteeDisclaimers = normalizedText
+    .replace(/\b(?:not|never) guaranteed\b/g, "")
+    .replace(/\b(?:does not|do not|cannot|can't) guarantee\b/g, "");
+  const overclaimPatterns = [
+    { label: "perfect match", pattern: /\bperfect\s+match\b/, value: normalizedText },
+    { label: "guaranteed", pattern: /\bguarantee(?:d|s)?\b/, value: textWithoutGuaranteeDisclaimers },
+    { label: "100% accurate", pattern: /\b100\s*%\s*accurate\b/, value: normalizedText },
+    { label: "certain to", pattern: /\bcertain\s+to\b/, value: normalizedText },
+    { label: "always will", pattern: /\balways\s+will\b/, value: normalizedText },
+    { label: "you qualify", pattern: /\byou\s+(?:(?:do|would|will|can)\s+)?(?:not\s+)?qualif(?:y|ied)\b/, value: normalizedText },
+    { label: "you are eligible", pattern: /\byou(?:'re|\s+(?:are|may\s+be|might\s+be|could\s+be|will\s+be))\s+(?:not\s+)?eligible\b/, value: normalizedText },
+    { label: "best route", pattern: /\bbest\s+(?:study\s+|career\s+)?route(?:\s+for\s+you)?\b/, value: normalizedText },
+    { label: "recommended career", pattern: /\brecommended\s+career\b/, value: normalizedText },
+    { label: "route appears open", pattern: /\broute\s+appears\s+open\b/, value: normalizedText },
+  ];
+  const overclaim = overclaimPatterns.find(({ pattern, value }) => pattern.test(value));
 
-  if (bannedPhrase) {
-    return { valid: false, reason: `Banned overclaim phrase: ${bannedPhrase}` };
+  if (overclaim) {
+    return { valid: false, reason: `Banned overclaim phrase: ${overclaim.label}` };
   }
 
   return { valid: true };

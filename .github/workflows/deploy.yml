@@ -33,6 +33,12 @@ jobs:
       - name: Validate catalog and build app
         run: npm run check
 
+      - name: Install Chromium for browser checks
+        run: npx playwright install --with-deps chromium
+
+      - name: Run public-launch smoke and accessibility checks
+        run: npm run test:browser
+
       - name: Configure GitHub Pages
         uses: actions/configure-pages@v5
         with:
