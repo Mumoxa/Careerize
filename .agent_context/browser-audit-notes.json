@@ -1,0 +1,57 @@
+{
+  "url": "http://127.0.0.1:4173/",
+  "desktop": {
+    "title": "Careerize | Explore career and study routes",
+    "h1": "Explore career and study routes from the signals you choose.",
+    "nav": [
+      "Discovery",
+      "Exploration matches",
+      "Pathway guide",
+      "Trust"
+    ],
+    "sectionHeadings": [
+      "Quick discovery",
+      "What pulls your attention first?",
+      "Interest signals",
+      "Exploration matches",
+      "Software Developer",
+      "Trust, privacy and saving"
+    ],
+    "visibleJourneyChooserTexts": 0,
+    "containsEarning": false,
+    "containsTravel": false
+  },
+  "interactions": {
+    "afterInterestUrl": "http://127.0.0.1:4173/?signals=technology#discover",
+    "resultCardCount": 9,
+    "firstCardText": "Exploration match\nStarter profile\nAI Product Specialist\n\nTechnology, data and AI\n\nYou work in technology, data and ai as a ai product specialist, helping people or organisations solve a real problem.\n\nWhy this route: It overlaps with Digital tools.\nView pathway: AI Product Specialist",
+    "afterPathwayUrl": "http://127.0.0.1:4173/?signals=technology&pathway=ai-product-specialist#discover",
+    "detailHeadings": [
+      "AI Product Specialist",
+      "Subject relevance",
+      "Optional subject-risk check",
+      "Possible qualification routes",
+      "Next exploration steps"
+    ],
+    "detailContains": {
+      "earning": false,
+      "travel": false,
+      "stress": false,
+      "remote": false,
+      "eightHourDay": false,
+      "tools": true,
+      "bestWorst": false,
+      "relatedModern": true
+    }
+  },
+  "mobile": {
+    "h1": "Explore career and study routes from the signals you choose.",
+    "menuButtonVisible": true,
+    "navItems": [
+      "Discovery",
+      "Exploration matches",
+      "Pathway guide",
+      "Trust"
+    ]
+  }
+}

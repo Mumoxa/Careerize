@@ -1,0 +1,16 @@
+{
+  "project_id": "51febfe5-907f-4d20-ada8-397e18faef44",
+  "project_title": "Careerize",
+  "project_description": "Career Intelligence Platform",
+  "resources": [
+    {
+      "id": "538adfbd-99e3-463a-9bd5-3147be1fd348",
+      "resource_type": "local_directory",
+      "resource_ref": {
+        "label": "Careerize",
+        "daemon_id": "019ee8b8-12bc-70b3-a909-0726f3e11bfe",
+        "local_path": "D:\\Careerize"
+      }
+    }
+  ]
+}
