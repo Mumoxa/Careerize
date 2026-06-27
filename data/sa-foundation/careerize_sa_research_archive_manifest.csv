@@ -1,0 +1,31 @@
+archive_path,file_type,row_count,purpose
+career_research/output/batch_002_data_quality_note.md,md,,Batch 002 data-quality note.
+career_research/output/batch_003_data_quality_note.md,md,,Batch 003 data-quality note.
+career_research/output/batch_004_data_quality_note.md,md,,Batch 004 data-quality note.
+career_research/output/batch_005_data_quality_note.md,md,,Batch 005 data-quality note.
+career_research/output/batch_006_data_quality_note.md,md,,Batch 006 data-quality note.
+career_research/output/batch_007_data_quality_note.md,md,,Batch 007 data-quality note.
+career_research/output/batch_008_data_quality_note.md,md,,Batch 008 data-quality note.
+career_research/output/batch_009_data_quality_note.md,md,,Batch 009 data-quality note.
+career_research/output/sa_career_database_batch_002_250_oihd.csv,csv,250,DHET 2024 OIHD expansion batch.
+career_research/output/sa_career_database_batch_003_250_qcto_tvet.csv,csv,250,QCTO and TVET pathway expansion batch.
+career_research/output/sa_career_database_batch_004_250_qcto_tvet.csv,csv,250,Continuation of QCTO and TVET pathway expansion.
+career_research/output/sa_career_database_batch_005_250_mixed_official.csv,csv,250,Mixed official-source closure batch.
+career_research/output/sa_career_database_batch_006_250_dpsa_public_service.csv,csv,250,DPSA public-service occupational records.
+career_research/output/sa_career_database_batch_007_250_dpsa_public_service.csv,csv,250,DPSA continuation and top-up records.
+career_research/output/sa_career_database_batch_008_250_future_2030_watchlist.csv,csv,250,2030 watchlist expansion batch.
+career_research/output/sa_career_database_batch_009_250_enriched_scarce_high_demand.csv,csv,250,Enrichment pass for priority scarce and high-demand records.
+career_research/sources/critical_skills_technical_report.pdf,pdf,,Critical skills technical report PDF.
+career_research/sources/critical_skills_technical_report.txt,txt,,Extracted critical skills technical report text.
+career_research/sources/critical_skills_update_47182_2022.pdf,pdf,,Critical skills gazette PDF.
+career_research/sources/critical_skills_update_47182_2022.txt,txt,,Extracted critical skills gazette text.
+career_research/sources/dhet_oihd_2024.pdf,pdf,,DHET OIHD source PDF.
+career_research/sources/dhet_oihd_2024.txt,txt,,Extracted DHET OIHD text.
+career_research/sources/dpsa_public_service_occupational_dictionary_2023.pdf,pdf,,DPSA occupational dictionary PDF.
+career_research/sources/dpsa_public_service_occupational_dictionary_2023.txt,txt,,Extracted DPSA occupational dictionary text.
+career_research/sources/qcto_full_qualifications_2023.pdf,pdf,,QCTO qualifications source PDF.
+career_research/sources/qcto_full_qualifications_2023.txt,txt,,Extracted QCTO qualification text.
+README.md,md,,Research archive readme.
+sa_career_database_batch_001_seed.csv,csv,25,Deep seed records across priority careers.
+sa_career_taxonomy_source_strategy.md,md,,Taxonomy and source strategy note.
+SOUTH_AFRICA_CAREER_DATABASE_MASTER_DOCUMENT.md,md,,Research archive master document.

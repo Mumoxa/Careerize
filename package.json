@@ -9,6 +9,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
+    "generate:foundation-research": "node scripts/generateSaResearchFoundation.mjs",
     "validate:catalog": "node scripts/validateCatalog.mjs",
     "validate:foundation": "node scripts/validateSaFoundation.mjs",
     "validate:academic-pathways": "node scripts/validateAcademicPathways.mjs",

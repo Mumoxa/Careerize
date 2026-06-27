@@ -3,6 +3,7 @@ dist
 .env
 .env.local
 .DS_Store
+.codex-temp/
 
 # Python cache files
 __pycache__/

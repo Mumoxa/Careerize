@@ -16,7 +16,13 @@ import learnersCollaborating1280 from "./assets/learners-collaborating-1280.jpg"
 import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
 import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph.js";
 import { assessSubjectRisk } from "./lib/subjectRisk.js";
-import { getProfileProgress, rankCareerRoutes, toggleSignal } from "./lib/scoring.js";
+import {
+  DEFAULT_LIFESTYLE_PREFERENCES,
+  PREFERENCE_DEFINITIONS,
+  getProfileProgress,
+  rankCareerRoutes,
+  toggleSignal,
+} from "./lib/scoring.js";
 
 const SIGNAL_LABELS = new Map(INTEREST_SIGNALS.map((signal) => [signal.value, signal.label]));
 const STARTER_ROUTE_IDS = ["software-developer", "environmental-scientist", "data-analyst"];
@@ -62,13 +68,15 @@ export default function App() {
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [routeSearch, setRouteSearch] = useState("");
   const [streamFilter, setStreamFilter] = useState("all");
+  const [lifestylePreferences, setLifestylePreferences] = useState(DEFAULT_LIFESTYLE_PREFERENCES);
   const pathwayHeadingRef = useRef(null);
 
   const ranked = useMemo(
-    () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals),
-    [answers, selectedSignals]
+    () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals, lifestylePreferences),
+    [answers, selectedSignals, lifestylePreferences]
   );
-  const hasDiscoveryInput = Object.keys(answers).length > 0 || selectedSignals.length > 0;
+  const hasPreferenceInput = Object.entries(lifestylePreferences).some(([key, value]) => value !== DEFAULT_LIFESTYLE_PREFERENCES[key]);
+  const hasDiscoveryInput = Object.keys(answers).length > 0 || selectedSignals.length > 0 || hasPreferenceInput;
   const starterRoutes = STARTER_ROUTE_IDS.map((id) => ranked.find((route) => route.id === id)).filter(Boolean);
   const hasRouteFilters = routeSearch.trim().length > 0 || streamFilter !== "all";
   const defaultResults = hasDiscoveryInput || hasRouteFilters ? ranked : starterRoutes;
@@ -112,6 +120,11 @@ export default function App() {
     setActivePathwayId(null);
   }
 
+  function updateLifestylePreference(id, value) {
+    setLifestylePreferences((current) => ({ ...current, [id]: Number(value) }));
+    setActivePathwayId(null);
+  }
+
   function toggleSubject(subject) {
     setSelectedSubjects((current) =>
       current.includes(subject) ? current.filter((item) => item !== subject) : [...current, subject]
@@ -133,6 +146,7 @@ export default function App() {
     setQuestionStep(0);
     setRouteSearch("");
     setStreamFilter("all");
+    setLifestylePreferences(DEFAULT_LIFESTYLE_PREFERENCES);
   }
 
   function advanceDiscovery() {
@@ -278,6 +292,25 @@ export default function App() {
           </div>
         </section>
 
+        <section className="section-border">
+          <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
+            <SectionIntro title="Career reality sliders" text="Add the life conditions that matter: earning ambition, travel, stress and danger tolerance. These sliders help compare trade-offs, not judge ambition." />
+            <div className="grid gap-5 md:grid-cols-2">
+              {PREFERENCE_DEFINITIONS.map((preference) => (
+                <PreferenceSlider
+                  key={preference.id}
+                  preference={preference}
+                  value={lifestylePreferences[preference.id]}
+                  onChange={updateLifestylePreference}
+                />
+              ))}
+              <div className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm leading-6 text-amber-950 md:col-span-2">
+                <strong>Important:</strong> Careerize uses qualitative starter signals for earning potential, travel, stress and danger. South African salary bands, injury risks and demand data still require source-verified labour-market records before being shown as facts.
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section id="matches" className="section-border bg-sage-50/80">
           <div className="mx-auto max-w-[1240px] px-5 py-16">
             <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
@@ -307,7 +340,7 @@ export default function App() {
                 </div>
                 <p className="mt-5 rounded-xl border border-sage-300 bg-sage-100 p-4 text-sm leading-6 text-forest-800" aria-live="polite">
                   {hasDiscoveryInput
-                    ? `${visibleRoutes.length} exploration matches shown. Ranking uses only your selected answers and interest signals.`
+                    ? `${visibleRoutes.length} exploration matches shown. Ranking uses your selected answers, interest signals and career reality sliders.`
                     : hasRouteFilters
                       ? `${visibleRoutes.length} starter routes shown from your search or career-cluster filter. No personal fit is inferred.`
                     : "Choose an answer or interest signal to rank routes. These three routes are starter examples."}
@@ -402,6 +435,29 @@ function matchedSignalLabels(route) {
     .map((item) => SIGNAL_LABELS.get(item.signal) ?? item.signal);
 }
 
+function PreferenceSlider({ preference, value, onChange }) {
+  return (
+    <label className="rounded-xl border border-sage-300 bg-cream-50 p-5">
+      <span className="font-bold text-forest-950">{preference.label}</span>
+      <input
+        type="range"
+        min="0"
+        max="100"
+        step="5"
+        value={value}
+        onChange={(event) => onChange(preference.id, event.target.value)}
+        className="mt-4 w-full accent-forest-700"
+        aria-describedby={`${preference.id}-helper`}
+      />
+      <span className="mt-2 flex justify-between gap-3 text-xs font-semibold text-forest-700">
+        <span>{preference.lowLabel}</span>
+        <span>{preference.highLabel}</span>
+      </span>
+      <span id={`${preference.id}-helper`} className="mt-3 block text-sm leading-6 text-forest-800/80">{preference.helper}</span>
+    </label>
+  );
+}
+
 function ExplorationCard({ route, active, hasInput, onOpen }) {
   const matched = matchedSignalLabels(route);
   return (
@@ -413,6 +469,7 @@ function ExplorationCard({ route, active, hasInput, onOpen }) {
       <h3 className="mt-5 text-xl font-bold">{route.title}</h3>
       <p className="mt-1 text-xs font-semibold text-forest-700">{route.stream}</p>
       <p className="mt-4 line-clamp-3 text-sm leading-6 text-forest-800/80">{route.summary}</p>
+      <p className="mt-3 text-xs font-semibold text-forest-700">Reality signal: {route.preferenceFit.strongestPreference}</p>
       <div className="mt-5 rounded-lg bg-sage-50 p-3 text-sm leading-6 text-forest-800">
         <strong>Why this route:</strong>{" "}
         {hasInput && matched.length
@@ -487,6 +544,16 @@ function PathwayDetail({ route, pathwayRecord, selectedSubjects, onToggleSubject
               <p className="mt-2 text-sm leading-6 text-forest-800">{subjectRisk.summary}</p>
               <p className="mt-2 text-sm leading-6 text-forest-800/80">{subjectRisk.nextStep}</p>
             </div>
+          </DetailSection>
+
+          <DetailSection title="Career reality trade-offs">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <SubjectNote label="Earning potential" text={route.earningPotential.label} />
+              <SubjectNote label="Stress" text={route.stress} />
+              <SubjectNote label="Travel or place" text={route.remote} />
+              <SubjectNote label="Environment and safety" text={route.environment} />
+            </div>
+            <p className="mt-4 text-sm leading-6 text-forest-800/80">{route.preferenceFit.summary}</p>
           </DetailSection>
 
           <DetailSection title="Possible qualification routes">

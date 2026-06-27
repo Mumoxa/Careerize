@@ -1,3 +1,41 @@
+export const DEFAULT_LIFESTYLE_PREFERENCES = {
+  earnings: 50,
+  travel: 50,
+  stress: 50,
+  danger: 50,
+};
+
+export const PREFERENCE_DEFINITIONS = [
+  {
+    id: "earnings",
+    label: "Earning ambition",
+    lowLabel: "Money is less important",
+    highLabel: "Higher earning upside matters",
+    helper: "Raises routes with stronger qualitative earning upside. Salary figures still need source verification.",
+  },
+  {
+    id: "travel",
+    label: "Travel and movement",
+    lowLabel: "Mostly one place",
+    highLabel: "Open to travel or field work",
+    helper: "Balances office/remote-friendly routes against work that needs sites, vehicles, clients or field locations.",
+  },
+  {
+    id: "stress",
+    label: "Stress tolerance",
+    lowLabel: "Lower pressure preferred",
+    highLabel: "Can handle pressure",
+    helper: "Considers pressure from deadlines, people, safety, public responsibility and unpredictable workloads.",
+  },
+  {
+    id: "danger",
+    label: "Safety and danger tolerance",
+    lowLabel: "Low physical risk preferred",
+    highLabel: "Open to higher-risk environments",
+    helper: "Flags hands-on, site, emergency, mine, farm, plant or equipment-heavy environments for discussion.",
+  },
+];
+
 export function getSelectedSignals(answers, selectedSignals) {
   const answerSignals = Object.values(answers).filter(Boolean);
   const explicitSignals = [...answerSignals, ...selectedSignals];
@@ -50,14 +88,81 @@ export function explainRoute(route, selectedSignals) {
   };
 }
 
-export function rankCareerRoutes(routes, answers, selectedSignals) {
+function includesAny(text, terms) {
+  const value = String(text ?? "").toLowerCase();
+  return terms.some((term) => value.includes(term));
+}
+
+export function getRoutePreferenceProfile(route) {
+  const earningText = `${route.earningPotential?.label ?? ""} ${route.earningPotential?.explanation ?? ""}`;
+  const environmentText = `${route.environment ?? ""} ${(route.workEnvironment ?? []).join(" ")}`;
+  const stressText = route.stress ?? "";
+
+  const earnings = includesAny(earningText, ["high", "strong", "specialist", "scarce", "good progression"])
+    ? 80
+    : includesAny(earningText, ["stable", "steady"])
+      ? 60
+      : 45;
+  const travel = includesAny(environmentText, ["remote", "office", "online"])
+    ? 25
+    : includesAny(environmentText, ["site", "field", "vehicle", "farm", "mine", "customer locations", "events", "ports", "streets"])
+      ? 78
+      : 50;
+  const stress = includesAny(stressText, ["high"])
+    ? 82
+    : includesAny(stressText, ["variable"])
+      ? 66
+      : 50;
+  const danger = includesAny(environmentText, ["mine", "site", "plant", "factory", "farm", "emergency", "equipment", "vehicles", "workshops", "safety"])
+    ? 72
+    : includesAny(environmentText, ["clinic", "hospital", "field"])
+      ? 58
+      : 30;
+
+  return { earnings, travel, stress, danger };
+}
+
+export function getPreferenceScore(route, preferences = DEFAULT_LIFESTYLE_PREFERENCES) {
+  const hasExplicitPreference = Object.entries(DEFAULT_LIFESTYLE_PREFERENCES).some(([key, defaultValue]) => {
+    return Number(preferences[key] ?? defaultValue) !== defaultValue;
+  });
+  if (!hasExplicitPreference) return 0;
+
+  const profile = getRoutePreferenceProfile(route);
+  return Object.entries(DEFAULT_LIFESTYLE_PREFERENCES).reduce((total, [key, defaultValue]) => {
+    const learnerValue = Number(preferences[key] ?? defaultValue);
+    const routeValue = Number(profile[key] ?? defaultValue);
+    const distance = Math.abs(learnerValue - routeValue);
+    return total + Math.max(0, 25 - distance / 4);
+  }, 0);
+}
+
+export function explainPreferenceFit(route, preferences = DEFAULT_LIFESTYLE_PREFERENCES) {
+  const profile = getRoutePreferenceProfile(route);
+  const strongest = Object.entries(profile).sort((a, b) => b[1] - a[1])[0];
+  const labels = {
+    earnings: "earning upside",
+    travel: "travel or movement",
+    stress: "stress tolerance",
+    danger: "physical safety risk",
+  };
+  return {
+    profile,
+    strongestPreference: strongest ? labels[strongest[0]] : "balanced conditions",
+    summary: `Lifestyle fit compares your sliders with qualitative ${labels.earnings}, ${labels.travel}, ${labels.stress} and ${labels.danger} signals. It is a discussion prompt, not a guarantee.`,
+  };
+}
+
+export function rankCareerRoutes(routes, answers, selectedSignals, preferences = DEFAULT_LIFESTYLE_PREFERENCES) {
   const uniqueSignals = getSelectedSignals(answers, selectedSignals);
 
   return [...routes]
     .map((route) => {
-      const score = getRouteScore(route, uniqueSignals);
+      const signalScore = getRouteScore(route, uniqueSignals);
+      const preferenceScore = getPreferenceScore(route, preferences);
+      const score = signalScore + preferenceScore;
       const maxScore = Object.values(route.signalWeights ?? {}).reduce((total, weight) => total + weight, 0);
-      const matchPercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+      const matchPercent = maxScore > 0 ? Math.round((signalScore / maxScore) * 100) : 0;
       const explanation = explainRoute(route, uniqueSignals);
 
       return {
@@ -65,6 +170,9 @@ export function rankCareerRoutes(routes, answers, selectedSignals) {
         score,
         matchPercent,
         explanation,
+        signalScore,
+        preferenceScore,
+        preferenceFit: explainPreferenceFit(route, preferences),
       };
     })
     .sort((a, b) => b.score - a.score || b.matchPercent - a.matchPercent || a.title.localeCompare(b.title));
