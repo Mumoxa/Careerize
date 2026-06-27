@@ -1,0 +1,101 @@
+export const SOURCES = {
+  OFO_2021: {
+    id: "dhet-ofo-2021",
+    title: "DHET Organising Framework for Occupations 2021",
+    type: "government-classification",
+    url: "https://www.dhet.gov.za/SitePages/OFO.aspx",
+    accessedAt: "2026-06-27",
+    confidence: 85,
+    supports: ["occupation-title", "alternative-titles", "occupation-code", "skill-level", "occupation-description"],
+    note: "Official South African government occupational classification system covering all 1,554 occupations in the labour market. Published by the Department of Higher Education and Training.",
+  },
+  OIHD_2024: {
+    id: "dhet-oihd-2024",
+    title: "DHET 2024 National List of Occupations in High Demand",
+    type: "government-list",
+    url: "https://www.gov.za/sites/default/files/gcis_document/202404/50510gen2414.pdf",
+    accessedAt: "2026-06-27",
+    confidence: 80,
+    supports: ["occupation-title", "occupation-code", "high-demand-status", "minimum-qualification"],
+    note: "350 occupations identified as in high demand from the OFO 2021 framework. Gazette 50510, General Notice 2414.",
+  },
+  SAQA_NQF: {
+    id: "saqa-nqf",
+    title: "SAQA NQF Framework",
+    type: "government-framework",
+    url: "https://www.saqa.org.za/",
+    accessedAt: "2026-06-27",
+    confidence: 90,
+    supports: ["nqf-level", "qualification-type", "credit-value"],
+    note: "South African Qualifications Authority. Maintains the NQF framework and qualifications database.",
+  },
+  DHET_PROVIDERS: {
+    id: "dhet-providers",
+    title: "DHET Registered Private Colleges and Providers",
+    type: "government-register",
+    url: "https://www.dhet.gov.za/",
+    accessedAt: "2026-06-27",
+    confidence: 75,
+    supports: ["provider-name", "provider-type", "registration-status"],
+    note: "DHET registers and publishes lists of private colleges, TVET colleges, and higher education institutions.",
+  },
+  CHE_ACCREDITATION: {
+    id: "che-accreditation",
+    title: "Council on Higher Education Accreditation",
+    type: "statutory-body",
+    url: "https://www.che.ac.za/",
+    accessedAt: "2026-06-27",
+    confidence: 85,
+    supports: ["programme-accreditation", "higher-education-quality"],
+    note: "CHE accredits higher education programmes and publishes the HEQC register.",
+  },
+  QCTO: {
+    id: "qcto",
+    title: "Quality Council for Trades and Occupations",
+    type: "statutory-body",
+    url: "https://www.qcto.org.za/",
+    accessedAt: "2026-06-27",
+    confidence: 75,
+    supports: ["occupational-qualification", "trade-test", "occupational-certificate"],
+    note: "QCTO oversees occupational qualifications, trade tests, and the OQSF framework.",
+  },
+  STATSSA_OCCUPATIONS: {
+    id: "statssa-occupations",
+    title: "Statistics South Africa Occupational Code List",
+    type: "government-classification",
+    url: "https://www.statssa.gov.za/?page_id=4528",
+    accessedAt: "2026-06-27",
+    confidence: 70,
+    supports: ["occupation-code", "occupation-title"],
+    note: "StatsSA maintains occupational codes for census and survey purposes, aligned with the OFO framework.",
+  },
+  LABOUR_GUIDE: {
+    id: "labour-guide",
+    title: "South African Labour Guide - Occupations",
+    type: "industry-reference",
+    url: "https://www.labourguide.co.za/",
+    accessedAt: "2026-06-27",
+    confidence: 60,
+    supports: ["occupation-description", "industry-context"],
+    note: "Reference for South African labour law and occupational information.",
+  },
+};
+
+export const OFO_MAJOR_GROUPS = [
+  { code: 0, title: "Armed Forces Occupations", skillLevel: [1, 4] },
+  { code: 1, title: "Managers", skillLevel: [3, 4] },
+  { code: 2, title: "Professionals", skillLevel: 4 },
+  { code: 3, title: "Technicians and Associate Professionals", skillLevel: 3 },
+  { code: 4, title: "Clerical Support Workers", skillLevel: 2 },
+  { code: 5, title: "Service and Sales Workers", skillLevel: 2 },
+  { code: 6, title: "Skilled Agricultural, Forestry, Fishery, Craft and Related Trades Workers", skillLevel: 2 },
+  { code: 7, title: "Plant and Machine Operators and Assemblers", skillLevel: 2 },
+  { code: 8, title: "Elementary Occupations", skillLevel: 1 },
+  { code: 9, title: "Other Occupations Not Elsewhere Classified", skillLevel: [1, 4] },
+];
+
+export function getSourceStatus(baseConfidence) {
+  if (baseConfidence >= 80) return "verified";
+  if (baseConfidence >= 60) return "source_found_needs_review";
+  return "editorial_only";
+}

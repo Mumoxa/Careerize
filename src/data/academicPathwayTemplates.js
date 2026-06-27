@@ -46,6 +46,9 @@ export const STREAM_TO_PATHWAY_TEMPLATE = {
   "Informal, entrepreneurship and community economy": { kind: "entrepreneur", profile: "entrepreneur" },
   "Science, research and frontier careers": { kind: "science", profile: "science" },
   "Arts, culture, heritage and society": { kind: "creative", profile: "portfolio" },
+  "Management, strategy and leadership": { kind: "people", profile: "mixed" },
+  "Elementary and entry-level work": { kind: "practical", profile: "vocational" },
+  "Armed forces and security services": { kind: "public", profile: "public" },
 };
 
 export const PATHWAY_TEMPLATE_PRESETS = {
