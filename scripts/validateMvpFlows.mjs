@@ -1,6 +1,6 @@
 import { CAREER_ROUTES } from "../src/data/careerCatalog.js";
 import { CAREER_ACADEMIC_PATHWAY_INDEX } from "../src/data/careerPathwayGraph.js";
-import { rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
+import { DEFAULT_LIFESTYLE_PREFERENCES, getPreferenceScore, rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
 import { assessSubjectRisk } from "../src/lib/subjectRisk.js";
 
 function fail(message) {
@@ -18,6 +18,20 @@ if (careRanked[0].stream !== "Health, care and social services") fail(`Care tags
 const software = CAREER_ROUTES.find((route) => route.id === "software-developer");
 const pathway = CAREER_ACADEMIC_PATHWAY_INDEX[software.id]?.academicPathway;
 if (!pathway) fail("Missing academic pathway for software developer.");
+
+const neutralPreferenceScore = getPreferenceScore(software, DEFAULT_LIFESTYLE_PREFERENCES);
+if (neutralPreferenceScore !== 0) fail(`Neutral lifestyle preferences should not affect ranking; got ${neutralPreferenceScore}.`);
+
+const preferenceRanked = rankCareerRoutes(CAREER_ROUTES, {}, [], { ...DEFAULT_LIFESTYLE_PREFERENCES, earnings: 90 });
+if (preferenceRanked.some((route) => !route.preferenceFit?.summary || !Number.isFinite(route.preferenceScore))) {
+  fail("Preference ranking did not attach preference fit metadata to every route.");
+}
+
+const neutralSoftware = rankCareerRoutes([software], {}, [], DEFAULT_LIFESTYLE_PREFERENCES)[0];
+const earningsWeightedSoftware = rankCareerRoutes([software], {}, [], { ...DEFAULT_LIFESTYLE_PREFERENCES, earnings: 90 })[0];
+if (neutralSoftware.matchPercent !== earningsWeightedSoftware.matchPercent) {
+  fail("Lifestyle preferences should not inflate signal match percentages.");
+}
 
 const greenRisk = assessSubjectRisk(pathway, {
   currentSubjects: ["Mathematics", "Information Technology"],

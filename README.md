@@ -2,27 +2,29 @@
 
 Careerize is a free, independent career-intelligence platform for South African learners, school leavers, parents, teachers and advisors who need to understand how school subjects connect to qualifications, training routes and real work.
 
-The corrected product direction is a **subject-choice-to-career pathway engine** for Grade 9-12 learners, not a static career list and not a course marketplace.
+The product direction is a **subject-choice-to-career pathway engine** for Grade 9-12 learners, not a static career list and not a course marketplace.
 
-## Current status
+## Current Status
 
-Careerize is at **expanded starter taxonomy + pathway-engine design** stage.
+Careerize is at **expanded public guidance SPA + pathway-engine foundation** stage.
 
-The live catalog currently covers **344 starter career routes** across **15 South African-first macro streams**. The breadth exists in the app catalog, but the next serious build is not more generic career dumping. The priority is to connect careers to Grade 10 subject decisions, Grade 12 exit requirements, NQF-aware qualification routes, provider-specific entry criteria, accreditation checks and first-work entry points.
+The live public app is a Vite/React single-page application. It currently supports account-free exploration, deterministic route ranking, career-reality sliders, subject-risk prompts and pathway template guidance.
 
-## Core product idea
+The catalog covers **1,050 starter career routes** across **18 South African-first macro streams**. This breadth is useful for exploration, but exact provider requirements, APS thresholds, salary data, accreditation status and labour-market claims remain marked for source verification before they can be treated as facts.
+
+## Core Product Idea
 
 Careerize works backwards from a possible career direction:
 
 ```text
 Career interest
-→ Realistic career picture
-→ Qualification route
-→ Provider-specific entry requirements
-→ Grade 12 marks / APS where available
-→ Grade 10 subject choice
-→ First-work entry point
-→ Career progression and adjacent options
+-> Realistic career picture
+-> Qualification route
+-> Provider-specific entry requirements
+-> Grade 12 marks / APS where available
+-> Grade 10 subject choice
+-> First-work entry point
+-> Career progression and adjacent options
 ```
 
 A learner should be able to ask:
@@ -34,45 +36,113 @@ A learner should be able to ask:
 - What qualification do I need, what is the NQF level, and what entry criteria must I verify?
 - What junior job can I realistically enter first?
 
-## Current stack
+## Current Stack
 
 - Vite
 - React
 - Tailwind CSS
-- Framer Motion
 - Lucide React icons
-- Supabase Auth and Row Level Security when configured
+- Playwright and axe accessibility checks
+- Optional Supabase schema and persistence helpers for a future saved-profile flow
 
-## Current product surface
+## Current Product Surface
 
 The current app includes:
 
-- South African-first landing page and audience segmentation.
+- South African-first landing page and learner guidance boundaries.
 - Simple discovery questions.
 - Interest tags.
+- Career reality sliders for earning ambition, travel/movement, stress tolerance and safety/danger tolerance.
 - Deterministic career-route signals.
 - Transparent recommendation explanations showing matched signals, missing signals, confidence and next step.
-- 344 structured starter career routes across 15 macro streams.
+- 1,050 structured starter career routes across 18 macro streams.
 - Structured starter career profiles with day-in-life, tasks, subjects, qualification/pathway notes, misconceptions, best/worst parts and uncertainty states.
 - Source registry and confidence display for starter content.
 - Qualitative earning-potential insights instead of detailed salary information.
 - Demand sections that clearly show when source-verified data is not yet available.
 - Low-data mode toggle.
-- Learner-owned saved profile and discovery-result persistence through Supabase when configured.
-- Local-browser demo fallback when Supabase environment variables are absent.
+- URL-state sharing for selected interest signals and the open pathway.
 - South African pathway readiness across NSC, university, TVET, learnership, apprenticeship, short-course, work and pivot routes.
 
-## New pathway-engine documentation
+Supabase schema and persistence helpers exist, but the public UI does not currently expose account creation, login or saved profiles.
 
-```text
-docs/SUBJECT_TO_CAREER_ENGINE.md
-docs/QUALIFICATION_PATHWAY_DATA_MODEL.md
-docs/BUILD_SEQUENCE_SUBJECT_CHOICE_ENGINE.md
+## Local Development
+
+Use Node from `.node-version` / `.nvmrc`, then install dependencies:
+
+```bash
+npm ci
+npm run dev
 ```
 
-These files define the updated product direction: Grade 9-12 subject choice first, then qualification mapping, then source-backed career enrichment.
+The Vite dev server prints the local URL, usually `http://localhost:5173`.
 
-## SA foundation data layer
+## Environment Variables
+
+The current public app does not require environment variables.
+
+Optional future Supabase configuration:
+
+```text
+VITE_SUPABASE_URL=your-project-url
+VITE_SUPABASE_ANON_KEY=your-public-anon-key
+```
+
+The Supabase anon key is public frontend configuration, not a server secret. Do not commit `.env` files. Before enabling account UX, test row-level security with at least two separate learner accounts and verify export/delete flows.
+
+## Test And Build Commands
+
+Run the full local production check:
+
+```bash
+npm run check
+```
+
+This runs catalog validation, OFO/source validation, SA foundation validation, academic-pathway validation, public launch copy checks, MVP flow guardrails and the production build.
+
+Run browser smoke and accessibility checks:
+
+```bash
+npm run test:browser
+```
+
+Run dependency vulnerability checks:
+
+```bash
+npm run audit:deps
+```
+
+The browser suite uses Playwright. If Chromium is not installed locally, run:
+
+```bash
+npx playwright install chromium
+```
+
+## Production Build
+
+```bash
+npm run build
+```
+
+The production artifact is written to `dist/`.
+
+## Deployment
+
+The GitHub Pages deployment workflow builds from `main`.
+
+Deployment checklist:
+
+- `npm ci`
+- `npm run check`
+- `npm run test:browser`
+- Confirm `dist/` was generated by the workflow.
+- Confirm public copy still says starter guidance, template guidance and provider verification where needed.
+- Confirm no `.env` file or private secret is committed.
+- If Supabase is enabled in a future release, verify RLS with two separate learner accounts before launch.
+
+Rollback is currently handled by redeploying a previous successful `main` commit or reverting the faulty commit and letting the Pages workflow deploy again.
+
+## SA Foundation Data Layer
 
 The repo includes a separate South African foundation-data workbench:
 
@@ -80,7 +150,7 @@ The repo includes a separate South African foundation-data workbench:
 data/sa-foundation/
 ```
 
-This folder is not duplicate frontend catalog content. It preserves source/backbone data and now includes the first explicit structures for subject-choice and qualification-pathway mapping.
+This folder is not duplicate frontend catalog content. It preserves source/backbone data and now includes structures for subject-choice, qualification-pathway and research-archive alignment.
 
 Key files:
 
@@ -88,95 +158,63 @@ Key files:
 data/sa-foundation/README.md
 data/sa-foundation/careerize_sa_repository_manifest.csv
 data/sa-foundation/careerize_sa_top100_build_queue.csv
-data/sa-foundation/careerize_sa_graph_summary.csv
+data/sa-foundation/careerize_sa_research_alignment.csv
+data/sa-foundation/careerize_sa_starter_route_research_links.csv
+data/sa-foundation/careerize_sa_starter_route_research_gaps.csv
+data/sa-foundation/careerize_sa_research_graph_nodes.csv
+data/sa-foundation/careerize_sa_research_graph_edges.csv
 data/sa-foundation/qualification_pathway_schema.csv
 data/sa-foundation/subject_choice_rules_seed.csv
 data/sa-foundation/accreditation_source_registry.csv
-docs/SA_FOUNDATION_IMPORT_REVIEW.md
 ```
 
-## Current career coverage
+Research-link coverage as of the current generated layer:
 
-The 344 starter routes are spread across:
+- 1,702 canonical research careers imported from the source archive.
+- 589 of 1,050 live starter routes have a direct, suggestion or curated research link.
+- 461 live starter routes are tracked in `data/sa-foundation/careerize_sa_starter_route_research_gaps.csv`.
+- The Top 100 enrichment backlog is fully linked in `data/sa-foundation/careerize_sa_top100_research_gaps.csv`, which is intentionally header-only.
+
+Regenerate the research layer with:
+
+```bash
+npm run generate:foundation-research
+```
+
+## Current Career Coverage
 
 | Macro stream | Starter routes |
 |---|---:|
-| Technology, data and AI | 36 |
-| Skilled trades, construction and engineering | 30 |
-| Finance, admin and business operations | 28 |
-| Creative, media and design | 26 |
-| Health, care and social services | 25 |
-| Science, research and frontier careers | 25 |
-| Agriculture, food and environment | 24 |
-| Manufacturing, mining and energy | 22 |
-| Informal, entrepreneurship and community economy | 20 |
-| Law, public service and public safety | 20 |
-| Sales, marketing and customer work | 20 |
-| Hospitality, tourism, sport and events | 18 |
-| Logistics, transport and supply chain | 18 |
-| Arts, culture, heritage and society | 16 |
-| Education, training and youth development | 16 |
-| **Total** | **344** |
+| Technology, data and AI | 89 |
+| Skilled trades, construction and engineering | 83 |
+| Informal, entrepreneurship and community economy | 81 |
+| Manufacturing, mining and energy | 74 |
+| Finance, admin and business operations | 72 |
+| Health, care and social services | 69 |
+| Management, strategy and leadership | 66 |
+| Sales, marketing and customer work | 57 |
+| Agriculture, food and environment | 54 |
+| Creative, media and design | 54 |
+| Hospitality, tourism, sport and events | 52 |
+| Law, public service and public safety | 50 |
+| Logistics, transport and supply chain | 44 |
+| Education, training and youth development | 43 |
+| Elementary and entry-level work | 43 |
+| Arts, culture, heritage and society | 42 |
+| Armed forces and security services | 39 |
+| Science, research and frontier careers | 38 |
+| **Total** | **1,050** |
 
-For the full coverage note, see:
+For the full coverage note, see `docs/CAREER_COVERAGE_MANIFEST.md`.
 
-```text
-docs/CAREER_COVERAGE_MANIFEST.md
-```
-
-## Documentation
-
-```text
-docs/SUBJECT_TO_CAREER_ENGINE.md
-docs/QUALIFICATION_PATHWAY_DATA_MODEL.md
-docs/BUILD_SEQUENCE_SUBJECT_CHOICE_ENGINE.md
-docs/CAREER_COVERAGE_MANIFEST.md
-docs/SA_FOUNDATION_IMPORT_REVIEW.md
-docs/FULL_OVERVIEW_REVIEW.md
-docs/market-insights-decision-log.md
-docs/REPO_ASSESSMENT.md
-docs/PRODUCT_GAP_AUDIT.md
-docs/SOURCES.md
-```
-
-`docs/SUBJECT_TO_CAREER_ENGINE.md` is the active product direction file for the corrected Careerize strategy.
-
-## Run locally
-
-```bash
-npm install
-npm run dev
-```
-
-## Production build
-
-```bash
-npm run check
-```
-
-`npm run check` validates the career catalog, validates the SA foundation workbench and then builds the app.
-
-## Supabase saved-profile setup
-
-The app works without Supabase in local demo mode. To enable cross-device learner login and saved learner profiles:
-
-1. Create a Supabase project.
-2. Run `supabase/schema.sql` in the Supabase SQL editor.
-3. Set these frontend environment variables:
-
-```text
-VITE_SUPABASE_URL=your-project-url
-VITE_SUPABASE_ANON_KEY=your-public-anon-key
-```
-
-The anon key is public frontend configuration, not a server secret. Do not commit `.env` files.
-
-## Career catalog structure
+## Architecture Notes
 
 Career data lives in:
 
 ```text
 src/data/careerCatalog.js
+src/data/masterCareerList.js
+src/data/streams/
 ```
 
 Scoring logic lives in:
@@ -185,51 +223,23 @@ Scoring logic lives in:
 src/lib/scoring.js
 ```
 
-Saved learner profile and discovery persistence lives in:
+Academic pathway template generation lives in:
+
+```text
+src/data/academicPathwayTemplates.js
+src/data/careerPathwayGraph.js
+```
+
+Optional saved learner profile persistence helpers live in:
 
 ```text
 src/lib/savedDiscovery.js
+supabase/schema.sql
 ```
 
-The current catalog is generated from macro-stream seed groups plus shared field templates. This creates the broad exploration universe now while keeping the content marked as starter/editorial until deeper source-backed enrichment is added.
+These helpers are not currently exposed in the public UI.
 
-## Qualification and subject-choice rules
-
-Careerize must support the following route types:
-
-- university route
-- university of technology route
-- TVET route
-- trade route
-- occupational route
-- learnership route
-- workplace route
-- professional body route
-- vendor certification route
-- self-study route
-- portfolio route
-- bridging route
-
-Careerize must support more than degrees:
-
-- Higher Certificates
-- Diplomas
-- Advanced Diplomas
-- Bachelor's Degrees
-- Extended Degrees
-- Occupational Certificates
-- National Certificate Vocational programmes
-- NATED / Report 191 routes
-- Learnerships
-- Apprenticeships
-- Trade Tests
-- Professional Certificates and designations
-- Vendor certificates
-- Short courses
-- Bridging programmes
-- Portfolio and workplace routes
-
-## Content rules
+## Content Rules
 
 - Every route ID must be unique.
 - Every route must include required display fields.
@@ -240,20 +250,14 @@ Careerize must support more than degrees:
 - Do not invent qualification names, APS scores, subject thresholds, accreditation status or provider availability.
 - If entry requirements vary by institution, say `varies by institution`.
 - If an APS score is not available, say `not publicly confirmed`.
-- If a qualification or vendor certification is retired, mark it as `retired_or_discontinued` and store the current replacement route if verified.
 - Career content must be honest, plain-English and useful to an uninformed learner.
-- Content must explain jargon and avoid assuming a university-bound, privileged or already-informed user.
-- Content must include the unglamorous reality of the work, not just the attractive parts.
 - Personalised guidance must explain options and next steps; it must not tell users what they must do.
-- Avoid overclaim phrases such as “perfect match”, “guaranteed” or “100% accurate”.
+- Avoid overclaim phrases such as `perfect match`, `guaranteed` or `100% accurate`.
 
-## Deployment
+## Known Limitations
 
-Deployment trigger: latest aligned frontend should deploy from `main`.
-
-## Known technical debt
-
-- A `package-lock.json` should be generated from a clean local install and committed. Until that is done, CI uses `npm install` instead of `npm ci`.
-- Full admin content tooling, bulk import, real demand heatmaps, PWA/offline support, i18n files, accessibility tests and e2e tests are still future work.
-- Detailed salary data is intentionally deferred. Careerize should stay with qualitative earning-potential insight unless there is a strong source-backed product reason to add salary detail later.
-- The new subject-choice and qualification-pathway files are schema/seed layers. They still need frontend components, validation scripts and source-backed provider imports.
+- This is not yet a fully provider-verified career intelligence graph.
+- Account UX, Supabase RLS verification with real test users, admin content tooling, bulk import, real demand heatmaps, PWA/offline support and i18n are still future work.
+- 461 live starter routes still need stronger research alignment.
+- Detailed salary data is intentionally deferred.
+- Subject-choice and qualification-pathway data are schema/seed/template layers and still need source-backed provider imports.

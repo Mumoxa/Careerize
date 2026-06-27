@@ -1,4 +1,4 @@
-import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS, PATHWAY_TYPES, SOURCE_REGISTRY } from "../src/data/careerCatalog.js";
+import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS, PATHWAY_TYPES, SOURCE_REGISTRY } from "../src/data/careerCatalog.js";
 import { rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
 
 const errors = [];
@@ -6,6 +6,27 @@ const routeIds = new Set();
 const sourceIds = new Set(SOURCE_REGISTRY.map((source) => source.id));
 const pathwayTypes = new Set(PATHWAY_TYPES.map((pathway) => pathway.id));
 const signalValues = new Set(INTEREST_SIGNALS.map((signal) => signal.value));
+
+if (CAREER_COVERAGE_SUMMARY.totalRoutes !== CAREER_ROUTES.length) {
+  errors.push(`Coverage summary totalRoutes (${CAREER_COVERAGE_SUMMARY.totalRoutes}) does not match generated route count (${CAREER_ROUTES.length}).`);
+}
+
+const actualStreamCounts = CAREER_ROUTES.reduce((counts, route) => {
+  counts[route.stream] = (counts[route.stream] ?? 0) + 1;
+  return counts;
+}, {});
+
+for (const [stream, count] of Object.entries(actualStreamCounts)) {
+  if (CAREER_COVERAGE_SUMMARY.streamCounts?.[stream] !== count) {
+    errors.push(`Coverage summary count for "${stream}" is ${CAREER_COVERAGE_SUMMARY.streamCounts?.[stream] ?? "missing"} but generated ${count}.`);
+  }
+}
+
+for (const stream of Object.keys(CAREER_COVERAGE_SUMMARY.streamCounts ?? {})) {
+  if (!actualStreamCounts[stream]) {
+    errors.push(`Coverage summary includes unknown stream "${stream}".`);
+  }
+}
 
 for (const source of SOURCE_REGISTRY) {
   if (!source.id || !source.title || !source.type || !source.url || !source.accessedAt || !Number.isFinite(source.confidence)) {

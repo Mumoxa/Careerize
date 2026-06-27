@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import learnersCollaborating640 from "./assets/learners-collaborating-640.jpg";
 import learnersCollaborating1280 from "./assets/learners-collaborating-1280.jpg";
-import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
+import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
 import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph.js";
 import { assessSubjectRisk } from "./lib/subjectRisk.js";
 import {
@@ -221,7 +221,7 @@ export default function App() {
               className="aspect-[16/10] w-full object-cover"
             />
             <div className="grid gap-2 bg-forest-900 p-5 text-cream-50 sm:grid-cols-3">
-              <HeroFact value="344" label="starter career profiles" />
+              <HeroFact value={CAREER_COVERAGE_SUMMARY.totalRoutes.toLocaleString("en-ZA")} label="starter career profiles" />
               <HeroFact value="Signals" label="not suitability scores" />
               <HeroFact value="Provider check" label="before subject choices" />
             </div>
@@ -394,7 +394,7 @@ export default function App() {
         <div className="mx-auto flex max-w-[1240px] flex-col gap-6 px-5 py-10 text-sm text-forest-800 md:flex-row md:items-center md:justify-between">
           <a href="#top" className="brand-wordmark">Careerize</a>
           <p>Explore possible routes. Verify the details.</p>
-          <p>© 2026 Careerize · South Africa</p>
+          <p>(c) 2026 Careerize - South Africa</p>
         </div>
       </footer>
     </>
@@ -533,8 +533,8 @@ function PathwayDetail({ route, pathwayRecord, selectedSubjects, onToggleSubject
               {SUBJECT_OPTIONS.map((subject) => {
                 const selected = selectedSubjects.includes(subject);
                 return (
-                  <button type="button" key={subject} onClick={() => onToggleSubject(subject)} aria-pressed={selected} className={`rounded-full border px-3 py-2 text-xs font-semibold ${selected ? "border-forest-700 bg-sage-100 text-forest-800" : "border-sage-300 bg-cream-50 text-forest-800"}`}>
-                    {subject}{selected ? " ✓" : ""}
+                  <button type="button" key={subject} onClick={() => onToggleSubject(subject)} aria-pressed={selected} className={`inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold ${selected ? "border-forest-700 bg-sage-100 text-forest-800" : "border-sage-300 bg-cream-50 text-forest-800"}`}>
+                    <span>{subject}</span>{selected ? <Check size={13} aria-hidden="true" /> : null}
                   </button>
                 );
               })}

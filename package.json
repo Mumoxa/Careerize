@@ -15,11 +15,12 @@
     "validate:academic-pathways": "node scripts/validateAcademicPathways.mjs",
     "validate:public-copy": "node scripts/validatePublicLaunchCopy.mjs",
     "validate:ofo-codes": "node scripts/validateOfoCodes.mjs",
+    "audit:deps": "node scripts/runNpmAudit.mjs",
     "check": "npm run validate:catalog && npm run validate:ofo-codes && npm run validate:foundation && npm run validate:academic-pathways && npm run validate:public-copy && npm test && npm run build",
     "check:launch": "npm run check && npm run test:browser",
     "preview": "vite preview",
     "test": "node scripts/validateMvpFlows.mjs",
-    "test:browser": "playwright test",
+    "test:browser": "npm run build && node scripts/runPlaywright.mjs",
     "test:smoke": "playwright test tests/e2e/public-launch.smoke.spec.js",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.js"
   },

@@ -1,51 +1,67 @@
-# Careerize architecture review
+# Careerize Architecture Review
 
-## Current architecture
+## Current Architecture
 
-Careerize is a Vite React single-page application styled with Tailwind CSS. The main application logic lives in `src/App.jsx`, career data lives in `src/data/careerCatalog.js`, deterministic scoring utilities live in `src/lib/scoring.js`, and learner-owned persistence lives in `src/lib/savedDiscovery.js`.
+Careerize is a Vite React single-page application styled with Tailwind CSS. The current production surface is a static frontend deployed from `dist/`.
 
-## Current product surface
+Main runtime areas:
 
-- Public landing page and interactive discovery demo.
-- Learner discovery questions and interest tags.
-- Deterministic career-route signals.
-- Learner-owned saved profile and discovery-result persistence through Supabase Auth when configured.
-- Local-browser demo fallback when Supabase environment variables are absent.
-- Career reality cards with day-to-day work, tools, stress, remote potential, growth, best and worst parts.
-- Trust section explaining privacy, independence and no commercial influence.
+- `src/App.jsx` - public app shell, discovery flow, route filters, pathway detail and trust copy.
+- `src/data/careerCatalog.js` - generated learner-facing route catalog.
+- `src/data/masterCareerList.js` and `src/data/streams/` - OFO-linked source route groups.
+- `src/data/academicPathwayTemplates.js` and `src/data/careerPathwayGraph.js` - pathway templates and generated route-to-pathway records.
+- `src/lib/scoring.js` - deterministic ranking, preference scoring and guidance-language guardrails.
+- `src/lib/subjectRisk.js` - template-based subject-risk prompts.
+- `src/lib/savedDiscovery.js` - optional Supabase/local persistence helpers for a future saved-profile feature.
+- `supabase/schema.sql` - optional learner-owned data schema with RLS.
+
+## Current Product Surface
+
+- Public landing page and interactive discovery flow.
+- Learner discovery questions, interest tags and career-reality sliders.
+- Deterministic career-route ranking.
+- Route search and macro-stream filtering.
+- Academic pathway template guidance for every starter route.
+- Subject-risk prompts with provider-verification limits.
+- Trust section explaining account-free public launch boundaries.
 - No employer dashboard, payment flow, CV upload, recruitment workflow, course sales or commercial partner pipeline.
 
-## Supabase domain boundary
+The public UI does not currently expose account creation, login, saved profiles or cross-device persistence.
 
-Supabase may support:
+## Supabase Domain Boundary
+
+Supabase may support a future saved-profile release:
 
 - `profiles`: learner-owned editable profile memory.
 - `results`: latest deterministic result snapshot.
-- `sessions`: discovery history for learner reflection and product improvement.
-- `privacy`: future consent, correction and deletion requests.
+- `sessions`: discovery history for learner reflection.
+- `privacy`: future consent, correction, export and deletion flows.
 
 Supabase must not support employer access, CV unlocks, hiring workflows, recruitment pipelines, payment records or sponsor targeting.
 
-## Key risks
+Before enabling account UX, verify `supabase/schema.sql` with two separate learner accounts and test export/delete flows.
+
+## Key Risks
 
 | Severity | Risk | Mitigation |
-| --- | --- | --- |
-| High | Route signals could be mistaken for a verdict. | Use transparent signal language and caveats. |
-| High | Saved profiles could drift into CV or candidate records. | Keep fields lightweight and learner-owned; prohibit CV/recruitment use. |
-| Medium | Supabase requires careful RLS setup. | Run and verify `supabase/schema.sql` with two test users before launch. |
-| Medium | Main UI is still one large component. | Split into feature components before adding deeper flows. |
-| Medium | No interaction tests yet. | Add component or E2E tests for discovery, saving and restore flows. |
+|---|---|---|
+| High | Route signals could be mistaken for a verdict. | Keep transparent signal language, starter labels and provider-verification caveats. |
+| High | Broad catalog could be mistaken for verified labour-market fact. | Keep demand and salary claims qualitative until source-backed. |
+| High | Saved-profile helpers could be exposed before privacy/RLS verification. | Keep account UX disabled until Supabase RLS, export/delete and privacy copy are tested. |
+| Medium | Main UI is still one large component. | Split into feature components before adding account, admin or deeper pathway flows. |
+| Medium | Research alignment is incomplete for 461 routes. | Keep the generated gap file visible and validate coverage counts. |
+| Medium | No production monitoring is configured. | Add error reporting/analytics only after consent and privacy decisions are documented. |
 
-## AI boundary
+## AI Boundary
 
 AI may draft explanations, summarise learner notes, suggest reflective questions and recommend safe next experiments.
 
 AI must not silently reject, rank for hiring, infer protected traits, make admissions decisions, produce unsupported psychometric claims or hide why a suggestion was made.
 
-## Recommended next architecture work
+## Recommended Next Architecture Work
 
-- Split `src/App.jsx` into discovery, account, trust and career-card components.
-- Add tests for scoring, save/restore and local fallback.
-- Add account deletion and profile correction flows.
-- Add explicit privacy copy before collecting more learner data.
-- Keep any institutional/school features separate from career profile content and route scoring.
+- Split `src/App.jsx` into discovery, route-results, pathway-detail and trust components.
+- Add component-level tests once the UI is split.
+- Add account UX only after privacy copy, RLS verification and deletion/export tests exist.
+- Add a governed content-admin workflow for source-backed career data.
+- Keep school/institution features separate from career profile content and route scoring.

@@ -21,6 +21,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Audit dependencies
+        run: npm run audit:deps
+
       - name: Validate catalog and build app
         run: npm run check
 

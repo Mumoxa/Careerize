@@ -2,6 +2,7 @@ import { defineConfig, devices } from "@playwright/test";
 
 const baseURL = "http://127.0.0.1:4173";
 const executablePath = process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH;
+const managedServer = process.env.CAREERIZE_PLAYWRIGHT_MANAGED_SERVER === "1";
 
 export default defineConfig({
   testDir: "./tests/e2e",
@@ -25,9 +26,11 @@ export default defineConfig({
       },
     },
   ],
-  webServer: {
-    command: "node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173",
-    url: baseURL,
-    reuseExistingServer: !process.env.CI,
-  },
+  webServer: managedServer
+    ? undefined
+    : {
+        command: "node ./node_modules/vite/bin/vite.js --host 127.0.0.1 --port 4173",
+        url: baseURL,
+        reuseExistingServer: !process.env.CI,
+      },
 });
