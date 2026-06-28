@@ -61,7 +61,8 @@ function cleanProfile(profile = {}) {
     preferredName: String(profile.preferredName ?? "").trim(),
     stage: String(profile.stage ?? "").trim(),
     location: String(profile.location ?? "").trim(),
-    subjects: String(profile.subjects ?? "").trim(),
+    subjects: Array.isArray(profile.subjects) ? profile.subjects : [],
+    subjectMarks: profile.subjectMarks && typeof profile.subjectMarks === "object" ? profile.subjectMarks : {},
     notes: String(profile.notes ?? "").trim(),
   };
 }
@@ -155,7 +156,7 @@ export async function loadSavedDiscovery(session) {
   if (supabase && session.provider === "supabase") {
     const { data, error } = await supabase
       .from("careerize_results")
-      .select("answers, selected_signals, ranked_results, best_match, updated_at")
+      .select("answers, selected_signals, reality_preferences, ranked_results, best_match, updated_at")
       .eq("user_id", session.id)
       .maybeSingle();
 
@@ -175,6 +176,7 @@ export async function saveDiscovery(session, discovery) {
   const record = {
     answers: discovery.answers,
     selected_signals: discovery.selectedSignals,
+    reality_preferences: discovery.realityPreferences,
     ranked_results: discovery.rankedResults,
     best_match: discovery.bestMatch,
     updated_at: new Date().toISOString(),
@@ -209,6 +211,7 @@ export async function saveDiscovery(session, discovery) {
       profile_snapshot: profile,
       answers: record.answers,
       selected_signals: record.selected_signals,
+      reality_preferences: record.reality_preferences,
       ranked_results: record.ranked_results,
       best_match: record.best_match,
       match_percent: discovery.matchPercent,

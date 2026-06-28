@@ -8,7 +8,7 @@ Status: imported foundation layer and pathway-engine scaffold, not public claims
 
 This folder preserves the high-value South African career intelligence tables from the supplied workspace without duplicating the live frontend catalog in `src/data/careerCatalog.js`.
 
-The live app catalog currently provides breadth: 344 starter career routes. This foundation layer provides the next depth layer: OFO/OIHD mapping, qualification bridges, graph structure, Top 100 enrichment queue, registration dependencies, specialisations, province notes, source-verification workflow, subject-choice rules and qualification-pathway schema.
+The live app catalog currently provides breadth: 461 mapped career routes. This foundation layer provides the next depth layer: OFO/OIHD mapping, qualification bridges, graph structure, Top 100 enrichment queue, registration dependencies, specialisations, province notes, source-verification workflow, subject-choice rules and qualification-pathway schema.
 
 ## Important product rule
 
@@ -45,6 +45,9 @@ The full qualification database is a long-term target. The immediate learner val
 | `qualification_pathway_schema.csv` | Spreadsheet-ready schema for verified qualification rows. |
 | `subject_choice_rules_seed.csv` | First conservative subject-to-pathway rules for Grade 10-12 planning. |
 | `accreditation_source_registry.csv` | Source registry for SAQA, DHET, CHE, QCTO, Umalusi, SETA, professional body and vendor checks. |
+| `career_qualification_coverage.csv` | Generated 461-row reconciliation showing every live career route and its conservative qualification-family association. Exact provider programmes remain source-verification work. |
+| `career_research_queue.csv` | Generated 461-row source-verification work queue. Every live career has required source categories and high-risk fields blocked until evidence is attached. |
+| `career_research_team_workplan.csv` | Generated 461-row research-team execution plan assigning every route to a lane, phase, primary role, evidence reviewer and learner-safety QA reviewer. |
 
 ## Full workspace assets represented in the manifest
 
@@ -84,4 +87,4 @@ Instead, this folder is the source-backed workbench for future phases:
 
 Convert this folder into a database seed/import layer and add validation scripts that reject public qualification claims without source URL, access date, verification status and confidence score.
 
-Do not add more hand-coded frontend career objects until the subject-choice and qualification-pathway structures are wired into the app.
+Do not add more hand-coded frontend career objects until the subject-choice, research-queue, research-team workplan and qualification-pathway structures are wired into the app.

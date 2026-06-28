@@ -1,5 +1,6 @@
 import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS, PATHWAY_TYPES, SOURCE_REGISTRY } from "../src/data/careerCatalog.js";
-import { rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
+import { evaluatePathwayRisk, rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
+import { SUBJECT_RULES } from "../src/data/subjectRules.js";
 
 const errors = [];
 const routeIds = new Set();
@@ -86,6 +87,19 @@ for (const route of CAREER_ROUTES) {
     }
   }
 
+  if (!Array.isArray(route.qualificationPathways) || route.qualificationPathways.length === 0) {
+    errors.push(`Route ${route.id} has no associated qualification pathway family.`);
+  }
+
+  for (const qualification of route.qualificationPathways ?? []) {
+    if (!qualification.id || !qualification.name || !qualification.type || !qualification.routeType || !qualification.verificationStatus || !qualification.sourceUrl) {
+      errors.push(`Route ${route.id} contains an incomplete qualification pathway association.`);
+    }
+    if (qualification.verificationStatus === "verified" && (!qualification.accessDate || qualification.sourceUrl.includes("required"))) {
+      errors.push(`Route ${route.id} marks qualification ${qualification.id} verified without a dated official source.`);
+    }
+  }
+
   if (route.salary) {
     errors.push(`Route ${route.id} must not carry a salary field. Use qualitative earningPotential instead.`);
   }
@@ -96,6 +110,16 @@ for (const route of CAREER_ROUTES) {
 
   if (!route.demand?.status || !route.demand?.explanation) {
     errors.push(`Route ${route.id} must show a clear demand data status instead of unsupported demand claims.`);
+  }
+  if (!route.evidenceState?.profile || !route.evidenceState?.qualification || !route.evidenceState?.demand || !Array.isArray(route.evidenceState?.verificationRequired)) {
+    errors.push(`Route ${route.id} must expose evidence state and verification requirements.`);
+  }
+
+  for (const dimension of ["earning", "travel", "stress", "danger"]) {
+    const value = route.careerReality?.[dimension];
+    if (!Number.isFinite(value) || value < 0 || value > 100) {
+      errors.push(`Route ${route.id} has invalid career reality dimension ${dimension}.`);
+    }
   }
 
   const guidanceText = [route.summary, route.day, route.worst, route.best, route.earningPotential?.label, route.earningPotential?.explanation, ...(route.misconceptions ?? []), ...(route.fitWarnings ?? [])].join(" ");
@@ -108,15 +132,25 @@ for (const route of CAREER_ROUTES) {
 const sampleAnswers = Object.fromEntries(
   DISCOVERY_QUESTIONS.map((question) => [question.id, question.options[0]?.value]).filter(([, value]) => Boolean(value))
 );
-const ranked = rankCareerRoutes(CAREER_ROUTES, sampleAnswers, []);
+const ranked = rankCareerRoutes(CAREER_ROUTES, sampleAnswers, [], { earning: 80, travel: 25, stress: 45, danger: 20 });
+
+if (CAREER_ROUTES.length !== 461) {
+  errors.push(`Career coverage must account for exactly 461 routes; found ${CAREER_ROUTES.length}.`);
+}
 
 if (ranked.length !== CAREER_ROUTES.length) {
   errors.push("Scoring did not return every career route.");
 }
 
-if (ranked.some((route) => !Number.isFinite(route.score) || !Number.isFinite(route.matchPercent) || !route.explanation?.confidenceLabel)) {
-  errors.push("Scoring produced an invalid score, match percentage or explanation.");
+if (ranked.some((route) => !Number.isFinite(route.score) || !Number.isFinite(route.matchPercent) || !route.explanation?.confidenceLabel || !route.realityFit?.matchPercent)) {
+  errors.push("Scoring produced an invalid score, match percentage, reality fit or explanation.");
 }
+
+const engineeringRoute = CAREER_ROUTES.find((route) => route.title === "Civil Engineering Technician");
+const engineeringRiskWithoutSubjects = evaluatePathwayRisk(engineeringRoute, [], {}, SUBJECT_RULES);
+const engineeringRiskWithSubjects = evaluatePathwayRisk(engineeringRoute, ["Mathematics", "Physical Sciences"], { Mathematics: 70, "Physical Sciences": 68 }, SUBJECT_RULES);
+if (engineeringRiskWithoutSubjects.status !== "red") errors.push("Engineering route should flag red when Mathematics and Physical Sciences are absent.");
+if (engineeringRiskWithSubjects.status !== "green") errors.push("Engineering route should flag green when Mathematics and Physical Sciences are selected with strong estimated marks.");
 
 if (errors.length) {
   console.error("Career catalog validation failed:\n");

@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   ArrowRight,
   ArrowUpRight,
+  AlertTriangle,
   Brain,
   Briefcase,
   Building2,
@@ -34,7 +35,8 @@ import {
   X,
   Zap,
 } from "lucide-react";
-import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
+import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
+import { SCHOOL_SUBJECTS, SUBJECT_RULES } from "./data/subjectRules";
 import {
   getCurrentSession,
   hasSupabaseConfig,
@@ -44,7 +46,7 @@ import {
   signInOrCreateLearner,
   signOutLearner,
 } from "./lib/savedDiscovery";
-import { getProfileProgress, rankCareerRoutes, toggleSignal } from "./lib/scoring";
+import { DEFAULT_REALITY_PREFERENCES, REALITY_PREFERENCE_LABELS, evaluatePathwayRisk, getProfileProgress, rankCareerRoutes, toggleSignal } from "./lib/scoring";
 
 const ICONS = {
   Brain,
@@ -69,15 +71,33 @@ const EMPTY_PROFILE = {
   preferredName: "",
   stage: "",
   location: "",
-  subjects: "",
+  subjects: [],
+  subjectMarks: {},
   notes: "",
 };
+
+function normaliseLearnerProfile(profile = {}) {
+  const subjects = Array.isArray(profile.subjects)
+    ? profile.subjects
+    : String(profile.subjects ?? "").split(",").map((item) => item.trim()).filter(Boolean);
+  return { ...EMPTY_PROFILE, ...profile, subjects, subjectMarks: profile.subjectMarks ?? {} };
+}
+
+function normaliseRealityPreferences(preferences = {}) {
+  return Object.fromEntries(
+    Object.entries(DEFAULT_REALITY_PREFERENCES).map(([key, fallback]) => {
+      const value = Number(preferences[key] ?? fallback);
+      return [key, Number.isFinite(value) ? Math.min(100, Math.max(0, value)) : fallback];
+    })
+  );
+}
 
 export default function App() {
   const [open, setOpen] = useState(false);
   const [answers, setAnswers] = useState({});
   const [selectedSignals, setSelectedSignals] = useState(DEFAULT_SIGNALS);
   const [manualActiveId, setManualActiveId] = useState(null);
+  const [realityPreferences, setRealityPreferences] = useState(DEFAULT_REALITY_PREFERENCES);
   const [learnerProfile, setLearnerProfile] = useState(EMPTY_PROFILE);
   const [session, setSession] = useState(null);
   const [savedAt, setSavedAt] = useState(null);
@@ -87,13 +107,17 @@ export default function App() {
   const [isAuthLoading, setIsAuthLoading] = useState(true);
 
   const ranked = useMemo(
-    () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals),
-    [answers, selectedSignals]
+    () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals, realityPreferences),
+    [answers, selectedSignals, realityPreferences]
   );
 
   const bestMatch = ranked[0];
   const active = ranked.find((route) => route.id === manualActiveId) || bestMatch;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
+  const pathwayRisk = useMemo(
+    () => evaluatePathwayRisk(active, learnerProfile.subjects, learnerProfile.subjectMarks, SUBJECT_RULES),
+    [active, learnerProfile.subjects, learnerProfile.subjectMarks]
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -112,12 +136,13 @@ export default function App() {
           if (cancelled) return;
 
           if (profile) {
-            setLearnerProfile({ ...EMPTY_PROFILE, ...profile });
+            setLearnerProfile(normaliseLearnerProfile(profile));
           }
 
           if (saved) {
             setAnswers(saved.answers ?? {});
             setSelectedSignals(saved.selected_signals ?? DEFAULT_SIGNALS);
+            setRealityPreferences(normaliseRealityPreferences(saved.reality_preferences));
             setManualActiveId(saved.best_match ?? null);
             setSavedAt(saved.updated_at ?? null);
             setAuthNotice("Your saved learner profile and discovery view have been restored.");
@@ -146,13 +171,35 @@ export default function App() {
     setManualActiveId(null);
   }
 
+  function updateRealityPreference(dimension, value) {
+    setRealityPreferences((current) => normaliseRealityPreferences({ ...current, [dimension]: value }));
+    setManualActiveId(null);
+  }
+
   function updateLearnerProfile(field, value) {
     setLearnerProfile((current) => ({ ...current, [field]: value }));
+  }
+
+  function toggleSubject(subject) {
+    setLearnerProfile((current) => ({
+      ...current,
+      subjects: current.subjects.includes(subject)
+        ? current.subjects.filter((item) => item !== subject)
+        : [...current.subjects, subject],
+    }));
+  }
+
+  function updateSubjectMark(subject, value) {
+    setLearnerProfile((current) => ({
+      ...current,
+      subjectMarks: { ...current.subjectMarks, [subject]: value },
+    }));
   }
 
   function reset() {
     setAnswers({});
     setSelectedSignals(DEFAULT_SIGNALS);
+    setRealityPreferences({ ...DEFAULT_REALITY_PREFERENCES });
     setManualActiveId(null);
   }
 
@@ -171,7 +218,7 @@ export default function App() {
       ]);
 
       if (profile) {
-        setLearnerProfile({ ...EMPTY_PROFILE, ...profile });
+        setLearnerProfile(normaliseLearnerProfile(profile));
       } else if (credentials.name) {
         setLearnerProfile((current) => ({ ...current, preferredName: credentials.name }));
       }
@@ -179,6 +226,7 @@ export default function App() {
       if (saved) {
         setAnswers(saved.answers ?? {});
         setSelectedSignals(saved.selected_signals ?? DEFAULT_SIGNALS);
+        setRealityPreferences(normaliseRealityPreferences(saved.reality_preferences));
         setManualActiveId(saved.best_match ?? null);
         setSavedAt(saved.updated_at ?? null);
         setAuthNotice("Welcome back. Your saved learner profile and discovery view have been restored.");
@@ -202,6 +250,7 @@ export default function App() {
         profile: learnerProfile,
         answers,
         selectedSignals,
+        realityPreferences,
         rankedResults: ranked,
         bestMatch: active.id,
         matchPercent: active.matchPercent,
@@ -303,9 +352,9 @@ export default function App() {
             <a href="#reality" className="inline-flex items-center gap-2 rounded-full border border-white/15 px-6 py-3 text-white/80 hover:border-white/40">See reality checks <ArrowUpRight size={18} /></a>
           </div>
           <div className="mt-8 grid max-w-xl grid-cols-3 gap-3 text-sm">
-            <MiniStat value={CAREER_ROUTES.length} label="starter routes" />
+            <MiniStat value={CAREER_ROUTES.length} label="mapped routes" />
             <MiniStat value={`${progress}%`} label="profile complete" />
-            <MiniStat value="Learner" label="owns the choice" />
+            <MiniStat value={CAREER_COVERAGE_SUMMARY.researchQueueCount} label="research queue" />
           </div>
         </div>
 
@@ -329,6 +378,13 @@ export default function App() {
             onSignOut={handleSignOut}
           />
 
+          <SubjectProfilePanel
+            profile={learnerProfile}
+            onProfileChange={updateLearnerProfile}
+            onToggleSubject={toggleSubject}
+            onMarkChange={updateSubjectMark}
+          />
+
           <GlassCard>
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -348,6 +404,9 @@ export default function App() {
                         <button
                           type="button"
                           key={option.value}
+                          data-testid="discovery-option"
+                          data-question-id={question.id}
+                          data-option-value={option.value}
                           onClick={() => choose(question.id, option.value)}
                           aria-pressed={activeChoice}
                           className={`rounded-2xl border px-4 py-3 text-left text-sm transition ${activeChoice ? "border-cyber bg-cyber text-black" : "border-white/10 bg-white/[0.03] text-white/70 hover:border-white/25"}`}
@@ -373,6 +432,8 @@ export default function App() {
                   <button
                     type="button"
                     key={signal.value}
+                    data-testid="interest-signal"
+                    data-signal-value={signal.value}
                     onClick={() => toggleInterestSignal(signal.value)}
                     aria-pressed={activeSignal}
                     className={`group flex items-center justify-between rounded-3xl border p-4 text-left transition ${activeSignal ? "border-mint bg-mint/12" : "border-white/10 bg-white/[0.03] hover:border-white/25"}`}
@@ -390,6 +451,8 @@ export default function App() {
       <section id="reality" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
         <SectionHeading eyebrow="Reality Check" title="Every career card must show the real job" text="The point is not to make careers sound glamorous. The point is to help learners make better choices before they commit years and money." />
         <div className="mt-9 grid gap-5 lg:grid-cols-[0.8fr_1.2fr]">
+          <RealityPreferencePanel preferences={realityPreferences} onChange={updateRealityPreference} />
+
           <GlassCard>
             <p className="text-sm uppercase tracking-[0.18em] text-white/40">Route signals</p>
             <div className="mt-5 space-y-3">
@@ -397,13 +460,14 @@ export default function App() {
                 <button
                   type="button"
                   key={route.id}
+                  data-testid="route-result"
                   onClick={() => setManualActiveId(route.id)}
                   aria-pressed={active.id === route.id}
                   className={`w-full rounded-3xl border p-4 text-left transition ${active.id === route.id ? "border-cyber bg-cyber text-black" : "border-white/10 bg-white/[0.03] text-white/75 hover:border-white/25"}`}
                 >
                   <div className="flex items-center justify-between gap-3">
                     <span className="font-semibold">{index + 1}. {route.title}</span>
-                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% signal</span>
+                    <span className="rounded-full bg-black/10 px-3 py-1 text-xs">{route.matchPercent}% signal · {route.realityFit?.matchPercent ?? 50}% reality</span>
                   </div>
                   <p className={`${active.id === route.id ? "text-black/65" : "text-white/45"} mt-1 text-xs`}>{route.stream}</p>
                 </button>
@@ -420,7 +484,9 @@ export default function App() {
       </section>
 
       <section id="pathway" className="relative z-10 mx-auto max-w-7xl px-5 py-16">
-        <SectionHeading eyebrow="Pathway" title="Show the route in and the route up" text="A learner needs to know the entry point, the practical ladder and where the career can get stuck." />
+        <SectionHeading eyebrow="Pathway" title="See what your subjects keep open" text="Careerize works backwards from the selected career to broad qualification routes and subject choices. Exact provider requirements must still be checked." />
+        <PathwayRiskPanel route={active} risk={pathwayRisk} />
+        <QualificationRoutePanel route={active} />
         <div className="mt-9 grid gap-5 md:grid-cols-3">
           <PathStep icon={GraduationCap} title="1. Entry" text="School subjects, TVET, diploma, degree, internship, apprenticeship, portfolio, work exposure or practical project." />
           <PathStep icon={Building2} title="2. First job" text="Junior role, assistant role, trainee role, site role or support role where real work begins." />
@@ -436,6 +502,7 @@ export default function App() {
           <TrustCard icon={Lock} title="Learner-owned memory" text="Saved profiles are for the learner to return later, compare options and receive better guidance. Supabase records are protected by row-level security and limited to the signed-in owner." />
           <TrustCard icon={Lightbulb} title="No commercial influence" text="No employers, recruiters, course providers or sponsors can pay to influence career profiles, unlock learners, collect CVs or steer recommendations." />
         </div>
+        <ProofLedger />
       </section>
 
       <footer className="relative z-10 mx-auto mt-16 flex max-w-7xl flex-col gap-4 border-t border-white/5 px-5 py-10 text-sm text-white/40 md:flex-row md:justify-between">
@@ -483,6 +550,130 @@ function HeroCard({ ranked, active, progress, session, savedAt }) {
   );
 }
 
+function RealityPreferencePanel({ preferences, onChange }) {
+  const sliders = [
+    { id: "earning", low: "Money less important", high: "High earning ambition" },
+    { id: "travel", low: "Prefer one place", high: "Open to travel and movement" },
+    { id: "stress", low: "Lower pressure", high: "Can handle high pressure" },
+    { id: "danger", low: "Safer environments", high: "Can accept risky settings" },
+  ];
+
+  return (
+    <GlassCard className="lg:col-span-2">
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div>
+          <Pill><Gauge size={14} /> Career reality sliders</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Choose the trade-offs that matter in real life.</h3>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/55">Money, travel, stress and danger should be visible before a learner commits to subjects or study. These sliders adjust route ranking with qualitative signals only; they do not publish salary or safety claims.</p>
+        </div>
+        <span className="rounded-full border border-white/10 bg-black/20 px-4 py-2 text-xs text-white/50">Neutral at 50</span>
+      </div>
+      <div className="mt-7 grid gap-5 md:grid-cols-2">
+        {sliders.map((slider) => (
+          <label key={slider.id} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex items-center justify-between gap-3">
+              <span className="font-semibold">{REALITY_PREFERENCE_LABELS[slider.id]}</span>
+              <span className="rounded-full bg-white/8 px-3 py-1 text-xs text-white/55">{preferences[slider.id]}</span>
+            </div>
+            <input type="range" min="0" max="100" step="5" value={preferences[slider.id]} onChange={(event) => onChange(slider.id, event.target.value)} className="mt-4 w-full accent-cyber" aria-label={REALITY_PREFERENCE_LABELS[slider.id]} />
+            <div className="mt-2 flex justify-between gap-3 text-xs text-white/40"><span>{slider.low}</span><span className="text-right">{slider.high}</span></div>
+          </label>
+        ))}
+      </div>
+    </GlassCard>
+  );
+}
+function SubjectProfilePanel({ profile, onProfileChange, onToggleSubject, onMarkChange }) {
+  return (
+    <GlassCard className="lg:col-span-2">
+      <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+        <div>
+          <Pill><GraduationCap size={14} /> Learner subject profile</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Which subjects are you taking or considering?</h3>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-white/55">Choose subjects and add estimated marks when useful. Careerize uses them to flag route-level risk—not to decide what you are capable of.</p>
+        </div>
+        <label className="min-w-48 text-sm text-white/60">
+          School stage
+          <select data-testid="school-stage-select" value={profile.stage} onChange={(event) => onProfileChange("stage", event.target.value)} className="mt-2 w-full rounded-2xl border border-white/10 bg-ink px-4 py-3 text-white outline-none focus:border-cyber">
+            <option value="">Choose a stage</option>
+            {["Grade 9", "Grade 10", "Grade 11", "Grade 12", "Post-matric"].map((stage) => <option key={stage}>{stage}</option>)}
+          </select>
+        </label>
+      </div>
+      <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        {SCHOOL_SUBJECTS.map((subject) => {
+          const selected = profile.subjects.includes(subject);
+          return (
+            <div key={subject} className={`rounded-2xl border p-3 transition ${selected ? "border-mint/50 bg-mint/10" : "border-white/10 bg-white/[0.025]"}`}>
+              <button type="button" data-testid="subject-toggle" data-subject={subject} onClick={() => onToggleSubject(subject)} aria-pressed={selected} className="flex w-full items-center justify-between gap-3 text-left text-sm">
+                <span className="text-white/80">{subject}</span>
+                <span className={`grid h-6 w-6 shrink-0 place-items-center rounded-full border ${selected ? "border-mint bg-mint text-black" : "border-white/20 text-transparent"}`}><Check size={14} /></span>
+              </button>
+              {selected && (
+                <label className="mt-3 flex items-center gap-2 text-xs text-white/45">
+                  Estimated mark
+                  <input aria-label={`${subject} estimated mark`} data-testid="subject-mark" data-subject={subject} type="number" min="0" max="100" value={profile.subjectMarks[subject] ?? ""} onChange={(event) => onMarkChange(subject, event.target.value)} placeholder="%" className="w-20 rounded-xl border border-white/10 bg-black/20 px-3 py-2 text-white outline-none focus:border-cyber" />
+                </label>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </GlassCard>
+  );
+}
+
+function PathwayRiskPanel({ route, risk }) {
+  const styles = {
+    green: { border: "border-mint/35", bg: "bg-mint/10", icon: Check, label: "Green" },
+    amber: { border: "border-cyber/35", bg: "bg-cyber/10", icon: AlertTriangle, label: "Amber" },
+    red: { border: "border-pink/35", bg: "bg-pink/10", icon: X, label: "Red" },
+  };
+  const state = styles[risk.status];
+  const StatusIcon = state.icon;
+
+  return (
+    <div className={`mt-9 rounded-[2rem] border ${state.border} ${state.bg} p-5 md:p-7`}>
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-start">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold"><StatusIcon size={18} /> {state.label} pathway signal</div>
+          <h3 className="mt-2 font-display text-3xl font-semibold">{risk.label}: {route.title}</h3>
+        </div>
+        <span className="rounded-full border border-white/10 bg-black/15 px-4 py-2 text-xs text-white/60">Broad guidance · provider check required</span>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        {risk.impacts.length ? risk.impacts.map((impact) => (
+          <div key={impact.id} className="rounded-2xl border border-white/10 bg-black/15 p-4">
+            <div className="flex items-center justify-between gap-3"><strong className="text-sm">{impact.subject}</strong><span className="text-xs uppercase tracking-[0.12em] text-white/40">{impact.status}</span></div>
+            <p className="mt-2 text-sm leading-6 text-white/60">{impact.reason}</p>
+          </div>
+        )) : <p className="text-sm text-white/60">No specific subject rule is loaded for this route yet. Treat the signal as amber and verify the intended qualification route.</p>}
+      </div>
+      <p className="mt-5 text-xs leading-5 text-white/45">{risk.disclaimer}</p>
+    </div>
+  );
+}
+
+function QualificationRoutePanel({ route }) {
+  return (
+    <GlassCard className="mt-5">
+      <Pill><GraduationCap size={14} /> Qualification routes</Pill>
+      <h3 className="mt-4 font-display text-3xl font-semibold">Routes associated with {route.title}</h3>
+      <p className="mt-3 text-sm leading-6 text-white/55">These are qualification families associated with the career stream. They are intentionally conservative until an official provider or awarding-body source confirms an exact programme.</p>
+      <div className="mt-6 grid gap-4 md:grid-cols-2">
+        {route.qualificationPathways.map((qualification) => (
+          <div key={qualification.id} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">
+            <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-xs uppercase tracking-[0.14em] text-mint">{qualification.type}</span><span className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/40">NQF {qualification.nqfLevel}</span></div>
+            <h4 className="mt-3 font-semibold">{qualification.name}</h4>
+            <p className="mt-2 text-sm leading-6 text-white/55">{qualification.caution}</p>
+            <p className="mt-3 text-xs text-white/35">Status: {qualification.verificationStatus.replaceAll("_", " ")}</p>
+          </div>
+        ))}
+      </div>
+    </GlassCard>
+  );
+}
+
 function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError, isAuthLoading, isSaving, onProfileChange, onSignIn, onSave, onSignOut }) {
   const [form, setForm] = useState({ name: "", email: "", password: "" });
 
@@ -519,7 +710,10 @@ function AccountPanel({ session, savedAt, learnerProfile, authNotice, authError,
               <ProfileInput label="Preferred name" value={learnerProfile.preferredName} onChange={(value) => onProfileChange("preferredName", value)} placeholder="What should Careerize call you?" />
               <ProfileInput label="Stage" value={learnerProfile.stage} onChange={(value) => onProfileChange("stage", value)} placeholder="Grade 10, Grade 12, gap year..." />
               <ProfileInput label="Town or suburb" value={learnerProfile.location} onChange={(value) => onProfileChange("location", value)} placeholder="For local route context" />
-              <ProfileInput label="Subjects or interests" value={learnerProfile.subjects} onChange={(value) => onProfileChange("subjects", value)} placeholder="Maths, tourism, art, computers..." />
+              <div className="rounded-2xl border border-white/10 bg-white/[0.04] px-4 py-3 text-sm text-white/55">
+                <span className="block text-xs uppercase tracking-[0.14em] text-white/35">Subject profile</span>
+                <span className="mt-1 block">{learnerProfile.subjects.length ? `${learnerProfile.subjects.length} subjects selected below` : "Select subjects below"}</span>
+              </div>
             </div>
             <label className="mt-3 block text-sm text-white/60">
               Notes for future guidance
@@ -614,6 +808,43 @@ function TrustCard({ icon: Icon, title, text }) {
   );
 }
 
+function ProofLedger() {
+  const stats = [
+    ["Mapped career routes", CAREER_COVERAGE_SUMMARY.totalRoutes],
+    ["Source-verified profiles", CAREER_COVERAGE_SUMMARY.sourceVerifiedProfileCount],
+    ["Research queue rows", CAREER_COVERAGE_SUMMARY.researchQueueCount],
+  ];
+  const blockedClaims = ["salary figures", "demand strength", "APS/marks", "provider entry requirements", "registration claims"];
+
+  return (
+    <GlassCard className="mt-5">
+      <div className="grid gap-6 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
+        <div>
+          <Pill><ShieldCheck size={14} /> Proof ledger</Pill>
+          <h3 className="mt-4 font-display text-3xl font-semibold">Evidence status is part of the product.</h3>
+          <p className="mt-3 text-sm leading-6 text-white/55">{CAREER_COVERAGE_SUMMARY.proofPolicy}</p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-3">
+          {stats.map(([label, value]) => (
+            <div key={label} className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-xs uppercase tracking-[0.14em] text-white/35">{label}</p>
+              <p className="mt-3 font-display text-3xl font-semibold">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="mt-5 rounded-3xl border border-cyber/20 bg-cyber/10 p-5">
+        <p className="text-sm font-semibold">Blocked until source-verified</p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {blockedClaims.map((claim) => (
+            <span key={claim} className="rounded-full border border-white/10 bg-black/15 px-3 py-1.5 text-xs text-white/60">{claim}</span>
+          ))}
+        </div>
+      </div>
+    </GlassCard>
+  );
+}
+
 function CareerCard({ route }) {
   const items = [
     ["What you do", route.day, Briefcase],
@@ -629,6 +860,25 @@ function CareerCard({ route }) {
       <Pill><Flag size={14} /> {route.stream}</Pill>
       <h3 className="mt-5 font-display text-4xl font-semibold tracking-[-0.04em] md:text-5xl">{route.title}</h3>
       <p className="mt-4 max-w-2xl text-white/60">{route.summary}</p>
+      <div className="mt-5 grid gap-3 md:grid-cols-2">
+        <div className="rounded-3xl border border-cyber/20 bg-cyber/10 p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck size={17} /> Evidence status</div>
+          <p className="mt-2 text-sm leading-6 text-white/60">Profile: {route.evidenceState?.profile?.replaceAll("-", " ")} · Qualification: {route.evidenceState?.qualification?.replaceAll("-", " ")} · Demand: {route.evidenceState?.demand?.replaceAll("-", " ")}</p>
+        </div>
+        <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-4">
+          <div className="flex items-center gap-2 text-sm font-semibold"><Gauge size={17} /> Reality fit</div>
+          <p className="mt-2 text-sm leading-6 text-white/60">{route.realityFit?.matchPercent ?? 50}% fit against your money, travel, stress and safety sliders. Qualitative signal only.</p>
+        </div>
+      </div>
+      <div className="mt-5 grid gap-3 md:grid-cols-4">
+        {Object.entries(route.careerReality ?? {}).filter(([key, value]) => ["earning", "travel", "stress", "danger"].includes(key) && Number.isFinite(value)).map(([key, value]) => (
+          <div key={key} className="rounded-2xl border border-white/10 bg-black/15 p-3">
+            <p className="text-xs uppercase tracking-[0.14em] text-white/35">{REALITY_PREFERENCE_LABELS[key]}</p>
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10"><div className="h-full rounded-full bg-cyber" style={{ width: `${value}%` }} /></div>
+            <p className="mt-2 text-xs text-white/50">{value}/100</p>
+          </div>
+        ))}
+      </div>
       <div className="mt-7 grid gap-4 md:grid-cols-2">
         {items.map(([title, text, Icon]) => (
           <div key={title} className="rounded-3xl border border-white/10 bg-white/[0.03] p-5">

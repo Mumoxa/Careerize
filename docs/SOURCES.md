@@ -50,3 +50,15 @@ Careerize should stay away from detailed salary information for now. No Careeriz
 - confidence score
 
 The default product pattern is qualitative earning-potential insight and pathway guidance, not pay-detail publishing or unverified eligibility claims.
+
+## Official backbone sources added on 2026-06-28
+
+The app source registry now includes official-source categories for DHET occupations in high demand, SAQA/NQF records, QCTO occupational qualifications and trade/provider checks, CHE programme accreditation, and DHET institution registers. These entries support the evidence workflow and research prioritisation only.
+
+They do not, by themselves, verify every individual career profile. A career claim becomes source-verified only when the exact profile field is mapped to a source URL, access date, verification status and confidence score.
+
+## Research queue rule
+
+`data/sa-foundation/career_research_queue.csv` is a source-verification work queue, not a source of labour-market fact. It proves that every live career profile has an assigned verification path and blocked claim list. It does not prove that a career has verified demand, salary, APS, entry or registration data.
+
+`data/sa-foundation/career_research_team_workplan.csv` is an execution plan for the research team, not evidence. It proves that every live route has an assigned lane, primary role, evidence reviewer and learner-safety reviewer.

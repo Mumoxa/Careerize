@@ -1,3 +1,47 @@
+export const DEFAULT_REALITY_PREFERENCES = {
+  earning: 50,
+  travel: 50,
+  stress: 50,
+  danger: 50,
+};
+
+export const REALITY_PREFERENCE_LABELS = {
+  earning: "Earning ambition",
+  travel: "Travel and movement",
+  stress: "Stress tolerance",
+  danger: "Safety and danger tolerance",
+};
+
+function normalisePreference(value) {
+  const number = Number(value);
+  if (!Number.isFinite(number)) return 50;
+  return Math.min(100, Math.max(0, number));
+}
+
+export function getRealityFit(route, preferences = DEFAULT_REALITY_PREFERENCES) {
+  const reality = route.careerReality ?? DEFAULT_REALITY_PREFERENCES;
+  const dimensions = Object.keys(DEFAULT_REALITY_PREFERENCES);
+  const details = dimensions.map((dimension) => {
+    const learner = normalisePreference(preferences[dimension]);
+    const routeValue = normalisePreference(reality[dimension]);
+    const difference = Math.abs(learner - routeValue);
+    return {
+      dimension,
+      learner,
+      routeValue,
+      fit: Math.max(0, 100 - difference),
+    };
+  });
+  const averageFit = Math.round(details.reduce((total, item) => total + item.fit, 0) / details.length);
+  const changed = details.some((item) => item.learner !== 50);
+
+  return {
+    score: changed ? Math.round((averageFit - 50) / 10) : 0,
+    matchPercent: averageFit,
+    details,
+    changed,
+  };
+}
 export function getSelectedSignals(answers, selectedSignals) {
   const answerSignals = Object.values(answers).filter(Boolean);
   return [...new Set([...answerSignals, ...selectedSignals])];
@@ -44,8 +88,9 @@ export function explainRoute(route, selectedSignals) {
   };
 }
 
-export function rankCareerRoutes(routes, answers, selectedSignals) {
-  const uniqueSignals = getSelectedSignals(answers, selectedSignals);
+export function rankCareerRoutes(routes, answers, selectedSignals, realityPreferences = DEFAULT_REALITY_PREFERENCES) {
+  const knownSignals = new Set(routes.flatMap((route) => Object.keys(route.signalWeights ?? {})));
+  const uniqueSignals = getSelectedSignals(answers, selectedSignals).filter((signal) => knownSignals.has(signal));
 
   return [...routes]
     .map((route) => {
@@ -53,15 +98,26 @@ export function rankCareerRoutes(routes, answers, selectedSignals) {
       const maxScore = Object.values(route.signalWeights ?? {}).reduce((total, weight) => total + weight, 0);
       const matchPercent = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
       const explanation = explainRoute(route, uniqueSignals);
+      const realityFit = getRealityFit(route, realityPreferences);
 
       return {
         ...route,
-        score,
+        score: score + realityFit.score,
+        signalScore: score,
         matchPercent,
+        realityFit,
         explanation,
       };
     })
-    .sort((a, b) => b.score - a.score || b.matchPercent - a.matchPercent || a.title.localeCompare(b.title));
+    .sort((a, b) => {
+      const aHasSignalOverlap = uniqueSignals.length === 0 || a.signalScore > 0;
+      const bHasSignalOverlap = uniqueSignals.length === 0 || b.signalScore > 0;
+      return Number(bHasSignalOverlap) - Number(aHasSignalOverlap)
+        || b.score - a.score
+        || b.matchPercent - a.matchPercent
+        || b.realityFit.matchPercent - a.realityFit.matchPercent
+        || a.title.localeCompare(b.title);
+    });
 }
 
 export function getProfileProgress(answers, questions) {
@@ -75,6 +131,46 @@ export function toggleSignal(currentSignals, signal) {
   }
 
   return [...currentSignals, signal];
+}
+
+const RISK_ORDER = { green: 0, amber: 1, red: 2 };
+
+export function evaluatePathwayRisk(route, selectedSubjects, subjectMarks, rules) {
+  const chosen = new Set(selectedSubjects ?? []);
+  const applicableRules = rules.filter((rule) => rule.clusters.includes(route.stream));
+
+  const impacts = applicableRules.map((rule) => {
+    const selected = chosen.has(rule.subject);
+    const mark = Number(subjectMarks?.[rule.subject] ?? 0);
+    let status = "green";
+    let reason = `${rule.subject} supports this route.`;
+
+    if (!selected && rule.strength === "blocks_some_routes_if_missing") {
+      status = "red";
+      reason = rule.warning;
+    } else if (!selected && ["strongly_recommended", "route_dependent"].includes(rule.strength)) {
+      status = "amber";
+      reason = rule.warning;
+    } else if (!selected && rule.strength === "helpful") {
+      status = "green";
+      reason = `${rule.subject} could help, but it is not presented as an absolute requirement.`;
+    } else if (selected && mark > 0 && mark < 50 && ["blocks_some_routes_if_missing", "strongly_recommended", "route_dependent"].includes(rule.strength)) {
+      status = "amber";
+      reason = `${rule.subject} is selected, but the current estimate may need improvement for some routes.`;
+    }
+
+    return { ...rule, selected, mark: mark || null, status, reason };
+  });
+
+  const highest = impacts.reduce((current, impact) => RISK_ORDER[impact.status] > RISK_ORDER[current] ? impact.status : current, "green");
+  const status = applicableRules.length === 0 ? "amber" : highest;
+
+  return {
+    status,
+    label: status === "green" ? "Subjects support this route" : status === "red" ? "A major route may be at risk" : "Route needs a closer check",
+    impacts,
+    disclaimer: "This is broad planning guidance. Confirm exact subjects, marks and APS with each provider or awarding body.",
+  };
 }
 
 export function validateGuidanceLanguage(text) {

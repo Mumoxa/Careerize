@@ -8,7 +8,7 @@ Imported workspace: `workspace-019ecb13-0c77-7745-a113-fb583a056bfa.zip`
 
 The uploaded workspace should not be pasted into the live React catalog. It should become a dedicated South African foundation-data layer.
 
-The reason is simple: the current app catalog solves breadth with 344 starter routes, while the workspace solves depth through OFO/OIHD mapping, qualification-pathway matrices, registration dependencies, specialisations, graph exports and Top 100 enrichment queues. Mixing the two would create duplication and could accidentally publish unverified labour-market claims.
+The reason is simple: the current app catalog solves breadth with 461 mapped routes, while the workspace solves depth through OFO/OIHD mapping, qualification-pathway matrices, registration dependencies, specialisations, graph exports, the 461-row research queue and Top 100 enrichment queues. Mixing the two without claim gates would create duplication and could accidentally publish unverified labour-market claims.
 
 ## What the workspace adds
 
@@ -71,7 +71,7 @@ No salary figures were wired into the public product. The imported salary file r
 
 The repo now has two complementary layers:
 
-1. **Learner-facing breadth:** 344 starter routes in `src/data/careerCatalog.js`.
+1. **Learner-facing breadth:** 461 mapped routes in `src/data/careerCatalog.js`.
 2. **Operational depth:** SA foundation data in `data/sa-foundation/`.
 
 That is the right architecture for Careerize.

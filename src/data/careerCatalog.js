@@ -1,3 +1,5 @@
+import { getQualificationPathways } from "./qualificationPathways.js";
+
 export const SOURCE_REGISTRY = [
   {
     id: "careerize-editorial-v1",
@@ -29,6 +31,56 @@ export const SOURCE_REGISTRY = [
     supports: ["careerUniverse", "streamCoverage", "starterProfiles", "pathwayScaffold"],
     note: "Broad starter taxonomy based on the Careerize project history and strategy. It expands coverage without pretending to be source-verified labour-market data.",
   },
+  {
+    id: "dhet-occupations-high-demand-2024",
+    title: "DHET National List of Occupations in High Demand 2024",
+    type: "official-labour-market-backbone",
+    url: "https://www.dhet.gov.za/",
+    accessedAt: "2026-06-28",
+    confidence: 85,
+    supports: ["occupationBackbone", "researchPrioritisation", "sourceVerificationWorkflow"],
+    note: "Official DHET source category for prioritising South African occupation research. Individual Careerize profiles must still link exact imported rows before showing demand claims.",
+  },
+  {
+    id: "saqa-nqf-source",
+    title: "SAQA National Qualifications Framework and qualification records",
+    type: "official-qualification-source",
+    url: "https://www.saqa.org.za/",
+    accessedAt: "2026-06-28",
+    confidence: 90,
+    supports: ["nqfLevels", "qualificationRegistration", "credits", "qualificationVerification"],
+    note: "Use for registered qualification records and NQF status before publishing qualification-specific claims.",
+  },
+  {
+    id: "qcto-occupational-source",
+    title: "QCTO occupational qualifications, providers and trade verification",
+    type: "official-occupational-source",
+    url: "https://www.qcto.org.za/",
+    accessedAt: "2026-06-28",
+    confidence: 90,
+    supports: ["occupationalQualifications", "skillsProgrammes", "tradeCertificates", "providerAccreditation"],
+    note: "Use for occupational certificates, trade routes, accredited skills development providers, assessment centres and verification workflows.",
+  },
+  {
+    id: "che-accreditation-source",
+    title: "Council on Higher Education programme accreditation",
+    type: "official-accreditation-source",
+    url: "https://www.che.ac.za/",
+    accessedAt: "2026-06-28",
+    confidence: 90,
+    supports: ["higherEducationAccreditation", "programmeRecognition", "providerChecks"],
+    note: "Use before publishing higher-education programme accreditation or recognition claims.",
+  },
+  {
+    id: "dhet-institution-registers-source",
+    title: "DHET public and private post-school institution registers",
+    type: "official-provider-source",
+    url: "https://www.dhet.gov.za/",
+    accessedAt: "2026-06-28",
+    confidence: 88,
+    supports: ["publicUniversities", "tvetColleges", "privateInstitutionRegistration", "providerChecks"],
+    note: "Use to check provider status before showing institution-specific route guidance.",
+  },
 ];
 
 export const PATHWAY_TYPES = [
@@ -51,27 +103,34 @@ const qualitativeDemandOnly = {
 const baseProfile = {
   country: "ZA",
   status: "starter-profile",
-  lastUpdated: "2026-06-15",
+  lastUpdated: "2026-06-28",
   dataConfidence: 50,
   sourceIds: ["careerize-editorial-v1", "careerize-source-model-v1", "careerize-expanded-taxonomy-v1"],
   demand: qualitativeDemandOnly,
+  evidenceState: {
+    profile: "starter-editorial",
+    qualification: "family-only",
+    demand: "not-source-verified",
+    earning: "qualitative-only",
+    verificationRequired: ["official occupation source", "SAQA/QCTO/CHE/DHET route source", "provider-specific entry source"],
+  },
 };
 
 const SIGNAL_PRESETS = {
-  tech: { technology: 3, building: 2, problemSolving: 3, patterns: 2, quiet: 1 },
-  finance: { numbers: 3, detail: 3, money: 3, structure: 2, office: 1 },
+  tech: { technology: 3, building: 2, problemSolving: 3, patterns: 2, quiet: 1, remote: 2 },
+  finance: { numbers: 3, detail: 3, accounting: 3, structure: 2, office: 1, remote: 1 },
   practical: { handsOn: 3, practical: 3, tools: 2, fixing: 2, moving: 1 },
   care: { helping: 3, care: 3, biology: 2, people: 2, highStress: 1 },
-  education: { helping: 3, people: 3, structure: 2, care: 1, business: 1 },
+  education: { helping: 3, people: 3, structure: 2, care: 1, business: 1, remote: 1 },
   agri: { practical: 3, biology: 2, tools: 2, moving: 2, business: 1 },
   logistics: { business: 2, moving: 3, practical: 2, people: 1, structure: 2 },
-  public: { people: 2, structure: 3, helping: 2, detail: 2, highStress: 1 },
-  creative: { building: 2, people: 2, technology: 1, practical: 1, detail: 1 },
-  people: { people: 3, helping: 2, business: 2, structure: 1, office: 1 },
+  public: { people: 2, structure: 3, helping: 2, detail: 2, highStress: 1, remote: 1 },
+  creative: { building: 2, people: 2, technology: 1, practical: 1, detail: 1, remote: 1 },
+  people: { people: 3, helping: 2, business: 2, structure: 1, office: 1, remote: 1 },
   hospitality: { people: 3, moving: 2, practical: 2, helping: 2, highStress: 1 },
   engineering: { technical: 3, maths: 2, problemSolving: 2, practical: 2, tools: 2 },
   entrepreneur: { business: 3, people: 2, practical: 2, problemSolving: 2, moving: 1 },
-  science: { science: 3, biology: 2, patterns: 2, detail: 2, problemSolving: 2 },
+  science: { science: 3, biology: 2, patterns: 2, detail: 2, problemSolving: 2, remote: 1 },
 };
 
 const SUBJECT_PRESETS = {
@@ -178,6 +237,23 @@ const ENVIRONMENT_PRESETS = {
   science: "labs, field sites, research organisations, universities, industry or public agencies",
 };
 
+
+const REALITY_PRESETS = {
+  tech: { earning: 82, travel: 25, stress: 58, danger: 18 },
+  finance: { earning: 72, travel: 22, stress: 55, danger: 12 },
+  practical: { earning: 68, travel: 65, stress: 60, danger: 58 },
+  care: { earning: 58, travel: 42, stress: 78, danger: 54 },
+  education: { earning: 52, travel: 25, stress: 58, danger: 22 },
+  agri: { earning: 56, travel: 72, stress: 62, danger: 48 },
+  logistics: { earning: 58, travel: 82, stress: 64, danger: 50 },
+  public: { earning: 58, travel: 45, stress: 72, danger: 55 },
+  creative: { earning: 60, travel: 42, stress: 62, danger: 20 },
+  people: { earning: 62, travel: 40, stress: 58, danger: 18 },
+  hospitality: { earning: 50, travel: 55, stress: 70, danger: 28 },
+  engineering: { earning: 75, travel: 60, stress: 68, danger: 56 },
+  entrepreneur: { earning: 66, travel: 55, stress: 76, danger: 32 },
+  science: { earning: 70, travel: 38, stress: 60, danger: 35 },
+};
 const HIGH_STRESS_KINDS = new Set(["care", "public", "hospitality", "engineering"]);
 const VARIABLE_STRESS_KINDS = new Set(["creative", "entrepreneur", "agri"]);
 const REMOTE_FRIENDLY_KINDS = new Set(["tech", "creative", "finance"]);
@@ -262,13 +338,38 @@ function makeRoute(title, stream, kind, profile) {
       "This route should be compared with at least two alternatives before making subject or study decisions.",
       "Source-verified South African demand and qualification detail still needs to be added before treating this as final advice.",
     ],
+    careerReality: {
+      ...REALITY_PRESETS[kind],
+      scale: "0-100 qualitative route signal",
+      note: "Qualitative Careerize signal only. Verify salary, travel, stress and safety details with current workers, official sources and providers.",
+    },
     similarCareerIds: [],
   };
 }
 
 const CAREER_GROUPS = [["Technology, data and AI", "tech", "mixed", ["Software Developer", "Front-End Developer", "Back-End Developer", "Full-Stack Developer", "Mobile App Developer", "Web Developer", "Cloud Engineer", "DevOps Engineer", "QA Tester", "Automation Tester", "Cyber Security Analyst", "Security Operations Centre Analyst", "Network Technician", "IT Support Technician", "Systems Administrator", "Database Administrator", "Data Analyst", "Business Intelligence Analyst", "Data Engineer", "Machine Learning Engineer", "AI Product Specialist", "Prompt Engineer", "AI Workflow Builder", "No-Code Automation Builder", "Robotics Technician", "Drone Operator", "GIS Technician", "Game Developer", "UX Designer", "UI Designer", "Product Manager", "Scrum Master", "Business Analyst", "ERP Support Consultant", "CRM Administrator", "Digital Accessibility Tester"]], ["Finance, admin and business operations", "finance", "mixed", ["Bookkeeper", "Accounts Clerk", "Debtors Clerk", "Creditors Clerk", "Payroll Administrator", "Tax Assistant", "Junior Accountant", "Financial Analyst", "Management Accountant", "Internal Auditor", "Risk Analyst", "Compliance Officer", "Procurement Officer", "Office Administrator", "Executive Assistant", "Operations Coordinator", "Project Coordinator", "Tender Administrator", "Business Process Analyst", "Management Consultant", "Entrepreneurship Programme Coordinator", "Insurance Claims Assessor", "Banking Consultant", "Credit Analyst", "Collections Specialist", "Fraud Analyst", "Actuarial Assistant", "Investment Operations Analyst"]], ["Skilled trades, construction and engineering", "practical", "trade", ["Electrician", "Plumber", "Boilermaker", "Welder", "Fitter and Turner", "Millwright", "Diesel Mechanic", "Automotive Mechanic", "Refrigeration Technician", "Solar PV Installer", "Lift Technician", "CNC Machinist", "Toolmaker", "Panel Beater", "Painter and Decorator", "Bricklayer", "Carpenter", "Quantity Surveying Technician", "Construction Site Supervisor", "Civil Engineering Technician", "Mechanical Engineering Technician", "Electrical Engineering Technician", "Draughtsperson", "Architectural Technologist", "Land Survey Technician", "Building Inspector", "Safety Officer", "Facilities Maintenance Technician", "Water Treatment Technician", "Fire Systems Technician"]], ["Health, care and social services", "care", "care", ["Nurse", "Caregiver", "Community Health Worker", "Pharmacist Assistant", "Pharmacy Technician", "Emergency Care Assistant", "Paramedic", "Radiography Assistant", "Dental Assistant", "Medical Receptionist", "Clinical Data Capturer", "Health and Safety Practitioner", "Occupational Health Assistant", "Social Worker", "Auxiliary Social Worker", "Child and Youth Care Worker", "Counsellor", "Psychology Assistant", "Occupational Therapy Assistant", "Physiotherapy Assistant", "Dietitian Assistant", "Public Health Practitioner", "Healthcare Administrator", "Veterinary Nurse", "Animal Health Technician"]], ["Education, training and youth development", "education", "education", ["Foundation Phase Teacher", "High School Teacher", "TVET Lecturer", "Early Childhood Development Practitioner", "Tutor", "Online Tutor", "Training Facilitator", "Instructional Designer", "Learning Technologist", "Career Advisor", "School Counsellor", "Special Needs Support Assistant", "Sports Coach", "Youth Programme Coordinator", "Library Assistant", "Academic Administrator"]], ["Agriculture, food and environment", "agri", "vocational", ["Crop Farmer", "Livestock Farmer", "Poultry Farmer", "Agricultural Extension Officer", "Farm Manager", "Agronomist", "Irrigation Technician", "Horticulturist", "Viticulture Worker", "Food Technologist", "Quality Controller Food Production", "Butcher", "Baker", "Chef", "Environmental Officer", "Conservation Ranger", "Wildlife Guide", "Waste Management Coordinator", "Recycling Entrepreneur", "Water Resource Technician", "Climate Adaptation Officer", "Urban Farmer", "Landscape Gardener", "Pest Control Operator"]], ["Logistics, transport and supply chain", "logistics", "logistics", ["Truck Driver", "Delivery Driver", "Forklift Operator", "Warehouse Clerk", "Inventory Controller", "Supply Chain Coordinator", "Logistics Planner", "Fleet Controller", "Import Export Clerk", "Customs Clearing Agent", "Freight Forwarding Coordinator", "Port Operations Clerk", "Courier Operations Supervisor", "Rail Operations Assistant", "Transport Scheduler", "Route Planner", "Procurement Logistics Analyst", "Cold Chain Coordinator"]], ["Law, public service and public safety", "public", "public", ["Police Officer", "Traffic Officer", "Correctional Services Officer", "Security Supervisor", "Private Investigator", "Legal Secretary", "Paralegal", "Candidate Attorney", "Court Clerk", "Community Development Worker", "Municipal Administrator", "Policy Analyst", "Public Administration Officer", "Immigration Support Officer", "Disaster Management Officer", "Firefighter", "Emergency Call Centre Operator", "Forensic Technician", "Anti-Corruption Investigator", "Labour Relations Officer"]], ["Creative, media and design", "creative", "portfolio", ["Graphic Designer", "Digital Designer", "Photographer", "Videographer", "Video Editor", "Animator", "Motion Graphics Designer", "Illustrator", "Copywriter", "Content Creator", "Social Media Manager", "Community Manager", "Journalist", "Radio Presenter", "Podcast Producer", "Public Relations Officer", "Brand Strategist", "Fashion Designer", "Interior Designer", "Set Designer", "Makeup Artist", "Hair Stylist", "Music Producer", "Sound Engineer", "Event Creative Producer", "Virtual Production Artist"]], ["Sales, marketing and customer work", "people", "mixed", ["Sales Representative", "Retail Sales Assistant", "Call Centre Agent", "Customer Success Consultant", "Client Services Consultant", "Account Manager", "Recruitment Consultant", "Market Research Assistant", "Digital Marketer", "SEO Assistant", "Paid Media Specialist", "Email Marketing Coordinator", "E-Commerce Coordinator", "Merchandiser", "Category Assistant", "Real Estate Agent", "Insurance Broker", "Travel Consultant", "Fundraising Coordinator", "Community Outreach Officer"]], ["Hospitality, tourism, sport and events", "hospitality", "hospitality", ["Hotel Receptionist", "Guest House Manager", "Restaurant Manager", "Waiter", "Barista", "Tour Guide", "Travel Agent", "Event Coordinator", "Wedding Planner", "Conference Coordinator", "Casino Dealer", "Cruise Ship Worker", "Flight Attendant", "Ground Crew Agent", "Sports Administrator", "Fitness Instructor", "Personal Trainer", "Adventure Tourism Guide"]], ["Manufacturing, mining and energy", "engineering", "trade", ["Production Operator", "Production Supervisor", "Quality Inspector", "Process Controller", "Packaging Technologist", "Industrial Engineer", "Maintenance Planner", "Mining Technician", "Mine Overseer Assistant", "Geology Technician", "Metallurgical Technician", "Chemical Process Operator", "Energy Auditor", "Wind Turbine Technician", "Battery Technician", "Hydrogen Economy Technician", "Industrial Automation Technician", "Instrumentation Technician", "Materials Controller", "Textile Production Technician", "Furniture Maker", "Plastic Moulding Technician"]], ["Informal, entrepreneurship and community economy", "entrepreneur", "entrepreneur", ["Spaza Shop Owner", "Street Food Trader", "Home Bakery Operator", "Mobile Car Wash Owner", "Township Delivery Operator", "Freelance Digital Assistant", "Virtual Assistant", "Community Tutor", "Repair Shop Owner", "Second-Hand Clothing Trader", "Market Stall Trader", "Home-Based Childcare Provider", "Cleaning Services Owner", "Garden Services Owner", "Small-Scale Poultry Entrepreneur", "Local Events Supplier", "Community Wi-Fi Operator", "Informal Recycling Collector", "Craft Seller", "Mobile Beauty Service Provider"]], ["Science, research and frontier careers", "science", "science", ["Laboratory Technician", "Research Assistant", "Biotechnologist", "Microbiologist", "Chemist", "Materials Scientist", "Environmental Scientist", "Data Research Analyst", "Epidemiology Assistant", "Astronomy Outreach Officer", "Forensic Scientist", "Food Safety Scientist", "Clinical Trial Coordinator", "Marine Scientist", "Geologist", "Hydrologist", "Renewable Energy Researcher", "Carbon Accounting Analyst", "Circular Economy Analyst", "Digital Twin Specialist", "Smart City Analyst", "Human Factors Researcher", "Behavioural Insights Analyst", "Bioinformatics Analyst", "Space Systems Technician"]], ["Arts, culture, heritage and society", "creative", "portfolio", ["Museum Curator", "Archivist", "Heritage Officer", "Cultural Programme Coordinator", "Translator", "Interpreter", "Language Practitioner", "Publishing Assistant", "Editor", "Author", "Theatre Technician", "Actor", "Dancer", "Choreographer", "Arts Administrator", "Community Arts Facilitator"]]];
 
-const generatedRoutes = CAREER_GROUPS.flatMap(([stream, kind, profile, titles]) =>
+
+const ADDITIONAL_CAREER_GROUPS = [
+  ["Technology, data and AI", "tech", "mixed", ["AI Governance Analyst", "Data Privacy Analyst", "Cybersecurity Incident Responder", "Cloud Support Associate", "Platform Engineer", "Site Reliability Engineer", "Digital Product Analyst", "Geospatial Data Analyst", "Health Informatics Analyst", "EdTech Support Specialist", "Agritech Systems Technician", "Fintech Operations Analyst"]],
+  ["Finance, admin and business operations", "finance", "mixed", ["Business Intelligence Developer", "Treasury Assistant", "Forensic Accounting Assistant", "Sustainability Reporting Analyst", "Data Protection Officer", "Grant Administrator", "Cooperative Development Officer", "Business Rescue Assistant"]],
+  ["Skilled trades, construction and engineering", "practical", "trade", ["Roadworks Technician", "Paving and Surfacing Worker", "Glazier", "Tiler", "Scaffolding Supervisor", "Rigging Assistant", "Generator Technician", "Pool and Spa Technician", "Waterproofing Applicator", "Smart Meter Installer"]],
+  ["Health, care and social services", "care", "care", ["Dental Hygienist", "Optical Assistant", "Hearing Aid Acoustician", "Home-Based Care Coordinator", "Mental Health Support Worker", "Substance Abuse Counsellor", "Medical Laboratory Assistant", "Patient Transport Officer", "Clinic Operations Manager"]],
+  ["Education, training and youth development", "education", "education", ["Assessment Moderator", "Curriculum Developer", "Skills Development Facilitator", "Workplace Mentor", "Adult Education Facilitator", "Education Data Capturer", "After-School Programme Manager"]],
+  ["Agriculture, food and environment", "agri", "vocational", ["Aquaculture Technician", "Bee Farmer", "Seed Production Technician", "Soil Testing Technician", "Agricultural Drone Operator", "Food Safety Auditor", "Meat Inspector", "Invasive Species Controller"]],
+  ["Logistics, transport and supply chain", "logistics", "logistics", ["Air Cargo Agent", "Marine Deckhand", "Bus Driver", "Taxi Fleet Administrator", "Distribution Centre Supervisor", "Last-Mile Delivery Coordinator", "Hazardous Goods Compliance Clerk"]],
+  ["Law, public service and public safety", "public", "public", ["Environmental Health Practitioner", "Customs Officer", "Border Management Officer", "Probation Officer", "Mediator", "Electoral Officer", "Records Management Officer", "Ward Committee Coordinator"]],
+  ["Creative, media and design", "creative", "portfolio", ["Digital Illustrator", "3D Artist", "Game Artist", "User Researcher", "Content Strategist", "Book Designer", "Signage Designer", "Exhibition Designer"]],
+  ["Sales, marketing and customer work", "people", "mixed", ["CRM Campaign Specialist", "Loyalty Programme Coordinator", "Community Sales Agent", "Motor Vehicle Salesperson", "Parts Salesperson", "Customer Experience Analyst", "Tender Sales Coordinator"]],
+  ["Hospitality, tourism, sport and events", "hospitality", "hospitality", ["Catering Manager", "Food and Beverage Controller", "Housekeeping Supervisor", "Spa Therapist", "Resort Activities Coordinator", "Sports Event Operations Assistant"]],
+  ["Manufacturing, mining and energy", "engineering", "trade", ["Boiler Operator", "Furnace Operator", "Foundry Patternmaker", "Recycling Plant Operator", "Mine Ventilation Assistant", "Explosives Safety Assistant", "Solar Farm Operations Technician", "Water Desalination Plant Operator"]],
+  ["Informal, entrepreneurship and community economy", "entrepreneur", "entrepreneur", ["Mobile Phone Repairer", "Appliance Repairer", "Laundry Service Owner", "Food Delivery Kitchen Operator", "Local Tour Experience Host", "Social Enterprise Founder", "Community Health Product Distributor", "Township Logistics Broker"]],
+  ["Science, research and frontier careers", "science", "science", ["Meteorological Technician", "GIS Scientist", "Medical Physicist Assistant", "Nanotechnology Technician", "Water Quality Analyst", "Clinical Research Data Manager", "AI Ethics Research Assistant"]],
+  ["Arts, culture, heritage and society", "creative", "portfolio", ["Community Historian", "Cultural Tourism Guide", "Subtitler", "Museum Education Officer"]],
+];
+
+const ALL_CAREER_GROUPS = [...CAREER_GROUPS, ...ADDITIONAL_CAREER_GROUPS];
+const generatedRoutes = ALL_CAREER_GROUPS.flatMap(([stream, kind, profile, titles]) =>
   titles.map((title) => makeRoute(title, stream, kind, profile))
 ).sort((a, b) => a.stream.localeCompare(b.stream) || a.title.localeCompare(b.title));
 
@@ -284,31 +385,35 @@ export const CAREER_ROUTES = generatedRoutes.map((route) => {
   return {
     ...baseProfile,
     ...route,
+    qualificationPathways: getQualificationPathways(route),
     similarCareerIds: sameStream.length > 2 ? [sameStream[(index + 1) % sameStream.length], sameStream[(index + 2) % sameStream.length]] : sameStream.filter((id) => id !== route.id),
   };
 });
 
 export const CAREER_COVERAGE_SUMMARY = {
-  totalRoutes: 344,
+  totalRoutes: 461,
   country: "ZA",
-  status: "expanded-starter-taxonomy",
+  status: "production-safety-taxonomy-with-research-queue",
   salaryPolicy: "qualitative-earning-potential-only",
+  researchQueueCount: 461,
+  sourceVerifiedProfileCount: 0,
+  proofPolicy: "A profile may be visible as a learner discussion scaffold, but demand, salary, provider entry and qualification claims stay locked until source evidence is attached.",
   streamCounts: {
-    "Technology, data and AI": 36,
-    "Finance, admin and business operations": 28,
-    "Skilled trades, construction and engineering": 30,
-    "Health, care and social services": 25,
-    "Education, training and youth development": 16,
-    "Agriculture, food and environment": 24,
-    "Logistics, transport and supply chain": 18,
-    "Law, public service and public safety": 20,
-    "Creative, media and design": 26,
-    "Sales, marketing and customer work": 20,
-    "Hospitality, tourism, sport and events": 18,
-    "Manufacturing, mining and energy": 22,
-    "Informal, entrepreneurship and community economy": 20,
-    "Science, research and frontier careers": 25,
-    "Arts, culture, heritage and society": 16
+    "Technology, data and AI": 48,
+    "Finance, admin and business operations": 36,
+    "Skilled trades, construction and engineering": 40,
+    "Health, care and social services": 34,
+    "Education, training and youth development": 23,
+    "Agriculture, food and environment": 32,
+    "Logistics, transport and supply chain": 25,
+    "Law, public service and public safety": 28,
+    "Creative, media and design": 34,
+    "Sales, marketing and customer work": 27,
+    "Hospitality, tourism, sport and events": 24,
+    "Manufacturing, mining and energy": 30,
+    "Informal, entrepreneurship and community economy": 28,
+    "Science, research and frontier careers": 32,
+    "Arts, culture, heritage and society": 20
   },
 };
 
@@ -368,7 +473,7 @@ export const INTEREST_SIGNALS = [
   { value: "quiet", label: "Quiet focused work", icon: "Check" },
   { value: "maths", label: "Maths thinking", icon: "Brain" },
   { value: "structure", label: "Structure and rules", icon: "Check" },
-  { value: "money", label: "Money and business", icon: "Briefcase" },
+  { value: "accounting", label: "Accounting and finance systems", icon: "Briefcase" },
   { value: "office", label: "Office work", icon: "Briefcase" },
   { value: "fixing", label: "Fixing problems", icon: "Wrench" },
   { value: "tools", label: "Working with tools", icon: "Wrench" },

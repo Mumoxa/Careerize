@@ -1,7 +1,7 @@
 # Careerize Career Coverage Manifest
 
 Date: 15 June 2026
-Status: Expanded starter taxonomy
+Status: Production-safety taxonomy with research queue
 Country focus: South Africa
 Salary policy: qualitative earning-potential insight only; no detailed salary bands or salary figures.
 
@@ -13,26 +13,26 @@ This manifest records the repo-level correction: the catalog is no longer a five
 
 ## Current live catalog coverage
 
-The live `CAREER_ROUTES` catalog now generates **344 starter career routes** across **15 macro streams**.
+The live `CAREER_ROUTES` catalog now generates **461 mapped career routes** across **15 macro streams**. Every route is usable for exploration, but is still marked with evidence status so unsupported salary, demand, provider-entry and qualification claims remain locked until source records are attached.
 
-| Macro stream | Starter routes |
+| Macro stream | Mapped routes |
 |---|---:|
-| Technology, data and AI | 36 |
-| Skilled trades, construction and engineering | 30 |
-| Finance, admin and business operations | 28 |
-| Creative, media and design | 26 |
-| Health, care and social services | 25 |
-| Science, research and frontier careers | 25 |
-| Agriculture, food and environment | 24 |
-| Manufacturing, mining and energy | 22 |
-| Informal, entrepreneurship and community economy | 20 |
-| Law, public service and public safety | 20 |
-| Sales, marketing and customer work | 20 |
-| Hospitality, tourism, sport and events | 18 |
-| Logistics, transport and supply chain | 18 |
-| Arts, culture, heritage and society | 16 |
-| Education, training and youth development | 16 |
-| **Total** | **344** |
+| Technology, data and AI | 48 |
+| Skilled trades, construction and engineering | 40 |
+| Finance, admin and business operations | 36 |
+| Creative, media and design | 34 |
+| Health, care and social services | 34 |
+| Agriculture, food and environment | 32 |
+| Science, research and frontier careers | 32 |
+| Manufacturing, mining and energy | 30 |
+| Informal, entrepreneurship and community economy | 28 |
+| Law, public service and public safety | 28 |
+| Sales, marketing and customer work | 27 |
+| Logistics, transport and supply chain | 25 |
+| Hospitality, tourism, sport and events | 24 |
+| Education, training and youth development | 23 |
+| Arts, culture, heritage and society | 20 |
+| **Total** | **461** |
 
 ## What each starter route includes
 
@@ -104,9 +104,35 @@ Priority enrichment order:
 
 ## Product interpretation
 
-This change means Careerize now has a broad career universe for exploration. It is not yet a fully verified 344-career knowledge graph. The difference matters:
+This change means Careerize now has a broad career universe for exploration. It is not yet a fully verified 461-career knowledge graph. The difference matters:
 
 - **Breadth exists now.**
 - **Deep verified guidance still needs staged editorial and source work.**
 
 That is the correct foundation for a South African-first career intelligence platform.
+## 2026-06-28 production-safety update
+
+The catalog has been expanded from 344 to 461 career routes and the full generated qualification coverage export now contains 461 career-to-qualification rows. This is a broader South African career universe for learners, parents and advisors, not a claim that all 461 profiles are fully researched.
+
+Each route now carries:
+
+- evidence state for profile, qualification, demand and earning guidance
+- qualitative career-reality dimensions for earning ambition, travel/movement, stress and safety/danger tolerance
+- source IDs that separate internal editorial scaffolding from official-source categories
+- a research-queue status until DHET, SAQA, QCTO, CHE, DHET institution registers, provider pages or professional-body records support the exact claim
+
+Production rule: Careerize can launch as a decision-support platform only if unverified claims stay visibly marked and the app continues to avoid salary figures, demand strength, APS and provider-entry requirements until the relevant source record is attached.
+
+## 2026-06-28 research-queue gate
+
+The repo now generates `data/sa-foundation/career_research_queue.csv`, a 461-row source-verification queue matching every live `CAREER_ROUTES` id. It records required source categories and the high-risk claim types blocked until evidence is attached.
+
+The repo also generates `data/sa-foundation/career_research_team_workplan.csv`, a 461-row execution plan assigning every route to a research lane, phase, primary researcher role, evidence reviewer and learner-safety QA reviewer.
+
+`npm run check` now exports and validates both generated files:
+
+- `career_qualification_coverage.csv`
+- `career_research_queue.csv`
+- `career_research_team_workplan.csv`
+
+The production validator cross-checks all generated files against the live route IDs, research queue, source registry and Supabase evidence/team-workplan schema.
