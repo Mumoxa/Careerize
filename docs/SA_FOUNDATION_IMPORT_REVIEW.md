@@ -8,7 +8,7 @@ Imported workspace: `workspace-019ecb13-0c77-7745-a113-fb583a056bfa.zip`
 
 The uploaded workspace should not be pasted into the live React catalog. It should become a dedicated South African foundation-data layer.
 
-The reason is simple: the current app catalog solves breadth with 344 starter routes, while the workspace solves depth through OFO/OIHD mapping, qualification-pathway matrices, registration dependencies, specialisations, graph exports and Top 100 enrichment queues. Mixing the two would create duplication and could accidentally publish unverified labour-market claims.
+The reason is simple: the current app catalog solves breadth with 1,050 starter routes, while the workspace solves depth through OFO/OIHD mapping, qualification-pathway matrices, registration dependencies, specialisations, graph exports, the generated 1,050-row research queue and Top 100 enrichment queues. Mixing the two without claim gates would create duplication and could accidentally publish unverified labour-market claims.
 
 ## What the workspace adds
 
@@ -25,7 +25,7 @@ The reason is simple: the current app catalog solves breadth with 344 starter ro
 
 ## Product correction
 
-Careerize must become graph-first, not only profile-first. The live 344-route catalog is useful for exploration, but the durable product moat is the relationship layer:
+Careerize must become graph-first, not only profile-first. The live 1,050-route starter catalog is useful for exploration, but the durable product moat is the relationship layer:
 
 - career to qualification
 - qualification to many careers
@@ -64,14 +64,14 @@ No salary figures were wired into the public product. The imported salary file r
 - Do not treat `starter_unverified` rows as final advice.
 - Do not publish salary bands from tracker files.
 - Do not collapse OIHD and Critical Skills List into the same flag.
-- Do not duplicate the 344 route titles into another frontend array.
+- Do not duplicate the 1,050 route titles into another frontend array.
 - Do not claim qualification eligibility without a source URL, access date and confidence score.
 
 ## Bottom line
 
 The repo now has two complementary layers:
 
-1. **Learner-facing breadth:** 344 starter routes in `src/data/careerCatalog.js`.
+1. **Learner-facing breadth:** 1,050 starter routes in `src/data/careerCatalog.js`.
 2. **Operational depth:** SA foundation data in `data/sa-foundation/`.
 
 That is the right architecture for Careerize.

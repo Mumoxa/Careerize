@@ -1,0 +1,58 @@
+export const SCHOOL_SUBJECTS = [
+  "Mathematics",
+  "Mathematical Literacy",
+  "Physical Sciences",
+  "Life Sciences",
+  "Accounting",
+  "Business Studies",
+  "Economics",
+  "Computer Applications Technology",
+  "Information Technology",
+  "Engineering Graphics and Design",
+  "Geography",
+  "Agricultural Sciences",
+  "Tourism",
+  "Consumer Studies",
+  "Visual Arts",
+  "Design",
+  "Dramatic Arts",
+  "History",
+  "Languages",
+];
+
+const rule = (id, subject, clusters, routeType, strength, summary, warning) => ({
+  id,
+  subject,
+  clusters,
+  routeType,
+  strength,
+  summary,
+  warning,
+  verificationStatus: "needs_manual_verification",
+  sourceUrl: "provider_prospectus_required",
+});
+
+// Conservative, route-level guidance normalised from
+// data/sa-foundation/subject_choice_rules_seed.csv. These are not provider claims.
+export const SUBJECT_RULES = [
+  rule("maths-engineering", "Mathematics", ["Skilled trades, construction and engineering", "Manufacturing, mining and energy"], "university", "blocks_some_routes_if_missing", "Most engineering degree routes require Mathematics and provider-specific marks.", "Dropping Mathematics can close many university engineering routes."),
+  rule("science-engineering", "Physical Sciences", ["Skilled trades, construction and engineering", "Manufacturing, mining and energy"], "university", "blocks_some_routes_if_missing", "Many engineering degree routes require Physical Sciences and provider-specific marks.", "Dropping Physical Sciences can close many university engineering routes."),
+  rule("maths-tech", "Mathematics", ["Technology, data and AI"], "university", "route_dependent", "Computer Science, data and quantitative degree routes often require Mathematics.", "Mathematical Literacy may narrow Computer Science, Data Science and related degree routes."),
+  rule("it-tech", "Information Technology", ["Technology, data and AI"], "self_study", "helpful", "IT supports programming and systems thinking but is not always an admission requirement.", "IT is helpful, but does not replace Mathematics where a degree requires it."),
+  rule("cat-tech", "Computer Applications Technology", ["Technology, data and AI"], "vendor_certification", "helpful", "CAT supports digital confidence, office systems and some support routes.", "CAT does not replace Mathematics for routes that require Mathematics."),
+  rule("accounting-finance", "Accounting", ["Finance, admin and business operations"], "university", "strongly_recommended", "Accounting is strongly useful for accounting, finance and bookkeeping pathways.", "Professional and degree requirements vary by programme."),
+  rule("maths-finance", "Mathematics", ["Finance, admin and business operations"], "professional_body", "strongly_recommended", "Mathematics supports accounting, actuarial, finance and quantitative banking routes.", "Mathematical Literacy may narrow actuarial and quantitative finance routes."),
+  rule("life-health", "Life Sciences", ["Health, care and social services", "Science, research and frontier careers"], "university", "route_dependent", "Life Sciences supports health, biology and medical study routes.", "Health and science requirements differ by institution and programme."),
+  rule("science-health", "Physical Sciences", ["Health, care and social services", "Science, research and frontier careers"], "university", "route_dependent", "Physical Sciences is important for medicine, pharmacy and several science routes.", "Check exact programme rules before dropping Physical Sciences."),
+  rule("egd-built", "Engineering Graphics and Design", ["Skilled trades, construction and engineering"], "university_of_technology", "helpful", "EGD supports construction, drafting and technical design thinking.", "EGD helps, but Mathematics and provider rules may still matter."),
+  rule("arts-creative", "Visual Arts", ["Creative, media and design", "Arts, culture, heritage and society"], "portfolio", "helpful", "Visual Arts supports creative portfolio development.", "Creative routes often need portfolio evidence as well as school marks."),
+  rule("design-creative", "Design", ["Creative, media and design", "Arts, culture, heritage and society"], "portfolio", "helpful", "Design supports design thinking and portfolio applications.", "A strong portfolio may matter more than one subject, but provider rules vary."),
+  rule("geography-environment", "Geography", ["Agriculture, food and environment", "Logistics, transport and supply chain"], "university", "helpful", "Geography supports environmental, GIS, planning and logistics pathways.", "Exact admission rules remain qualification-specific."),
+  rule("agri", "Agricultural Sciences", ["Agriculture, food and environment"], "tvet", "helpful", "Agricultural Sciences supports farming, food and agricultural study routes.", "Mathematics, Life Sciences or Geography may still matter by programme."),
+  rule("tourism", "Tourism", ["Hospitality, tourism, sport and events"], "tvet", "helpful", "Tourism supports travel, hospitality and events routes.", "Tourism is useful but not the only route into the field."),
+  rule("consumer-hospitality", "Consumer Studies", ["Hospitality, tourism, sport and events", "Agriculture, food and environment"], "tvet", "helpful", "Consumer Studies supports culinary, hospitality and service pathways.", "Practical evidence and provider-specific rules still matter."),
+  rule("languages-law", "Languages", ["Law, public service and public safety", "Education, training and youth development", "Sales, marketing and customer work"], "university", "helpful", "Strong language ability supports law, teaching, communication and research-heavy routes.", "Entry remains provider-specific and may depend on language marks."),
+  rule("history-public", "History", ["Law, public service and public safety", "Arts, culture, heritage and society"], "university", "helpful", "History supports social context, policy, law and humanities routes.", "History is helpful but does not guarantee entry."),
+  rule("business-enterprise", "Business Studies", ["Informal, entrepreneurship and community economy", "Sales, marketing and customer work", "Finance, admin and business operations"], "workplace", "helpful", "Business Studies supports commercial language, planning and enterprise basics.", "Practical evidence and financial skills still matter."),
+  rule("maths-science", "Mathematics", ["Science, research and frontier careers"], "university", "strongly_recommended", "Mathematics supports quantitative science and research routes.", "Mathematical Literacy may narrow quantitative degree options."),
+];

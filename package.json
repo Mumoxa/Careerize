@@ -12,15 +12,23 @@
     "generate:foundation-research": "node scripts/generateSaResearchFoundation.mjs",
     "validate:catalog": "node scripts/validateCatalog.mjs",
     "validate:foundation": "node scripts/validateSaFoundation.mjs",
+    "validate:production": "node scripts/validateProductionReadiness.mjs",
+    "validate:recommendations": "node scripts/validateRecommendationScenarios.mjs",
+    "validate:recommendation-matrix": "node scripts/validateRecommendationMatrix.mjs",
     "validate:academic-pathways": "node scripts/validateAcademicPathways.mjs",
     "validate:public-copy": "node scripts/validatePublicLaunchCopy.mjs",
     "validate:ofo-codes": "node scripts/validateOfoCodes.mjs",
+    "export:qualification-coverage": "node scripts/exportQualificationCoverage.mjs",
+    "export:career-research-queue": "node scripts/exportCareerResearchQueue.mjs",
+    "export:research-team-workplan": "node scripts/exportResearchTeamWorkplan.mjs",
     "audit:deps": "node scripts/runNpmAudit.mjs",
-    "check": "npm run validate:catalog && npm run validate:ofo-codes && npm run validate:foundation && npm run validate:academic-pathways && npm run validate:public-copy && npm test && npm run build",
+    "check": "npm run export:qualification-coverage && npm run export:career-research-queue && npm run export:research-team-workplan && npm run validate:catalog && npm run validate:ofo-codes && npm run validate:foundation && npm run validate:academic-pathways && npm run validate:public-copy && npm run validate:production && npm test && npm run build && npm run smoke:browser",
     "check:launch": "npm run check && npm run test:browser",
     "preview": "vite preview",
-    "test": "node scripts/validateMvpFlows.mjs",
+    "test": "npm run export:qualification-coverage && npm run export:career-research-queue && npm run export:research-team-workplan && node scripts/validateMvpFlows.mjs && npm run validate:recommendations && npm run validate:recommendation-matrix && npm run test:ui",
+    "test:ui": "vitest run",
     "test:browser": "npm run build && node scripts/runPlaywright.mjs",
+    "smoke:browser": "node scripts/smokeBrowser.mjs",
     "test:smoke": "playwright test tests/e2e/public-launch.smoke.spec.js",
     "test:a11y": "playwright test tests/e2e/accessibility.spec.js"
   },
@@ -33,10 +41,16 @@
   "devDependencies": {
     "@axe-core/playwright": "^4.11.3",
     "@playwright/test": "^1.61.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@vitejs/plugin-react": "^6.0.2",
     "autoprefixer": "^10.4.20",
+    "jsdom": "^29.1.1",
+    "playwright": "^1.61.1",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.13",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "vitest": "^4.1.9"
   }
 }

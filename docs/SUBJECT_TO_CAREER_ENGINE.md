@@ -96,4 +96,4 @@ A Careerize pathway is publishable only when every formal claim has:
 
 The next product layer should be the subject-choice engine, not another broad static career dump.
 
-The existing 344 starter career routes remain useful for exploration, but the priority is now to connect them to verified qualification pathways and Grade 10 subject decisions.
+The existing 1,050 starter career routes remain useful for exploration, but the priority is now to connect them to verified qualification pathways, the research queue and Grade 10 subject decisions.

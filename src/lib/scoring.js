@@ -154,7 +154,8 @@ export function explainPreferenceFit(route, preferences = DEFAULT_LIFESTYLE_PREF
 }
 
 export function rankCareerRoutes(routes, answers, selectedSignals, preferences = DEFAULT_LIFESTYLE_PREFERENCES) {
-  const uniqueSignals = getSelectedSignals(answers, selectedSignals);
+  const knownSignals = new Set(routes.flatMap((route) => Object.keys(route.signalWeights ?? {})));
+  const uniqueSignals = getSelectedSignals(answers, selectedSignals).filter((signal) => knownSignals.has(signal));
 
   return [...routes]
     .map((route) => {
@@ -175,7 +176,14 @@ export function rankCareerRoutes(routes, answers, selectedSignals, preferences =
         preferenceFit: explainPreferenceFit(route, preferences),
       };
     })
-    .sort((a, b) => b.score - a.score || b.matchPercent - a.matchPercent || a.title.localeCompare(b.title));
+    .sort((a, b) => {
+      const aHasSignalOverlap = uniqueSignals.length === 0 || a.signalScore > 0;
+      const bHasSignalOverlap = uniqueSignals.length === 0 || b.signalScore > 0;
+      return Number(bHasSignalOverlap) - Number(aHasSignalOverlap)
+        || b.score - a.score
+        || b.matchPercent - a.matchPercent
+        || a.title.localeCompare(b.title);
+    });
 }
 
 export function getProfileProgress(answers, questions) {

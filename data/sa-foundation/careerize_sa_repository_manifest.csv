@@ -57,3 +57,6 @@ careerize_sa_top100_profile_schema_notes.md,md,,Companion notes/documentation
 careerize_sa_top100_source_verification_tracker.csv,csv,100,Verification workflow tracker for Top 100 careers
 careerize_sa_top100_source_verification_tracker_notes.md,md,,Companion notes/documentation
 careerize_sa_visual_interdependency_map.md,md,,Mermaid-based visual interdependency notes
+career_qualification_coverage.csv,csv,1050,Generated reconciliation showing every live Careerize route and its conservative qualification-family association
+career_research_queue.csv,csv,1050,Generated source-verification work queue covering every live Careerize route and the claims blocked until evidence is attached
+career_research_team_workplan.csv,csv,1050,Generated research-team execution plan assigning every live route to a lane phase role reviewer and QA status

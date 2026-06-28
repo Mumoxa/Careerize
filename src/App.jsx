@@ -182,7 +182,7 @@ export default function App() {
           </button>
         </div>
         {mobileNavOpen ? (
-          <nav id="mobile-navigation" className="grid gap-4 border-t border-sage-200 bg-cream-100 px-5 py-5 text-sm font-semibold md:hidden">
+          <nav id="mobile-navigation" className="grid gap-4 border-t border-sage-200 bg-cream-100 px-5 py-5 text-sm font-semibold md:hidden" aria-label="Mobile navigation">
             <a href="#discover" onClick={() => setMobileNavOpen(false)}>Discovery</a>
             <a href="#matches" onClick={() => setMobileNavOpen(false)}>Exploration matches</a>
             <a href="#pathway-detail" onClick={() => setMobileNavOpen(false)}>Pathway guide</a>
@@ -243,6 +243,9 @@ export default function App() {
                     <button
                       type="button"
                       key={option.value}
+                      data-testid="discovery-option"
+                      data-question-id={currentQuestion.id}
+                      data-option-value={option.value}
                       onClick={() => choose(currentQuestion.id, option.value)}
                       aria-pressed={selected}
                       className={`answer-card ${selected ? "answer-card-selected" : ""}`}
@@ -275,6 +278,8 @@ export default function App() {
                     <button
                       type="button"
                       key={signal.value}
+                      data-testid="interest-signal"
+                      data-signal-value={signal.value}
                       onClick={() => toggleInterest(signal.value)}
                       aria-pressed={selected}
                       className={`interest-chip ${selected ? "interest-chip-selected" : ""}`}
@@ -445,8 +450,11 @@ function PreferenceSlider({ preference, value, onChange }) {
         max="100"
         step="5"
         value={value}
+        data-testid="preference-slider"
+        data-preference-id={preference.id}
         onChange={(event) => onChange(preference.id, event.target.value)}
         className="mt-4 w-full accent-forest-700"
+        aria-label={preference.label}
         aria-describedby={`${preference.id}-helper`}
       />
       <span className="mt-2 flex justify-between gap-3 text-xs font-semibold text-forest-700">
@@ -461,7 +469,7 @@ function PreferenceSlider({ preference, value, onChange }) {
 function ExplorationCard({ route, active, hasInput, onOpen }) {
   const matched = matchedSignalLabels(route);
   return (
-    <article className={`flex min-h-[330px] flex-col rounded-xl border bg-cream-50 p-5 ${active ? "border-2 border-forest-700 shadow-[4px_4px_0_#a9c59f]" : "border-sage-300"}`}>
+    <article data-testid="route-card" data-route-id={route.id} className={`flex min-h-[330px] flex-col rounded-xl border bg-cream-50 p-5 ${active ? "border-2 border-forest-700 shadow-[4px_4px_0_#a9c59f]" : "border-sage-300"}`}>
       <div className="flex items-start justify-between gap-3">
         <StatusBadge tone="leaf">Exploration match</StatusBadge>
         <span className="text-xs font-semibold text-forest-700">Starter profile</span>
@@ -476,7 +484,7 @@ function ExplorationCard({ route, active, hasInput, onOpen }) {
           ? `It overlaps with ${matched.join(", ")}.`
           : "It is a starter example. Choose signals to create a ranked comparison."}
       </div>
-      <button type="button" onClick={() => onOpen(route.id)} className="mt-auto flex items-center justify-between pt-6 text-left text-sm font-bold text-forest-700">
+      <button type="button" data-testid="route-open" data-route-id={route.id} onClick={() => onOpen(route.id)} className="mt-auto flex items-center justify-between pt-6 text-left text-sm font-bold text-forest-700">
         <span>View pathway: {route.title}</span><ChevronRight size={18} aria-hidden="true" />
       </button>
     </article>
@@ -533,7 +541,7 @@ function PathwayDetail({ route, pathwayRecord, selectedSubjects, onToggleSubject
               {SUBJECT_OPTIONS.map((subject) => {
                 const selected = selectedSubjects.includes(subject);
                 return (
-                  <button type="button" key={subject} onClick={() => onToggleSubject(subject)} aria-pressed={selected} className={`inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold ${selected ? "border-forest-700 bg-sage-100 text-forest-800" : "border-sage-300 bg-cream-50 text-forest-800"}`}>
+                  <button type="button" key={subject} data-testid="subject-toggle" data-subject={subject} onClick={() => onToggleSubject(subject)} aria-pressed={selected} className={`inline-flex items-center gap-1 rounded-full border px-3 py-2 text-xs font-semibold ${selected ? "border-forest-700 bg-sage-100 text-forest-800" : "border-sage-300 bg-cream-50 text-forest-800"}`}>
                     <span>{subject}</span>{selected ? <Check size={13} aria-hidden="true" /> : null}
                   </button>
                 );
