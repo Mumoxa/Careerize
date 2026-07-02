@@ -15,7 +15,7 @@ test("learner can complete the public discovery and pathway journey", async ({ p
 
   await expect(digitalTools).toHaveAttribute("aria-pressed", "true");
   await expect.poll(() => page.url()).not.toBe(beforeSignalSelection);
-  await expect(page.getByRole("heading", { name: "Exploration matches", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Route explorer", exact: true })).toBeVisible();
 
   const pathwayButtons = page.getByRole("button", { name: /^View pathway:/i });
   await expect(pathwayButtons.first()).toBeVisible();
