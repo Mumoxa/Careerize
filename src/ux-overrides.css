@@ -1,0 +1,121 @@
+#top {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 10% 12%, rgba(169, 197, 159, 0.45), transparent 28%),
+    radial-gradient(circle at 82% 18%, rgba(229, 216, 190, 0.8), transparent 24%),
+    linear-gradient(135deg, #faf5e9 0%, #f3f7f0 52%, #faf5e9 100%);
+}
+
+#top::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: -1;
+  height: 100%;
+  opacity: 0.7;
+  background-image: linear-gradient(rgba(47, 82, 63, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 82, 63, 0.08) 1px, transparent 1px);
+  background-size: 42px 42px;
+  mask-image: linear-gradient(to bottom, black, transparent 82%);
+}
+
+#top > div > div:first-child {
+  position: relative;
+  z-index: 1;
+}
+
+#top > div > div:last-child {
+  position: relative;
+  z-index: 1;
+  box-shadow: 10px 10px 0 #a9c59f;
+}
+
+#top > div > div:last-child::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 1rem;
+  border: 1px solid rgba(255, 253, 247, 0.72);
+  border-radius: 1.35rem;
+}
+
+#top .mt-9 {
+  display: grid;
+  gap: 1rem;
+}
+
+#top .mt-9 .primary-button,
+#top .mt-9 .secondary-button {
+  position: relative;
+  min-height: 210px;
+  align-items: flex-start;
+  justify-content: flex-start;
+  flex-direction: column;
+  overflow: hidden;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  text-align: left;
+  box-shadow: 4px 4px 0 #cbdcc5;
+}
+
+#top .mt-9 .primary-button {
+  border: 2px solid #2f523f;
+  background: #e3eedf;
+  color: #10241c;
+}
+
+#top .mt-9 .secondary-button {
+  border-color: #a9c59f;
+}
+
+#top .mt-9 .primary-button::before,
+#top .mt-9 .secondary-button::before {
+  margin-bottom: 1.25rem;
+  border-radius: 999px;
+  background: #2f523f;
+  padding: 0.25rem 0.75rem;
+  color: #fffdf7;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+#top .mt-9 .primary-button::before {
+  content: "Signal-first";
+}
+
+#top .mt-9 .secondary-button::before {
+  content: "Route-first";
+}
+
+#top .mt-9 .primary-button::after,
+#top .mt-9 .secondary-button::after {
+  display: block;
+  margin-top: 1rem;
+  color: rgba(25, 49, 38, 0.78);
+  font-size: 0.9rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+#top .mt-9 .primary-button::after {
+  content: "Answer quick prompts, then compare routes against the choices you selected.";
+}
+
+#top .mt-9 .secondary-button::after {
+  content: "Search a field, subject or career cluster, then open the pathway guide.";
+}
+
+#top .bg-forest-900,
+#matches [aria-live="polite"] {
+  display: none;
+}
+
+@media (min-width: 640px) {
+  #top .mt-9 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
