@@ -108,7 +108,8 @@ button:disabled {
     @apply absolute -bottom-1 left-0 h-[3px] w-16 -rotate-2 bg-forest-700;
   }
 
-  .hero-shell {
+  .hero-shell,
+  #top {
     @apply relative isolate overflow-hidden;
     background:
       radial-gradient(circle at 10% 12%, rgba(169, 197, 159, 0.45), transparent 28%),
@@ -116,7 +117,8 @@ button:disabled {
       linear-gradient(135deg, #faf5e9 0%, #f3f7f0 52%, #faf5e9 100%);
   }
 
-  .hero-shell::before {
+  .hero-shell::before,
+  #top::before {
     content: "";
     @apply pointer-events-none absolute inset-x-0 top-0 -z-10 h-full opacity-70;
     background-image: linear-gradient(rgba(47, 82, 63, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 82, 63, 0.08) 1px, transparent 1px);
@@ -124,10 +126,46 @@ button:disabled {
     mask-image: linear-gradient(to bottom, black, transparent 82%);
   }
 
-  .hero-shell::after {
+  .hero-shell::after,
+  #top::after {
     content: "";
     @apply pointer-events-none absolute right-6 top-20 -z-10 h-32 w-32 rounded-full border border-sage-300 opacity-70;
     box-shadow: 28px 28px 0 rgba(169, 197, 159, 0.28);
+  }
+
+  #top > div > div:first-child {
+    @apply relative z-10;
+  }
+
+  #top > div > div:last-child {
+    @apply relative z-10 shadow-[10px_10px_0_#a9c59f];
+  }
+
+  #top > div > div:last-child::before {
+    content: "";
+    @apply pointer-events-none absolute inset-4 rounded-[1.35rem] border border-cream-50/70;
+  }
+
+  #top .mt-9 {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  #top .mt-9 .primary-button,
+  #top .mt-9 .secondary-button {
+    @apply relative flex min-h-[190px] flex-col items-start justify-start overflow-hidden rounded-2xl p-5 text-left shadow-[4px_4px_0_#cbdcc5] transition duration-200 hover:-translate-y-1 hover:shadow-[7px_7px_0_#a9c59f];
+  }
+
+  #top .mt-9 .primary-button {
+    @apply border-2 border-forest-700 bg-sage-100 text-forest-950;
+  }
+
+  #top .mt-9 .secondary-button {
+    @apply border-2 border-sage-300 bg-cream-50 text-forest-950;
+  }
+
+  #top .bg-forest-900,
+  #matches [aria-live="polite"] {
+    @apply hidden;
   }
 
   .primary-button {
