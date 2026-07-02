@@ -108,6 +108,66 @@ button:disabled {
     @apply absolute -bottom-1 left-0 h-[3px] w-16 -rotate-2 bg-forest-700;
   }
 
+  .hero-shell,
+  #top {
+    @apply relative isolate overflow-hidden;
+    background:
+      radial-gradient(circle at 10% 12%, rgba(169, 197, 159, 0.45), transparent 28%),
+      radial-gradient(circle at 82% 18%, rgba(229, 216, 190, 0.8), transparent 24%),
+      linear-gradient(135deg, #faf5e9 0%, #f3f7f0 52%, #faf5e9 100%);
+  }
+
+  .hero-shell::before,
+  #top::before {
+    content: "";
+    @apply pointer-events-none absolute inset-x-0 top-0 -z-10 h-full opacity-70;
+    background-image: linear-gradient(rgba(47, 82, 63, 0.08) 1px, transparent 1px), linear-gradient(90deg, rgba(47, 82, 63, 0.08) 1px, transparent 1px);
+    background-size: 42px 42px;
+    mask-image: linear-gradient(to bottom, black, transparent 82%);
+  }
+
+  .hero-shell::after,
+  #top::after {
+    content: "";
+    @apply pointer-events-none absolute right-6 top-20 -z-10 h-32 w-32 rounded-full border border-sage-300 opacity-70;
+    box-shadow: 28px 28px 0 rgba(169, 197, 159, 0.28);
+  }
+
+  #top > div > div:first-child {
+    @apply relative z-10;
+  }
+
+  #top > div > div:last-child {
+    @apply relative z-10 shadow-[10px_10px_0_#a9c59f];
+  }
+
+  #top > div > div:last-child::before {
+    content: "";
+    @apply pointer-events-none absolute inset-4 rounded-[1.35rem] border border-cream-50/70;
+  }
+
+  #top .mt-9 {
+    @apply grid gap-4 sm:grid-cols-2;
+  }
+
+  #top .mt-9 .primary-button,
+  #top .mt-9 .secondary-button {
+    @apply relative flex min-h-[190px] flex-col items-start justify-start overflow-hidden rounded-2xl p-5 text-left shadow-[4px_4px_0_#cbdcc5] transition duration-200 hover:-translate-y-1 hover:shadow-[7px_7px_0_#a9c59f];
+  }
+
+  #top .mt-9 .primary-button {
+    @apply border-2 border-forest-700 bg-sage-100 text-forest-950;
+  }
+
+  #top .mt-9 .secondary-button {
+    @apply border-2 border-sage-300 bg-cream-50 text-forest-950;
+  }
+
+  #top .bg-forest-900,
+  #matches [aria-live="polite"] {
+    @apply hidden;
+  }
+
   .primary-button {
     @apply inline-flex items-center justify-center gap-2 rounded-md bg-forest-700 px-6 py-3 text-sm font-bold text-white shadow-[3px_3px_0_#a9c59f] transition hover:-translate-y-0.5 hover:bg-forest-800 focus-visible:outline-forest-700;
   }
@@ -127,6 +187,36 @@ button:disabled {
   .accent-stroke {
     @apply h-1 w-52 -rotate-1 bg-forest-700;
     clip-path: polygon(0 25%, 100% 0, 96% 70%, 4% 100%);
+  }
+
+  .entry-point-card {
+    @apply group relative flex min-h-[230px] flex-col overflow-hidden rounded-2xl border border-sage-300 bg-cream-50/90 p-5 text-left shadow-[4px_4px_0_#cbdcc5] transition duration-200 hover:-translate-y-1 hover:border-forest-600 hover:shadow-[7px_7px_0_#a9c59f];
+  }
+
+  .entry-point-card::after {
+    content: "";
+    @apply absolute inset-x-5 bottom-0 h-1 origin-left scale-x-0 bg-forest-700 transition duration-200 group-hover:scale-x-100;
+  }
+
+  .entry-point-card-primary {
+    @apply border-forest-700 bg-sage-100 shadow-[7px_7px_0_#a9c59f];
+  }
+
+  .entry-point-icon {
+    @apply mb-5 grid h-11 w-11 place-items-center rounded-full bg-forest-700 text-white;
+  }
+
+  .hero-visual-card {
+    @apply relative z-10 overflow-hidden rounded-[1.75rem] border border-sage-200 bg-sage-100 shadow-[10px_10px_0_#a9c59f];
+  }
+
+  .hero-visual-card::before {
+    content: "";
+    @apply pointer-events-none absolute inset-4 rounded-[1.35rem] border border-cream-50/70;
+  }
+
+  .hero-signal-strip {
+    @apply grid gap-2 bg-forest-900 p-5 text-cream-50 sm:grid-cols-3;
   }
 
   .route-preview {
