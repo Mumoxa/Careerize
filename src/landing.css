@@ -1,0 +1,10 @@
+#top .mt-9 {
+  display: grid;
+  gap: 1rem;
+}
+
+@media (min-width: 640px) {
+  #top .mt-9 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
