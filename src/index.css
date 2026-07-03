@@ -3,9 +3,11 @@
 @tailwind utilities;
 
 :root {
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  font-family: "Trebuchet MS", "Avenir Next", "Segoe UI", sans-serif;
   color: #193126;
-  background: #faf5e9;
+  background:
+    radial-gradient(circle at top, rgba(201, 222, 191, 0.45), transparent 34%),
+    linear-gradient(180deg, #fcf8ef 0%, #f7f0df 100%);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -19,14 +21,20 @@
 
 html {
   scroll-behavior: smooth;
-  background: #faf5e9;
+  background:
+    radial-gradient(circle at top, rgba(201, 222, 191, 0.45), transparent 34%),
+    linear-gradient(180deg, #fcf8ef 0%, #f7f0df 100%);
 }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: #faf5e9;
+  background: transparent;
+  background-image:
+    linear-gradient(rgba(25, 49, 38, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(25, 49, 38, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
 }
 
 a {
@@ -101,6 +109,7 @@ button:disabled {
 @layer components {
   .brand-wordmark {
     @apply relative inline-block text-2xl font-extrabold tracking-[-0.045em] text-forest-950;
+    font-family: Georgia, "Times New Roman", serif;
   }
 
   .brand-wordmark::after {
@@ -129,6 +138,24 @@ button:disabled {
     clip-path: polygon(0 25%, 100% 0, 96% 70%, 4% 100%);
   }
 
+  .route-studio-panel {
+    background:
+      linear-gradient(145deg, rgba(255, 255, 255, 0.84), rgba(249, 243, 228, 0.95)),
+      radial-gradient(circle at top right, rgba(169, 197, 159, 0.28), transparent 34%);
+    box-shadow: 10px 10px 0 #d8ccb6;
+  }
+
+  .discovery-ribbon {
+    background:
+      linear-gradient(135deg, rgba(169, 197, 159, 0.26), rgba(255, 255, 255, 0.72)),
+      linear-gradient(90deg, rgba(25, 49, 38, 0.06), rgba(25, 49, 38, 0));
+    border: 1px solid rgba(47, 82, 63, 0.16);
+  }
+
+  .route-mode-banner {
+    box-shadow: 6px 6px 0 rgba(169, 197, 159, 0.55);
+  }
+
   .route-preview {
     @apply overflow-hidden rounded-xl border border-sage-200 bg-cream-50 transition duration-200 hover:-translate-y-1 hover:border-sage-400 hover:shadow-[4px_4px_0_#cbdcc5];
   }
@@ -138,7 +165,7 @@ button:disabled {
   }
 
   .answer-card {
-    @apply flex min-h-40 flex-col items-start justify-between rounded-xl border border-sage-300 bg-cream-50 p-5 text-left text-sm font-semibold leading-6 transition hover:border-sage-400;
+    @apply flex min-h-40 flex-col items-start justify-between rounded-xl border border-sage-300 bg-cream-50 p-5 text-left text-sm font-semibold leading-6 transition hover:-translate-y-0.5 hover:border-sage-400;
   }
 
   .answer-card-selected {

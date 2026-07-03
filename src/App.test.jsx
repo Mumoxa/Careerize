@@ -26,7 +26,7 @@ const SUBJECT_OPTIONS = [
 
 async function renderApp() {
   render(<App />);
-  await screen.findByRole("heading", { name: /explore career and study routes/i });
+  await screen.findByRole("heading", { name: /start with a question, or start with a route/i });
 }
 
 function byDataset(testId, field, value) {
@@ -69,6 +69,15 @@ function selectOption(questionId, optionValue) {
 }
 
 describe("Careerize public launch selection system", () => {
+  it("shows the two entry points clearly near the top of the experience", async () => {
+    await renderApp();
+
+    expect(screen.getByRole("heading", { name: "I need direction" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "I have an idea" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Start guided discovery/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Jump to direct exploration/i })).toBeInTheDocument();
+  });
+
   it("renders every question option, interest signal, lifestyle slider and subject-risk option", async () => {
     await renderApp();
 

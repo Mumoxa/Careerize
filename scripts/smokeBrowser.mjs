@@ -93,7 +93,7 @@ async function main() {
     page.on("pageerror", (error) => consoleErrors.push(error.message));
 
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.getByRole("heading", { name: /explore career and study routes/i }).waitFor();
+    await page.getByRole("heading", { name: /start with a question, or start with a route/i }).waitFor();
 
     await page.getByRole("button", { name: "Working with people" }).click();
     await page.getByRole("button", { name: "Caring for people" }).click();

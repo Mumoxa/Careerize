@@ -4,6 +4,7 @@ import {
   Check,
   ChevronRight,
   Compass,
+  CornerDownRight,
   Lock,
   Map as MapIcon,
   Menu,
@@ -157,6 +158,22 @@ export default function App() {
     document.querySelector("#matches")?.scrollIntoView({ behavior: "smooth" });
   }
 
+  function jumpToSection(sectionId) {
+    document.querySelector(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function handleRouteSearchSubmit(event) {
+    event.preventDefault();
+    jumpToSection("#matches");
+  }
+
+  function applyQuickStream(stream) {
+    setStreamFilter(stream);
+    jumpToSection("#matches");
+  }
+
+  const directEntryExamples = routeStreams.slice(0, 4);
+
   return (
     <>
       <a href="#main-content" className="skip-link">Skip to main content</a>
@@ -195,43 +212,105 @@ export default function App() {
         <section id="top" className="mx-auto grid max-w-[1240px] gap-12 px-5 py-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-20">
           <div>
             <GuidanceLabels />
+            <p className="mt-6 text-sm font-bold uppercase tracking-[0.2em] text-forest-700">South African route exploration</p>
             <h1 className="mt-6 max-w-[680px] text-5xl font-extrabold leading-[1.02] tracking-[-0.045em] sm:text-6xl lg:text-[72px]">
-              Explore career and study routes from the signals you choose.
+              Start with a question, or start with a route you already have in mind.
             </h1>
             <div className="accent-stroke mt-5" />
             <p className="mt-8 max-w-2xl text-lg leading-8 text-forest-800/80">
-              Careerize helps you explore possible study and career routes based on the signals you choose. This is starter guidance, not an admissions decision. Check subject and entry requirements with each provider.
+              Careerize is a route-exploration tool for South African learners. You can use guided discovery when you need direction, or jump straight into a field, subject or route you want to investigate. This is starter guidance, not an admissions decision. Check subject and entry requirements with each provider.
             </p>
-            <div className="mt-9 flex flex-wrap gap-3">
+            <div className="mt-10 grid gap-4 xl:grid-cols-2">
+              <EntryPointCard
+                eyebrow="Entry point 1"
+                title="I need direction"
+                body="Move through a few signal-based prompts, then compare starter routes shaped by your answers, interests and career-reality preferences."
+                actionLabel="Start guided discovery"
+                onAction={() => jumpToSection("#discover")}
+                tone="forest"
+              />
+              <EntryPointCard
+                eyebrow="Entry point 2"
+                title="I have an idea"
+                body="Search a career area, browse a cluster, or open a pathway directly when you already have a direction worth checking."
+                actionLabel="Jump to direct exploration"
+                onAction={() => jumpToSection("#matches")}
+                tone="cream"
+              />
+            </div>
+            <div className="mt-6 flex flex-wrap gap-3">
               <a href="#discover" className="primary-button">Start exploring <ArrowRight size={18} /></a>
-              <a href="#matches" className="secondary-button">Browse starter routes</a>
+              <a href="#matches" className="secondary-button">Open route explorer</a>
             </div>
             <p className="mt-6 flex items-center gap-2 text-sm font-medium text-forest-800/80"><MapIcon size={18} className="text-forest-700" /> Built for South African learners</p>
           </div>
-          <div className="overflow-hidden rounded-2xl border border-sage-200 bg-sage-100 shadow-[8px_8px_0_#a9c59f]">
-            <img
-              src={learnersCollaborating1280}
-              srcSet={`${learnersCollaborating640} 640w, ${learnersCollaborating1280} 1280w`}
-              sizes="(min-width: 1024px) 52vw, 100vw"
-              width="1280"
-              height="720"
-              fetchpriority="high"
-              decoding="async"
-              alt="Learners discussing possible study and career routes"
-              className="aspect-[16/10] w-full object-cover"
-            />
-            <div className="grid gap-2 bg-forest-900 p-5 text-cream-50 sm:grid-cols-3">
-              <HeroFact value={CAREER_COVERAGE_SUMMARY.totalRoutes.toLocaleString("en-ZA")} label="starter career profiles" />
-              <HeroFact value="Signals" label="not suitability scores" />
-              <HeroFact value="Provider check" label="before subject choices" />
+          <div className="grid gap-4">
+            <div className="overflow-hidden rounded-2xl border border-sage-200 bg-sage-100 shadow-[8px_8px_0_#a9c59f]">
+              <img
+                src={learnersCollaborating1280}
+                srcSet={`${learnersCollaborating640} 640w, ${learnersCollaborating1280} 1280w`}
+                sizes="(min-width: 1024px) 52vw, 100vw"
+                width="1280"
+                height="720"
+                fetchpriority="high"
+                decoding="async"
+                alt="Learners discussing possible study and career routes"
+                className="aspect-[16/10] w-full object-cover"
+              />
+              <div className="grid gap-2 bg-forest-900 p-5 text-cream-50 sm:grid-cols-3">
+                <HeroFact value="Two ways in" label="guided discovery or direct route search" />
+                <HeroFact value="Signals first" label="not suitability scores" />
+                <HeroFact value="Provider check" label="before subject choices" />
+              </div>
             </div>
+            <aside className="route-studio-panel rounded-[28px] border border-sage-200 p-5 sm:p-6" aria-label="Direct route exploration shortcut">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-forest-700">Route studio</p>
+              <h2 className="mt-3 text-2xl font-extrabold tracking-[-0.04em] text-forest-950">If you already have a direction, investigate it fast.</h2>
+              <p className="mt-3 max-w-xl text-sm leading-7 text-forest-800/80">
+                Search a field, subject or route, then open the pathway guide to compare template subject signals, qualification routes and next verification steps.
+              </p>
+              <form className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={handleRouteSearchSubmit}>
+                <label className="text-sm font-semibold text-forest-800">
+                  <span className="sr-only">Search a career area, subject or route directly</span>
+                  <span className="relative block">
+                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-600/60" size={18} aria-hidden="true" />
+                    <input
+                      type="search"
+                      value={routeSearch}
+                      onChange={(event) => setRouteSearch(event.target.value)}
+                      className="w-full rounded-xl border border-sage-300 bg-cream-50 py-3 pl-11 pr-4 font-normal text-forest-900 placeholder:text-forest-600/50"
+                      placeholder="Try nursing, tourism, data or Mathematics"
+                      aria-label="Search a career area, subject or route directly"
+                    />
+                  </span>
+                </label>
+                <button type="submit" className="primary-button">Explore now <CornerDownRight size={18} /></button>
+              </form>
+              <div className="mt-5">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-forest-700">Quick cluster jump</p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {directEntryExamples.map((stream) => (
+                    <button key={stream} type="button" className="interest-chip" onClick={() => applyQuickStream(stream)}>
+                      {stream}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <p className="mt-5 text-sm leading-6 text-forest-800/80">
+                Search is for exploration only. Careerize does not confirm entry, APS, subject sufficiency or provider availability.
+              </p>
+            </aside>
           </div>
         </section>
 
         <section id="discover" className="section-border bg-sage-50/80">
           <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Quick discovery" text="Your answers change the order of exploration routes. They do not determine eligibility or readiness." />
+            <SectionIntro title="Guided discovery" text="Use this path when you need direction. Your answers change the order of exploration routes. They do not determine eligibility or readiness." />
             <div>
+              <div className="discovery-ribbon mb-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-4 text-sm text-forest-900">
+                <p className="max-w-2xl leading-6"><strong>How this lane works:</strong> answer a few prompts, add interest signals if you want, then compare routes that seem worth investigating further.</p>
+                <span className="rounded-full border border-forest-300 bg-white/70 px-3 py-1 font-semibold">Entry point 1</span>
+              </div>
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 className="text-xl font-bold">{currentQuestion.label}</h2>
                 <span className="text-sm text-forest-700">Question {questionStep + 1} of {DISCOVERY_QUESTIONS.length}</span>
@@ -319,11 +398,23 @@ export default function App() {
         <section id="matches" className="section-border bg-sage-50/80">
           <div className="mx-auto max-w-[1240px] px-5 py-16">
             <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
-              <SectionIntro title="Exploration matches" text="These matches are based on the signals you selected. They are not admissions decisions. Subject and provider requirements must still be checked." />
+              <SectionIntro title="Route explorer" text="This area serves both entry points. Use ranked matches after guided discovery, or use direct search and cluster browsing when you already have an idea." />
               <div>
+                <div className="route-mode-banner mb-5 grid gap-3 rounded-2xl border border-sage-300 bg-cream-50 p-4 sm:grid-cols-2">
+                  <RouteModeBadge
+                    title="I need direction"
+                    active={hasDiscoveryInput}
+                    text="Ranking is using your answers, interest signals or career-reality sliders."
+                  />
+                  <RouteModeBadge
+                    title="I have an idea"
+                    active={!hasDiscoveryInput}
+                    text="Search and cluster filters let you inspect routes directly without implying personal fit."
+                  />
+                </div>
                 <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
                   <label className="text-sm font-semibold text-forest-800">
-                    Search exploration routes
+                    Search routes directly
                     <span className="relative mt-2 block">
                       <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-600/60" size={18} aria-hidden="true" />
                       <input
@@ -348,7 +439,7 @@ export default function App() {
                     ? `${visibleRoutes.length} exploration matches shown. Ranking uses your selected answers, interest signals and career reality sliders.`
                     : hasRouteFilters
                       ? `${visibleRoutes.length} starter routes shown from your search or career-cluster filter. No personal fit is inferred.`
-                    : "Choose an answer or interest signal to rank routes. These three routes are starter examples."}
+                    : "Use guided discovery to rank routes, or search directly if you already have a direction. These three routes are starter examples."}
                 </p>
                 {visibleRoutes.length ? (
                   <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -430,6 +521,24 @@ function HeroFact({ value, label }) {
   return <div><p className="font-extrabold">{value}</p><p className="mt-1 text-xs leading-5 text-sage-200">{label}</p></div>;
 }
 
+function EntryPointCard({ eyebrow, title, body, actionLabel, onAction, tone }) {
+  const tones = {
+    forest: "border-forest-900 bg-forest-950 text-cream-50 shadow-[8px_8px_0_#a9c59f]",
+    cream: "border-sage-300 bg-cream-50 text-forest-950 shadow-[8px_8px_0_#d8ccb6]",
+  };
+
+  return (
+    <article className={`rounded-[28px] border p-5 sm:p-6 ${tones[tone]}`}>
+      <p className={`text-xs font-bold uppercase tracking-[0.18em] ${tone === "forest" ? "text-sage-200" : "text-forest-700"}`}>{eyebrow}</p>
+      <h2 className="mt-4 text-2xl font-extrabold tracking-[-0.04em]">{title}</h2>
+      <p className={`mt-3 text-sm leading-7 ${tone === "forest" ? "text-cream-50/85" : "text-forest-800/80"}`}>{body}</p>
+      <button type="button" className={`mt-6 inline-flex items-center gap-2 text-sm font-bold ${tone === "forest" ? "text-cream-50" : "text-forest-800"}`} onClick={onAction}>
+        {actionLabel} <ArrowRight size={16} />
+      </button>
+    </article>
+  );
+}
+
 function SectionIntro({ title, text }) {
   return <div><h2 className="text-3xl font-extrabold tracking-[-0.035em] text-forest-950">{title}</h2><div className="accent-stroke mt-3 w-24" /><p className="mt-5 max-w-[260px] leading-7 text-forest-800/80">{text}</p></div>;
 }
@@ -463,6 +572,15 @@ function PreferenceSlider({ preference, value, onChange }) {
       </span>
       <span id={`${preference.id}-helper`} className="mt-3 block text-sm leading-6 text-forest-800/80">{preference.helper}</span>
     </label>
+  );
+}
+
+function RouteModeBadge({ title, text, active }) {
+  return (
+    <div className={`rounded-xl border p-4 ${active ? "border-forest-700 bg-sage-100" : "border-sage-200 bg-white"}`}>
+      <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest-700">{title}</p>
+      <p className="mt-2 text-sm leading-6 text-forest-800/80">{text}</p>
+    </div>
   );
 }
 
