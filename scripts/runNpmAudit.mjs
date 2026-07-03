@@ -9,9 +9,14 @@ const npmArgs = npmExecPath
     ? ["/d", "/s", "/c", "npm.cmd audit --audit-level=moderate"]
     : ["audit", "--audit-level=moderate"];
 const existingNodeOptions = process.env.NODE_OPTIONS ?? "";
+const canAppendSystemCaFlag =
+  !existingNodeOptions.includes("--use-system-ca") &&
+  (process.allowedNodeEnvironmentFlags?.has("--use-system-ca") ?? false);
 const nodeOptions = existingNodeOptions.includes("--use-system-ca")
   ? existingNodeOptions
-  : `${existingNodeOptions} --use-system-ca`.trim();
+  : canAppendSystemCaFlag
+    ? `${existingNodeOptions} --use-system-ca`.trim()
+    : existingNodeOptions;
 
 const audit = spawn(npmCommand, npmArgs, {
   cwd: process.cwd(),
