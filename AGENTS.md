@@ -1,6 +1,12 @@
 # Coding Agent Instructions for this Mumoxa repo
 
-Before making any change in this repository, every coding agent must read and follow the canonical Mumoxa agent rules in `Mumoxa/Agent-OS/AGENTS.md`.
+Before making any change in this repository, every coding agent must read this repository's `AGENTS.md` and then read and follow the canonical Mumoxa instructions in `Mumoxa/agent-instructions/AGENTS.md`.
+
+Canonical source of truth:
+
+`Mumoxa/agent-instructions/AGENTS.md`
+
+Do not use `Mumoxa/ai-agent-squad` as the canonical source for agent instructions.
 
 Core rules:
 
