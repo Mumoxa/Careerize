@@ -93,11 +93,11 @@ async function main() {
     page.on("pageerror", (error) => consoleErrors.push(error.message));
 
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.getByRole("heading", { name: /start with a question, or start with a route/i }).waitFor();
+    await page.getByRole("heading", { name: /turn interests into career paths/i }).waitFor();
 
-    await page.getByRole("button", { name: "Working with people" }).click();
-    await page.getByRole("button", { name: "Caring for people" }).click();
-    await setSlider(page, "Earning ambition", 100);
+    await page.getByRole("button", { name: /Talking to people/ }).click();
+    await page.getByRole("button", { name: /Caring for people/ }).click();
+    await setSlider(page, "Earning potential", 100);
 
     const firstRoute = page.locator('[data-testid="route-card"]').first();
     await firstRoute.waitFor();
@@ -110,7 +110,7 @@ async function main() {
     const secondRoute = page.locator('[data-testid="route-card"]').nth(1);
     const routeId = await secondRoute.getAttribute("data-route-id");
     const selectedTitle = (await secondRoute.locator("h3").innerText()).trim();
-    await page.locator(`[data-testid="route-open"][data-route-id="${routeId}"]`).click();
+    await secondRoute.locator(`[data-testid="route-open"][data-route-id="${routeId}"]`).click();
     await page.locator(`h2:has-text("${selectedTitle}")`).waitFor();
 
     await page.setViewportSize({ width: 390, height: 844 });

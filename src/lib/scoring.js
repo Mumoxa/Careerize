@@ -8,7 +8,7 @@ export const DEFAULT_LIFESTYLE_PREFERENCES = {
 export const PREFERENCE_DEFINITIONS = [
   {
     id: "earnings",
-    label: "Earning ambition",
+    label: "Earning potential",
     lowLabel: "Money is less important",
     highLabel: "Higher earning upside matters",
     helper: "Raises routes with stronger qualitative earning upside. Salary figures still need source verification.",
@@ -22,14 +22,14 @@ export const PREFERENCE_DEFINITIONS = [
   },
   {
     id: "stress",
-    label: "Stress tolerance",
+    label: "High-pressure tolerance",
     lowLabel: "Lower pressure preferred",
     highLabel: "Can handle pressure",
     helper: "Considers pressure from deadlines, people, safety, public responsibility and unpredictable workloads.",
   },
   {
     id: "danger",
-    label: "Safety and danger tolerance",
+    label: "Physical risk tolerance",
     lowLabel: "Low physical risk preferred",
     highLabel: "Open to higher-risk environments",
     helper: "Flags hands-on, site, emergency, mine, farm, plant or equipment-heavy environments for discussion.",
@@ -150,6 +150,121 @@ export function explainPreferenceFit(route, preferences = DEFAULT_LIFESTYLE_PREF
     profile,
     strongestPreference: strongest ? labels[strongest[0]] : "balanced conditions",
     summary: `Lifestyle fit compares your sliders with qualitative ${labels.earnings}, ${labels.travel}, ${labels.stress} and ${labels.danger} signals. It is a discussion prompt, not a guarantee.`,
+  };
+}
+
+export function getChangedPreferenceDetails(preferences = DEFAULT_LIFESTYLE_PREFERENCES, definitions = PREFERENCE_DEFINITIONS) {
+  return definitions
+    .filter((definition) => {
+      const value = Number(preferences[definition.id] ?? DEFAULT_LIFESTYLE_PREFERENCES[definition.id]);
+      return value !== DEFAULT_LIFESTYLE_PREFERENCES[definition.id];
+    })
+    .map((definition) => {
+      const value = Number(preferences[definition.id] ?? DEFAULT_LIFESTYLE_PREFERENCES[definition.id]);
+      return {
+        ...definition,
+        value,
+        directionLabel: value > DEFAULT_LIFESTYLE_PREFERENCES[definition.id] ? definition.highLabel : definition.lowLabel,
+      };
+    });
+}
+
+export function getSignalCareerConnections(signalValue, routes, limit = 6) {
+  const mappedSignals = getSelectedSignals({}, [signalValue]);
+  return routes
+    .filter((route) => mappedSignals.some((signal) => Number(route.signalWeights?.[signal] ?? 0) > 0))
+    .sort((a, b) => {
+      const aWeight = mappedSignals.reduce((total, signal) => total + Number(a.signalWeights?.[signal] ?? 0), 0);
+      const bWeight = mappedSignals.reduce((total, signal) => total + Number(b.signalWeights?.[signal] ?? 0), 0);
+      return bWeight - aWeight || a.title.localeCompare(b.title);
+    })
+    .slice(0, limit);
+}
+
+export function validateInterestSignalTaxonomy(signals, routes, definitions = PREFERENCE_DEFINITIONS) {
+  const errors = [];
+  const labels = new Set();
+  const values = new Set();
+  const validPreferenceIds = new Set(definitions.map((definition) => definition.id));
+
+  for (const signal of signals) {
+    if (!signal.value || !signal.label || !signal.category) {
+      errors.push(`Interest signal ${signal.value ?? signal.label ?? "unknown"} is missing value, label or category.`);
+    }
+
+    if (values.has(signal.value)) errors.push(`Duplicate interest signal value: ${signal.value}.`);
+    values.add(signal.value);
+
+    const normalizedLabel = String(signal.label ?? "").trim().toLowerCase();
+    if (labels.has(normalizedLabel)) errors.push(`Duplicate interest signal label: ${signal.label}.`);
+    labels.add(normalizedLabel);
+
+    if (!Array.isArray(signal.skills) || signal.skills.length === 0) {
+      errors.push(`Interest signal ${signal.value} must include related skills.`);
+    }
+
+    if (!signal.why) {
+      errors.push(`Interest signal ${signal.value} must explain why it connects to routes.`);
+    }
+
+    if (!Array.isArray(signal.sliderDimensions) || signal.sliderDimensions.length === 0) {
+      errors.push(`Interest signal ${signal.value} must list slider dimensions that affect weighting.`);
+    } else {
+      for (const dimension of signal.sliderDimensions) {
+        if (!validPreferenceIds.has(dimension)) {
+          errors.push(`Interest signal ${signal.value} references unknown slider dimension: ${dimension}.`);
+        }
+      }
+    }
+
+    if (getSignalCareerConnections(signal.value, routes, 1).length === 0) {
+      errors.push(`Interest signal ${signal.value} has no mapped career route.`);
+    }
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+export function getInterestRecommendationDetails(
+  route,
+  selectedSignals,
+  preferences = DEFAULT_LIFESTYLE_PREFERENCES,
+  interestSignals = [],
+  definitions = PREFERENCE_DEFINITIONS
+) {
+  const signalIndex = new Map(interestSignals.map((signal) => [signal.value, signal]));
+  const matchedInterests = route.explanation.matchedSignals
+    .filter(({ signal }) => selectedSignals.includes(signal))
+    .map(({ signal, weight }) => {
+      const metadata = signalIndex.get(signal);
+      return metadata ? { ...metadata, weight } : { value: signal, label: signal, skills: [], why: "", weight };
+    });
+  const relatedSkills = [...new Set(matchedInterests.flatMap((signal) => signal.skills ?? []))].slice(0, 6);
+  const changedPreferences = getChangedPreferenceDetails(preferences, definitions);
+  const sliderInfluences = changedPreferences.map((preference) => {
+    const routeValue = Number(route.preferenceFit?.profile?.[preference.id] ?? DEFAULT_LIFESTYLE_PREFERENCES[preference.id]);
+    const distance = Math.abs(preference.value - routeValue);
+    const routeSignal = routeValue >= 68 ? preference.highLabel : routeValue <= 35 ? preference.lowLabel : "Balanced signal";
+    return {
+      id: preference.id,
+      label: preference.label,
+      learnerChoice: preference.directionLabel,
+      routeSignal,
+      fitLabel: distance <= 25 ? "close fit" : distance <= 45 ? "partial fit" : "trade-off to discuss",
+    };
+  });
+  const learningRoute = route.pathways?.[0]?.label ?? route.qualifications?.[0] ?? "Open the pathway guide for possible learning routes.";
+
+  return {
+    contributingInterests: matchedInterests.map((signal) => signal.label),
+    relatedSkills,
+    sliderInfluences,
+    learningRoute,
+    tradeOffs: route.fitWarnings?.slice(0, 2) ?? [],
+    why:
+      matchedInterests.length > 0
+        ? `This path may fit because it overlaps with ${matchedInterests.slice(0, 3).map((signal) => signal.label).join(", ")}. Use it as an exploration lead, not a verdict.`
+        : "This path has limited selected-interest overlap so far. Select more interests before treating it as a serious comparison.",
   };
 }
 

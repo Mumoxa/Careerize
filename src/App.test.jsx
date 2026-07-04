@@ -2,8 +2,13 @@ import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import App from "./App";
-import { CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog";
-import { DEFAULT_LIFESTYLE_PREFERENCES, PREFERENCE_DEFINITIONS, rankCareerRoutes } from "./lib/scoring";
+import { CAREER_ROUTES, INTEREST_SELECTION_LIMIT, INTEREST_SIGNALS } from "./data/careerCatalog";
+import {
+  DEFAULT_LIFESTYLE_PREFERENCES,
+  PREFERENCE_DEFINITIONS,
+  rankCareerRoutes,
+  validateInterestSignalTaxonomy,
+} from "./lib/scoring";
 
 const SUBJECT_OPTIONS = [
   "Mathematics",
@@ -26,19 +31,12 @@ const SUBJECT_OPTIONS = [
 
 async function renderApp() {
   render(<App />);
-  await screen.findByRole("heading", { name: /search a career, or explore the word graph/i });
+  await screen.findByRole("heading", { name: /turn interests into career paths/i });
 }
 
 function byDataset(testId, field, value) {
   const match = [...document.querySelectorAll(`[data-testid="${testId}"]`)].find((element) => element.dataset[field] === value);
   expect(match, `${testId} ${field}=${value} should be rendered`).toBeTruthy();
-  return match;
-}
-
-function discoveryOption(questionId, optionValue) {
-  const match = [...document.querySelectorAll('[data-testid="discovery-option"]')]
-    .find((element) => element.dataset.questionId === questionId && element.dataset.optionValue === optionValue);
-  expect(match, `${questionId}:${optionValue} should be rendered`).toBeTruthy();
   return match;
 }
 
@@ -62,46 +60,43 @@ function expectFirstRoute(expectedRoute) {
   expect(routeCards()[0]).toHaveTextContent(expectedRoute.title);
 }
 
-function selectOption(questionId, optionValue) {
-  const button = discoveryOption(questionId, optionValue);
-  fireEvent.click(button);
-  expect(button).toHaveAttribute("aria-pressed", "true");
-}
-
-describe("Careerize public launch selection system", () => {
-  it("shows the two entry points clearly near the top of the experience", async () => {
+describe("Careerize focused homepage and wordmap", () => {
+  it("shows two clear homepage entry paths and removes repeated refinement sections", async () => {
     await renderApp();
 
-    expect(screen.getByRole("heading", { level: 2, name: "Search a career" })).toBeInTheDocument();
-    expect(screen.getByRole("searchbox", { name: /Career search/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Open first match/i })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 2, name: "Word graph" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /^Data: analysis/i })).toBeInTheDocument();
-    expect(screen.getByText(/Real-world signal to confirm/i)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Open full profile/i })).toBeInTheDocument();
+    expect(screen.getByText(/Careerize helps young people connect raw interests/i)).toBeInTheDocument();
+    expect(screen.getAllByRole("link", { name: /start with what you like/i }).some((link) => link.getAttribute("href") === "#word-graph")).toBe(true);
+    expect(screen.getAllByRole("link", { name: /explore career paths/i }).some((link) => link.getAttribute("href") === "#matches")).toBe(true);
+    expect(screen.getByRole("heading", { level: 2, name: /interest word map/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: /explore career paths/i })).toBeInTheDocument();
+
+    expect(screen.queryByText("Refine matches")).not.toBeInTheDocument();
+    expect(screen.queryByText("Signals to refine")).not.toBeInTheDocument();
+    expect(screen.queryByText("Career reality sliders")).not.toBeInTheDocument();
   });
 
-  it("renders every question option, interest signal, lifestyle slider and subject-risk option", async () => {
+  it("renders only mapped interest words, categories, sliders and subject-risk options", async () => {
     await renderApp();
 
-    for (let index = 0; index < DISCOVERY_QUESTIONS.length; index += 1) {
-      const question = DISCOVERY_QUESTIONS[index];
-      for (const option of question.options) {
-        expect(discoveryOption(question.id, option.value)).toHaveTextContent(option.label);
-      }
-      if (index < DISCOVERY_QUESTIONS.length - 1) {
-        fireEvent.click(screen.getByRole("button", { name: /next question/i }));
-      }
-    }
+    const taxonomy = validateInterestSignalTaxonomy(INTEREST_SIGNALS, CAREER_ROUTES, PREFERENCE_DEFINITIONS);
+    expect(taxonomy.valid, taxonomy.errors.join("\n")).toBe(true);
+
+    const labels = INTEREST_SIGNALS.map((signal) => signal.label.toLowerCase());
+    expect(new Set(labels).size).toBe(labels.length);
 
     for (const signal of INTEREST_SIGNALS) {
-      expect(interestSignal(signal.value)).toHaveTextContent(signal.label);
+      const button = interestSignal(signal.value);
+      expect(button).toHaveTextContent(signal.label);
+      expect(signal.skills.length).toBeGreaterThan(0);
+      expect(signal.sliderDimensions.length).toBeGreaterThan(0);
     }
 
+    const wordMap = screen.getByRole("list", { name: /mapped interest keywords/i });
     for (const preference of PREFERENCE_DEFINITIONS) {
       const slider = preferenceSlider(preference.id);
       expect(slider).toHaveAccessibleName(preference.label);
       expect(slider).toHaveValue(String(DEFAULT_LIFESTYLE_PREFERENCES[preference.id]));
+      expect(slider.compareDocumentPosition(wordMap) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
 
     for (const subject of SUBJECT_OPTIONS) {
@@ -109,56 +104,66 @@ describe("Careerize public launch selection system", () => {
     }
   });
 
-  it("keeps rendered route ranking aligned with the scorer across all discovery steps and interest tags", async () => {
-    await renderApp();
-
-    const answers = {};
-    const selectedSignals = [];
-
-    for (let index = 0; index < DISCOVERY_QUESTIONS.length; index += 1) {
-      const question = DISCOVERY_QUESTIONS[index];
-      for (const option of question.options) {
-        selectOption(question.id, option.value);
-        answers[question.id] = option.value;
-        expectFirstRoute(rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals, DEFAULT_LIFESTYLE_PREFERENCES)[0]);
-      }
-      if (index < DISCOVERY_QUESTIONS.length - 1) {
-        fireEvent.click(screen.getByRole("button", { name: /next question/i }));
-      }
-    }
-
-    for (const signal of INTEREST_SIGNALS) {
-      const button = interestSignal(signal.value);
-      fireEvent.click(button);
-      selectedSignals.push(signal.value);
-      expect(button).toHaveAttribute("aria-pressed", "true");
-      expectFirstRoute(rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals, DEFAULT_LIFESTYLE_PREFERENCES)[0]);
-    }
-  });
-
-  it("uses lifestyle sliders to refine visible results and clear discovery resets state", async () => {
+  it("selects and deselects wordmap interests and explains path suggestions", async () => {
     const user = userEvent.setup();
     await renderApp();
 
-    await user.click(discoveryOption("interest", "people"));
-    await user.click(interestSignal("care"));
-    fireEvent.change(preferenceSlider("earnings"), { target: { value: "100" } });
+    await user.click(interestSignal("technology"));
+
+    const expected = rankCareerRoutes(CAREER_ROUTES, {}, ["technology"], DEFAULT_LIFESTYLE_PREFERENCES)[0];
+    await waitFor(() => expectFirstRoute(expected));
+    expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("1 / 20 selected");
+    expect(screen.getAllByText(/Why this path may fit/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Related skills/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Possible learning route/i).length).toBeGreaterThan(0);
+
+    await user.click(interestSignal("technology"));
+    expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "false");
+    expect(screen.getByText(/No path is suggested yet/i)).toBeInTheDocument();
+  });
+
+  it("enforces the maximum of 20 selected interest keywords", async () => {
+    const user = userEvent.setup();
+    await renderApp();
+
+    for (const signal of INTEREST_SIGNALS.slice(0, INTEREST_SELECTION_LIMIT)) {
+      await user.click(interestSignal(signal.value));
+    }
+
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("20 / 20 selected");
+    expect(screen.getByText(/Limit reached/i)).toBeInTheDocument();
+    expect(interestSignal(INTEREST_SIGNALS[INTEREST_SELECTION_LIMIT].value)).toBeDisabled();
+
+    await user.click(interestSignal(INTEREST_SIGNALS[0].value));
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("19 / 20 selected");
+    expect(interestSignal(INTEREST_SIGNALS[INTEREST_SELECTION_LIMIT].value)).not.toBeDisabled();
+  });
+
+  it("uses slider values to influence visible path ordering and reset clears state", async () => {
+    const user = userEvent.setup();
+    await renderApp();
+
+    await user.click(interestSignal("handsOn"));
+    await user.click(interestSignal("tools"));
+    fireEvent.change(preferenceSlider("danger"), { target: { value: "100" } });
 
     const expected = rankCareerRoutes(
       CAREER_ROUTES,
-      { interest: "people" },
-      ["care"],
-      { ...DEFAULT_LIFESTYLE_PREFERENCES, earnings: 100 }
+      {},
+      ["handsOn", "tools"],
+      { ...DEFAULT_LIFESTYLE_PREFERENCES, danger: 100 }
     )[0];
     await waitFor(() => expectFirstRoute(expected));
-    expect(preferenceSlider("earnings")).toHaveValue("100");
+    expect(preferenceSlider("danger")).toHaveValue("100");
+    expect(screen.getAllByText(/Slider influence/i).length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole("button", { name: /clear refinements/i }));
+    await user.click(screen.getByRole("button", { name: /reset word map/i }));
 
-    expect(discoveryOption("interest", "people")).toHaveAttribute("aria-pressed", "false");
-    expect(interestSignal("care")).toHaveAttribute("aria-pressed", "false");
-    expect(preferenceSlider("earnings")).toHaveValue("50");
-    expect(routeCards()).toHaveLength(3);
+    expect(interestSignal("handsOn")).toHaveAttribute("aria-pressed", "false");
+    expect(interestSignal("tools")).toHaveAttribute("aria-pressed", "false");
+    expect(preferenceSlider("danger")).toHaveValue("50");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("0 / 20 selected");
   });
 
   it("opens pathway details, updates the URL and exercises every subject-risk toggle", async () => {
@@ -185,7 +190,7 @@ describe("Careerize public launch selection system", () => {
     expect(screen.getByText(/possible qualification routes/i)).toBeInTheDocument();
   });
 
-  it("hydrates linkable exploration state from URL signals and pathway parameters", async () => {
+  it("hydrates linkable wordmap state from URL signals and pathway parameters", async () => {
     window.history.pushState({}, "", "/?signals=technology,care&pathway=data-analyst");
     await renderApp();
 

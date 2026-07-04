@@ -1,24 +1,23 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import {
   ArrowRight,
   Check,
   ChevronRight,
-  Compass,
   CornerDownRight,
-  Lock,
-  Map as MapIcon,
   Menu,
+  Network,
+  RotateCcw,
   Search,
-  ShieldCheck,
+  SlidersHorizontal,
   X,
 } from "lucide-react";
-import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
+import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, INTEREST_CATEGORIES, INTEREST_SELECTION_LIMIT, INTEREST_SIGNALS } from "./data/careerCatalog.js";
 import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph.js";
 import { assessSubjectRisk } from "./lib/subjectRisk.js";
 import {
   DEFAULT_LIFESTYLE_PREFERENCES,
   PREFERENCE_DEFINITIONS,
-  getProfileProgress,
+  getInterestRecommendationDetails,
   rankCareerRoutes,
   toggleSignal,
 } from "./lib/scoring.js";
@@ -43,21 +42,6 @@ const SUBJECT_OPTIONS = [
   "Visual Arts",
   "Design",
 ];
-const WORD_MAP_NODES = [
-  { id: "data", routeId: "data-analyst", label: "Data", meta: "analysis", x: 50, y: 43, z: 118, scale: 1.08, tone: "green" },
-  { id: "software", routeId: "software-developer", label: "Software", meta: "build", x: 20, y: 28, z: 76, scale: 0.96, tone: "teal" },
-  { id: "nursing", routeId: "registered-nurse", label: "Nursing", meta: "care", x: 81, y: 28, z: 72, scale: 0.94, tone: "amber" },
-  { id: "trades", routeId: "technical-artisan", label: "Trades", meta: "hands-on", x: 17, y: 61, z: 56, scale: 0.9, tone: "amber" },
-  { id: "teaching", routeId: "teacher", label: "Teaching", meta: "people", x: 82, y: 59, z: 58, scale: 0.9, tone: "green" },
-  { id: "tourism", routeId: "chef", label: "Tourism", meta: "service", x: 69, y: 82, z: 38, scale: 0.82, tone: "teal" },
-  { id: "design", routeId: "graphic-designer", label: "Design", meta: "creative", x: 32, y: 82, z: 42, scale: 0.84, tone: "pink" },
-  { id: "finance", routeId: "bookkeeper", label: "Finance", meta: "numbers", x: 50, y: 20, z: 30, scale: 0.78, tone: "teal" },
-  { id: "environment", routeId: "environmental-scientist", label: "Environment", meta: "field", x: 65, y: 70, z: 24, scale: 0.75, tone: "green" },
-  { id: "logistics", routeId: "logistics-manager", label: "Logistics", meta: "movement", x: 41, y: 72, z: 18, scale: 0.75, tone: "teal" },
-  { id: "law", routeId: "attorney", label: "Law", meta: "public", x: 15, y: 43, z: 20, scale: 0.78, tone: "pink" },
-  { id: "business", routeId: "chief-executive-officer", label: "Business", meta: "growth", x: 85, y: 43, z: 20, scale: 0.78, tone: "amber" },
-  { id: "maths", routeId: "mathematics-teacher", label: "Maths", meta: "subject", x: 51, y: 90, z: 10, scale: 0.74, tone: "green" },
-];
 
 function initialRouteState() {
   if (typeof window === "undefined") return { signals: [], pathwayId: null };
@@ -75,25 +59,25 @@ function initialRouteState() {
 export default function App() {
   const initial = useMemo(initialRouteState, []);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
-  const [questionStep, setQuestionStep] = useState(0);
-  const [answers, setAnswers] = useState({});
   const [selectedSignals, setSelectedSignals] = useState(initial.signals);
   const [activePathwayId, setActivePathwayId] = useState(initial.pathwayId);
   const [selectedSubjects, setSelectedSubjects] = useState([]);
   const [routeSearch, setRouteSearch] = useState("");
   const [streamFilter, setStreamFilter] = useState("all");
   const [lifestylePreferences, setLifestylePreferences] = useState(DEFAULT_LIFESTYLE_PREFERENCES);
-  const [activeWordNodeId, setActiveWordNodeId] = useState("data");
+  const [interestSearch, setInterestSearch] = useState("");
+  const [activeInterestCategory, setActiveInterestCategory] = useState("all");
+  const [interestLimitMessage, setInterestLimitMessage] = useState("");
   const [entryMode, setEntryMode] = useState("existing");
-  const directSearchRef = useRef(null);
   const pathwayHeadingRef = useRef(null);
 
   const ranked = useMemo(
-    () => rankCareerRoutes(CAREER_ROUTES, answers, selectedSignals, lifestylePreferences),
-    [answers, selectedSignals, lifestylePreferences]
+    () => rankCareerRoutes(CAREER_ROUTES, {}, selectedSignals, lifestylePreferences),
+    [selectedSignals, lifestylePreferences]
   );
   const hasPreferenceInput = Object.entries(lifestylePreferences).some(([key, value]) => value !== DEFAULT_LIFESTYLE_PREFERENCES[key]);
-  const hasDiscoveryInput = Object.keys(answers).length > 0 || selectedSignals.length > 0 || hasPreferenceInput;
+  const hasInterestInput = selectedSignals.length > 0;
+  const hasDiscoveryInput = hasInterestInput || hasPreferenceInput;
   const starterRoutes = STARTER_ROUTE_IDS.map((id) => ranked.find((route) => route.id === id)).filter(Boolean);
   const hasRouteFilters = routeSearch.trim().length > 0 || streamFilter !== "all";
   const defaultResults = hasDiscoveryInput || hasRouteFilters ? ranked : starterRoutes;
@@ -128,11 +112,12 @@ export default function App() {
   }, [routeSearch, starterRoutes]);
   const activeRoute = ranked.find((route) => route.id === activePathwayId) ?? visibleRoutes[0] ?? ranked[0];
   const pathwayRecord = activeRoute ? getAcademicPathwayForCareer(activeRoute.id) : null;
-  const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
-  const currentQuestion = DISCOVERY_QUESTIONS[questionStep];
-  const activeWordNode = WORD_MAP_NODES.find((node) => node.id === activeWordNodeId) ?? WORD_MAP_NODES[0];
-  const activeWordRoute = CAREER_ROUTES.find((route) => route.id === activeWordNode.routeId) ?? ranked[0];
   const hasWordMapInput = entryMode === "word-map";
+  const interestRecommendations = useMemo(() => {
+    if (!hasInterestInput && !hasPreferenceInput) return [];
+    const source = hasInterestInput ? ranked.filter((route) => route.signalScore > 0) : ranked;
+    return source.slice(0, 4);
+  }, [hasInterestInput, hasPreferenceInput, ranked]);
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -143,21 +128,23 @@ export default function App() {
     window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
   }, [activePathwayId, selectedSignals]);
 
-  function choose(questionId, value) {
-    setAnswers((current) => ({ ...current, [questionId]: value }));
-    setEntryMode("discovery");
-    setActivePathwayId(null);
-  }
-
   function toggleInterest(signal) {
-    setSelectedSignals((current) => toggleSignal(current, signal));
-    setEntryMode("discovery");
+    setSelectedSignals((current) => {
+      const alreadySelected = current.includes(signal);
+      if (!alreadySelected && current.length >= INTEREST_SELECTION_LIMIT) {
+        setInterestLimitMessage(`You can select up to ${INTEREST_SELECTION_LIMIT} interests. Remove one before adding another.`);
+        return current;
+      }
+      setInterestLimitMessage("");
+      return toggleSignal(current, signal);
+    });
+    setEntryMode("word-map");
     setActivePathwayId(null);
   }
 
   function updateLifestylePreference(id, value) {
     setLifestylePreferences((current) => ({ ...current, [id]: Number(value) }));
-    setEntryMode("discovery");
+    setEntryMode("word-map");
     setActivePathwayId(null);
   }
 
@@ -176,32 +163,19 @@ export default function App() {
   }
 
   function resetDiscovery() {
-    setAnswers({});
     setSelectedSignals([]);
     setActivePathwayId(null);
-    setQuestionStep(0);
+    setInterestSearch("");
+    setActiveInterestCategory("all");
+    setInterestLimitMessage("");
     setRouteSearch("");
     setStreamFilter("all");
     setLifestylePreferences(DEFAULT_LIFESTYLE_PREFERENCES);
     setEntryMode("existing");
   }
 
-  function advanceDiscovery() {
-    if (questionStep < DISCOVERY_QUESTIONS.length - 1) {
-      setQuestionStep((step) => step + 1);
-      return;
-    }
-    document.querySelector("#matches")?.scrollIntoView({ behavior: "smooth" });
-  }
-
   function jumpToSection(sectionId) {
     document.querySelector(sectionId)?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
-
-  function handleRouteSearchSubmit(event) {
-    event.preventDefault();
-    setEntryMode("existing");
-    jumpToSection("#matches");
   }
 
   function handleCareerSearchSubmit(event) {
@@ -212,17 +186,6 @@ export default function App() {
     else jumpToSection("#matches");
   }
 
-  function handleWordMapSelect(node) {
-    setActiveWordNodeId(node.id);
-    const route = CAREER_ROUTES.find((item) => item.id === node.routeId);
-    if (route) {
-      setRouteSearch(route.title);
-      setStreamFilter(route.stream);
-    }
-    setEntryMode("word-map");
-    setActivePathwayId(null);
-  }
-
   return (
     <>
       <a href="#main-content" className="skip-link">Skip to main content</a>
@@ -230,12 +193,11 @@ export default function App() {
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-5 py-5">
           <a href="#top" className="brand-wordmark" aria-label="Careerize home">Careerize</a>
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex" aria-label="Primary navigation">
-            <a href="#career-search">Career search</a>
-            <a href="#word-graph">Word graph</a>
-            <a href="#matches">Routes</a>
+            <a href="#word-graph">Start with interests</a>
+            <a href="#matches">Explore paths</a>
             <a href="#pathway-detail">Pathway guide</a>
           </nav>
-          <a href="#career-search" className="primary-button hidden md:inline-flex">Search careers</a>
+          <a href="#word-graph" className="primary-button hidden md:inline-flex">Start with what you like</a>
           <button
             type="button"
             onClick={() => setMobileNavOpen((value) => !value)}
@@ -249,9 +211,8 @@ export default function App() {
         </div>
         {mobileNavOpen ? (
           <nav id="mobile-navigation" className="grid gap-4 border-t border-sage-200 bg-cream-100 px-5 py-5 text-sm font-semibold md:hidden" aria-label="Mobile navigation">
-            <a href="#career-search" onClick={() => setMobileNavOpen(false)}>Career search</a>
-            <a href="#word-graph" onClick={() => setMobileNavOpen(false)}>Word graph</a>
-            <a href="#matches" onClick={() => setMobileNavOpen(false)}>Routes</a>
+            <a href="#word-graph" onClick={() => setMobileNavOpen(false)}>Start with interests</a>
+            <a href="#matches" onClick={() => setMobileNavOpen(false)}>Explore paths</a>
             <a href="#pathway-detail" onClick={() => setMobileNavOpen(false)}>Pathway guide</a>
           </nav>
         ) : null}
@@ -260,165 +221,90 @@ export default function App() {
       <main id="main-content">
         <section id="top" className="home-entry mx-auto max-w-[1240px] px-5 py-10 lg:py-14">
           <div className="home-entry-heading">
-            <p className="text-sm font-bold uppercase text-forest-700">Careerize route entry</p>
-            <h1 className="mt-4 max-w-[820px] text-[42px] font-extrabold leading-[1.02] sm:text-6xl">
-              Search a career, or explore the word graph.
+            <p className="text-sm font-bold uppercase text-forest-700">Careerize career exploration</p>
+            <h1 className="mt-4 max-w-[840px] text-[42px] font-extrabold leading-[1.02] sm:text-6xl">
+              Turn interests into career paths you can explore.
             </h1>
             <p className="mt-5 max-w-3xl text-lg leading-8 text-forest-800/80">
-              Pick one path in. Search opens the career profile flow. The graph helps you compare real-world career signals before opening a full profile.
+              Careerize helps young people connect raw interests, personal decision preferences and career-impact factors to realistic route options, skills, clusters, trade-offs and learning steps.
             </p>
           </div>
 
-          <div className="home-entry-grid mt-8">
-            <CareerSearchEntry
-              query={routeSearch}
-              results={searchEntryResults}
-              inputRef={directSearchRef}
-              onQueryChange={(value) => {
-                setRouteSearch(value);
-                setEntryMode("existing");
-              }}
-              onSubmit={handleCareerSearchSubmit}
+          <div className="home-entry-grid mt-8" aria-label="Choose how to begin">
+            <a href="#word-graph" className="entry-choice entry-choice-primary">
+              <span className="entry-choice-kicker">Entry path A</span>
+              <strong>Start with what you like</strong>
+              <span>Pick interest words, tune the decision sliders, then see which career paths may be worth exploring.</span>
+              <span className="entry-choice-action">Open the word map <ArrowRight size={17} aria-hidden="true" /></span>
+            </a>
+            <a href="#matches" className="entry-choice">
+              <span className="entry-choice-kicker">Entry path B</span>
+              <strong>Explore career paths</strong>
+              <span>Search or filter starter profiles directly when you already have a career, subject or cluster in mind.</span>
+              <span className="entry-choice-action">Browse career paths <ArrowRight size={17} aria-hidden="true" /></span>
+            </a>
+          </div>
+        </section>
+
+        <section id="word-graph" className="section-border bg-sage-50/80">
+          <div className="mx-auto max-w-[1240px] px-5 py-16">
+            <InterestWordMap
+              categories={INTEREST_CATEGORIES}
+              interests={INTEREST_SIGNALS}
+              selectedSignals={selectedSignals}
+              selectedCount={selectedSignals.length}
+              selectionLimit={INTEREST_SELECTION_LIMIT}
+              search={interestSearch}
+              activeCategory={activeInterestCategory}
+              preferences={lifestylePreferences}
+              recommendations={interestRecommendations}
+              limitMessage={interestLimitMessage}
+              hasPreferenceInput={hasPreferenceInput}
+              onSearchChange={setInterestSearch}
+              onCategoryChange={setActiveInterestCategory}
+              onToggleInterest={toggleInterest}
+              onPreferenceChange={updateLifestylePreference}
+              onReset={resetDiscovery}
               onOpen={openPathway}
             />
-            <WordGraph
-              nodes={WORD_MAP_NODES}
-              activeNode={activeWordNode}
-              activeRoute={activeWordRoute}
-              coverage={CAREER_COVERAGE_SUMMARY.totalRoutes}
-              onPreview={setActiveWordNodeId}
-              onSelect={handleWordMapSelect}
-              onOpen={openPathway}
-            />
-          </div>
-        </section>
-
-        <section id="discover" className="section-border bg-sage-50/80">
-          <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Refine matches" text="Optional prompts help compare routes after you enter through search or the word graph. They do not determine eligibility or readiness." />
-            <div>
-              <div className="discovery-ribbon mb-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-4 text-sm text-forest-900">
-                <p className="max-w-2xl leading-6"><strong>Optional layer:</strong> answer a few prompts, add interest signals if you want, then compare routes that seem worth investigating further.</p>
-                <span className="rounded-full border border-forest-300 bg-white/70 px-3 py-1 font-semibold">Refinement</span>
-              </div>
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <h2 className="text-xl font-bold">{currentQuestion.label}</h2>
-                <span className="text-sm text-forest-700">Question {questionStep + 1} of {DISCOVERY_QUESTIONS.length}</span>
-              </div>
-              <div className="mt-7 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-                {currentQuestion.options.map((option) => {
-                  const selected = answers[currentQuestion.id] === option.value;
-                  return (
-                    <button
-                      type="button"
-                      key={option.value}
-                      data-testid="discovery-option"
-                      data-question-id={currentQuestion.id}
-                      data-option-value={option.value}
-                      onClick={() => choose(currentQuestion.id, option.value)}
-                      aria-pressed={selected}
-                      className={`answer-card ${selected ? "answer-card-selected" : ""}`}
-                    >
-                      <span>{option.label}</span>
-                      <span className="selection-dot" aria-hidden="true">{selected ? <Check size={14} /> : null}</span>
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-7 flex flex-wrap justify-between gap-3">
-                <button type="button" className="secondary-button" disabled={questionStep === 0} onClick={() => setQuestionStep((step) => Math.max(0, step - 1))}>Back</button>
-                <button type="button" className="primary-button" onClick={advanceDiscovery}>
-                  {questionStep === DISCOVERY_QUESTIONS.length - 1 ? "View exploration matches" : "Next question"} <ArrowRight size={17} />
-                </button>
-              </div>
-              <p className="mt-5 text-sm text-forest-700">Refinement answers complete: {progress}%</p>
-            </div>
-          </div>
-        </section>
-
-        <section className="section-border">
-          <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Signals to refine" text="Choose any signals that feel useful. The address updates so you can revisit or share this exploration state." />
-            <div>
-              <div className="flex flex-wrap gap-3">
-                {INTEREST_SIGNALS.map((signal) => {
-                  const selected = selectedSignals.includes(signal.value);
-                  return (
-                    <button
-                      type="button"
-                      key={signal.value}
-                      data-testid="interest-signal"
-                      data-signal-value={signal.value}
-                      onClick={() => toggleInterest(signal.value)}
-                      aria-pressed={selected}
-                      className={`interest-chip ${selected ? "interest-chip-selected" : ""}`}
-                    >
-                      {signal.label}{selected ? <Check size={15} aria-hidden="true" /> : null}
-                    </button>
-                  );
-                })}
-              </div>
-              <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
-                <button type="button" onClick={resetDiscovery} className="text-sm font-semibold text-forest-700 underline">Clear refinements</button>
-                <span className="text-sm text-forest-700">{selectedSignals.length} interest signals selected</span>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <section className="section-border">
-          <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Career reality sliders" text="Add the life conditions that matter: earning ambition, travel, stress and danger tolerance. These sliders help compare trade-offs, not judge ambition." />
-            <div className="grid gap-5 md:grid-cols-2">
-              {PREFERENCE_DEFINITIONS.map((preference) => (
-                <PreferenceSlider
-                  key={preference.id}
-                  preference={preference}
-                  value={lifestylePreferences[preference.id]}
-                  onChange={updateLifestylePreference}
-                />
-              ))}
-              <div className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm leading-6 text-amber-950 md:col-span-2">
-                <strong>Important:</strong> Careerize uses qualitative starter signals for earning potential, travel, stress and danger. South African salary bands, injury risks and demand data still require source-verified labour-market records before being shown as facts.
-              </div>
-            </div>
           </div>
         </section>
 
         <section id="matches" className="section-border bg-sage-50/80">
           <div className="mx-auto max-w-[1240px] px-5 py-16">
             <div className="grid gap-8 lg:grid-cols-[250px_1fr]">
-              <SectionIntro title="Route explorer" text="This area serves both entry points. Use ranked matches after guided discovery, or use direct search and cluster browsing when you already have an idea." />
+              <SectionIntro title="Explore career paths" text="Search directly or browse by cluster. Interest and slider choices from the word map can still shape the order shown here." />
               <div>
                 <div className="route-mode-banner mb-5 grid gap-3 rounded-2xl border border-sage-300 bg-cream-50 p-4 sm:grid-cols-2">
                   <RouteModeBadge
-                    title="Word graph or refinement"
+                    title="Exploration matches"
                     active={hasDiscoveryInput || hasWordMapInput}
-                    text="Ranking is using your prompt answers, selected word terms, interest signals or career-reality sliders."
+                    text="Ranking is using selected interest words and career-reality sliders."
                   />
                   <RouteModeBadge
-                    title="Existing path"
+                    title="Direct career search"
                     active={!hasDiscoveryInput && !hasWordMapInput}
                     text="Search and cluster filters let you inspect routes directly without implying personal fit."
                   />
                 </div>
-                <div className="grid gap-3 md:grid-cols-[1fr_1fr]">
-                  <label className="text-sm font-semibold text-forest-800">
-                    Search routes directly
-                    <span className="relative mt-2 block">
-                      <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-600/60" size={18} aria-hidden="true" />
+                <div className="grid gap-3 md:grid-cols-[1.35fr_0.85fr]">
+                  <form className="career-search-form mt-0" onSubmit={handleCareerSearchSubmit}>
+                    <label htmlFor="direct-route-search">Career search</label>
+                    <div className="career-search-control">
+                      <Search className="career-search-icon" size={18} aria-hidden="true" />
                       <input
+                        id="direct-route-search"
                         type="search"
                         value={routeSearch}
                         onChange={(event) => {
                           setRouteSearch(event.target.value);
                           setEntryMode("existing");
                         }}
-                        className="w-full rounded-xl border border-sage-300 bg-cream-50 py-3 pl-11 pr-4 font-normal text-forest-900 placeholder:text-forest-600/50"
-                        placeholder="Try data, nursing, plumbing or tourism"
+                        placeholder="Try Data Analyst, Nurse, Electrician or Design"
                       />
-                    </span>
-                  </label>
+                      <button type="submit">Open first match <CornerDownRight size={17} aria-hidden="true" /></button>
+                    </div>
+                  </form>
                   <label className="text-sm font-semibold text-forest-800">
                     Filter by career cluster
                     <select
@@ -436,12 +322,12 @@ export default function App() {
                 </div>
                 <p className="mt-5 rounded-xl border border-sage-300 bg-sage-100 p-4 text-sm leading-6 text-forest-800" aria-live="polite">
                   {hasDiscoveryInput
-                    ? `${visibleRoutes.length} exploration matches shown. Ranking uses your selected answers, interest signals and career reality sliders.`
+                    ? `${visibleRoutes.length} exploration paths shown. Ranking uses your selected interests and career reality sliders.`
                     : hasWordMapInput
-                      ? `${visibleRoutes.length} starter routes shown from the word graph term "${activeWordNode.label}". No personal fit is inferred.`
+                      ? `${visibleRoutes.length} starter routes shown from the word map. No personal fit is inferred.`
                     : hasRouteFilters
                       ? `${visibleRoutes.length} starter routes shown from your search or career-cluster filter. No personal fit is inferred.`
-                    : "Use guided discovery to rank routes, or search directly if you already have a direction. These three routes are starter examples."}
+                    : "Start with interests to rank paths, or search directly if you already have a direction. These three routes are starter examples."}
                 </p>
                 {visibleRoutes.length ? (
                   <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -473,19 +359,6 @@ export default function App() {
           </div>
         </section>
 
-        <section id="trust" className="section-border">
-          <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Trust, privacy and saving" text="The public launch keeps exploration available without creating an account." />
-            <div className="grid gap-5 md:grid-cols-3">
-              <TrustPoint icon={Lock} title="No public pseudo-account" text="This launch build does not offer browser-only email accounts. Real saved profiles require configured, tested account infrastructure." />
-              <TrustPoint icon={Compass} title="Session exploration" text="Answers stay in the current app session. Selected interest signals and the open pathway appear in the URL so the route is linkable." />
-              <TrustPoint icon={ShieldCheck} title="Clear guidance boundary" text="Every current pathway is starter template guidance. Provider-specific verification is required before subject or application decisions." />
-            </div>
-            <div className="rounded-xl border border-sage-300 bg-sage-50 p-5 text-sm leading-6 text-forest-800 md:col-start-2">
-              <strong>Verified pathway</strong> is reserved for provider-specific information checked against source records. No current starter pathway carries that label.
-            </div>
-          </div>
-        </section>
       </main>
 
       <footer className="border-t border-sage-200 bg-cream-200/60">
@@ -519,137 +392,248 @@ function StatusBadge({ children, tone = "slate" }) {
   return <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${tones[tone]}`}>{children}</span>;
 }
 
-function CareerSearchEntry({ query, results, inputRef, onQueryChange, onSubmit, onOpen }) {
-  return (
-    <section id="career-search" className="entry-panel entry-panel-primary" aria-labelledby="career-search-title">
-      <div className="entry-panel-heading">
-        <span>Entry 1</span>
-        <h2 id="career-search-title">Search a career</h2>
-        <p>Type a career, field or subject. Open a result to see the profile, subject signals, route options and next checks.</p>
-      </div>
-      <form className="career-search-form" onSubmit={onSubmit}>
-        <label htmlFor="direct-route-search">Career search</label>
-        <div className="career-search-control">
-          <Search className="career-search-icon" size={18} aria-hidden="true" />
-          <input
-            id="direct-route-search"
-            ref={inputRef}
-            type="search"
-            value={query}
-            onChange={(event) => onQueryChange(event.target.value)}
-            placeholder="Try Data Analyst, Nurse, Electrician or Design"
-          />
-          <button type="submit">Open first match <CornerDownRight size={17} aria-hidden="true" /></button>
-        </div>
-      </form>
-      <div className="career-search-results" aria-live="polite">
-        <p className="career-search-results-label">{query.trim() ? `${results.length} matching careers` : "Suggested careers"}</p>
-        {results.length ? (
-          <div className="career-result-list">
-            {results.map((route) => (
-              <button key={route.id} type="button" className="career-result" onClick={() => onOpen(route.id)}>
-                <span>
-                  <strong>{route.title}</strong>
-                  <small>{route.stream}</small>
-                </span>
-                <ChevronRight size={18} aria-hidden="true" />
-              </button>
-            ))}
-          </div>
-        ) : (
-          <p className="career-no-results">No direct match yet. Try a broader field such as data, care, business, trades or tourism.</p>
-        )}
-      </div>
-    </section>
-  );
+const CATEGORY_TONES = {
+  "digital-technology": "teal",
+  "creative-building": "amber",
+  "academic-systems": "blue",
+  "health-impact": "green",
+  "business-enterprise": "violet",
+  "communication-influence": "pink",
+  "work-style": "slate",
+};
+
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
-function WordGraph({ nodes, activeNode, activeRoute, coverage, onPreview, onSelect, onOpen }) {
-  const edges = nodes.filter((node) => node.id !== activeNode.id).slice(0, 8);
-  const compactSignal = (value, limit = 92) => {
-    if (!value) return "Check the full profile.";
-    if (value.length <= limit) return value;
-    const clipped = value.slice(0, limit).replace(/\s+\S*$/, "");
-    return `${clipped}...`;
-  };
-  const usefulSubjects = activeRoute.subjects?.slice(0, 2).join(", ") || "Check provider requirements";
+function layoutInterestNodes(interests) {
+  const count = Math.max(1, interests.length);
+  const radii = [18, 29, 40];
+  return interests.map((interest, index) => {
+    const ring = index % radii.length;
+    const angle = (index / count) * Math.PI * 2 - Math.PI / 2 + ring * 0.34;
+    const radius = radii[ring];
+    return {
+      ...interest,
+      x: clamp(50 + Math.cos(angle) * radius, 8, 92),
+      y: clamp(52 + Math.sin(angle) * radius * 0.72, 12, 88),
+      z: 22 + ring * 30 + (index % 5) * 4,
+      scale: ring === 0 ? 0.98 : ring === 1 ? 0.88 : 0.78,
+      tone: CATEGORY_TONES[interest.category] ?? "green",
+    };
+  });
+}
+
+function InterestWordMap({
+  categories,
+  interests,
+  selectedSignals,
+  selectedCount,
+  selectionLimit,
+  search,
+  activeCategory,
+  preferences,
+  recommendations,
+  limitMessage,
+  hasPreferenceInput,
+  onSearchChange,
+  onCategoryChange,
+  onToggleInterest,
+  onPreferenceChange,
+  onReset,
+  onOpen,
+}) {
+  const deferredSearch = useDeferredValue(search);
+  const categoryIndex = useMemo(() => new Map(categories.map((category) => [category.id, category.label])), [categories]);
+  const selectedSet = useMemo(() => new Set(selectedSignals), [selectedSignals]);
+  const selectedInterests = interests.filter((interest) => selectedSet.has(interest.value));
+  const normalizedSearch = deferredSearch.trim().toLowerCase();
+  const filteredInterests = interests.filter((interest) => {
+    const matchesCategory = activeCategory === "all" || interest.category === activeCategory;
+    const searchable = [interest.label, categoryIndex.get(interest.category), interest.why, ...(interest.skills ?? [])].join(" ").toLowerCase();
+    return matchesCategory && (!normalizedSearch || searchable.includes(normalizedSearch));
+  });
+  const graphNodes = layoutInterestNodes(filteredInterests);
+  const limitReached = selectedCount >= selectionLimit;
+  const hasRecommendationInput = selectedCount > 0 || hasPreferenceInput;
+
   return (
-    <section id="word-graph" className="entry-panel word-map-shell" aria-labelledby="word-map-title">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+    <section className="word-map-experience" aria-labelledby="word-map-title">
+      <div className="word-map-heading">
         <div>
-          <p className="text-xs font-bold uppercase text-forest-700">Entry 2</p>
-          <h2 id="word-map-title" className="mt-2 text-2xl font-extrabold text-forest-950">Word graph</h2>
-          <p className="mt-2 max-w-xl text-sm leading-6 text-forest-800/75">Tap a word to preview what the work is really like, then open the full profile.</p>
+          <p className="text-sm font-bold uppercase text-forest-700">Entry path A</p>
+          <h2 id="word-map-title">Interest word map</h2>
+          <p>
+            Select up to {selectionLimit} mapped interests, tune the sliders, then compare career paths that may connect to those signals.
+          </p>
         </div>
-        <span className="word-map-count"><MapIcon size={16} aria-hidden="true" /> {coverage}+ routes</span>
+        <div className="word-map-status">
+          <span><Network size={17} aria-hidden="true" /> {CAREER_COVERAGE_SUMMARY.totalRoutes} mapped routes</span>
+          <strong data-testid="selected-interest-count">{selectedCount} / {selectionLimit} selected</strong>
+        </div>
       </div>
-      <div className="word-map-stage" role="list" aria-label="Career word graph">
-        <svg className="word-graph-edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-          {edges.map((node) => (
-            <line
-              key={`${activeNode.id}-${node.id}`}
-              x1={activeNode.x}
-              y1={activeNode.y}
-              x2={node.x}
-              y2={node.y}
-              className={node.tone === activeNode.tone ? "word-graph-edge word-graph-edge-strong" : "word-graph-edge"}
+
+      <div className="decision-panel" aria-labelledby="decision-sliders-title">
+        <div className="decision-panel-heading">
+          <SlidersHorizontal size={22} aria-hidden="true" />
+          <div>
+            <h3 id="decision-sliders-title">Decision-driving sliders</h3>
+            <p>These sliders affect ranking through the existing qualitative scorer. They compare trade-offs; they do not decide eligibility or success.</p>
+          </div>
+        </div>
+        <div className="decision-slider-grid">
+          {PREFERENCE_DEFINITIONS.map((preference) => (
+            <PreferenceSlider
+              key={preference.id}
+              preference={preference}
+              value={preferences[preference.id]}
+              onChange={onPreferenceChange}
             />
           ))}
-        </svg>
-        <div className="word-map-core" aria-hidden="true" />
-        {nodes.map((node) => {
-          const active = activeNode.id === node.id;
-          return (
-            <div
-              key={node.id}
-              role="listitem"
-              className="word-map-point"
-              style={{
-                "--x": `${node.x}%`,
-                "--y": `${node.y}%`,
-                "--z": `${node.z}px`,
-                "--scale": node.scale,
-              }}
+        </div>
+        <p className="decision-note">
+          Careerize uses qualitative starter signals for earning potential, travel, pressure and physical risk. Salary bands, injury rates and demand claims still need source-verified labour-market records before being shown as facts.
+        </p>
+      </div>
+
+      <div className="word-map-controls">
+        <label htmlFor="interest-search">
+          Search interests
+          <span className="relative mt-2 block">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-600/60" size={18} aria-hidden="true" />
+            <input
+              id="interest-search"
+              type="search"
+              value={search}
+              onChange={(event) => onSearchChange(event.target.value)}
+              placeholder="Try tools, care, data, business or science"
+            />
+          </span>
+        </label>
+        <div className="interest-category-list" aria-label="Interest categories">
+          <button
+            type="button"
+            className={activeCategory === "all" ? "interest-category-active" : ""}
+            onClick={() => onCategoryChange("all")}
+          >
+            All mapped interests
+          </button>
+          {categories.map((category) => (
+            <button
+              type="button"
+              key={category.id}
+              className={activeCategory === category.id ? "interest-category-active" : ""}
+              onClick={() => onCategoryChange(category.id)}
             >
-              <button
-                type="button"
-                className={`word-map-node word-map-node-${node.tone} ${active ? "word-map-node-active" : ""}`}
-                onMouseEnter={() => onPreview(node.id)}
-                onFocus={() => onPreview(node.id)}
-                onClick={() => onSelect(node)}
-                aria-pressed={active}
-                aria-label={`${node.label}: ${node.meta}`}
+              {category.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="word-map-workspace">
+        <div className="word-map-stage" role="list" aria-label="Mapped interest keywords">
+          <svg className="word-graph-edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+            {graphNodes.map((node) => (
+              <line
+                key={`edge-${node.value}`}
+                x1="50"
+                y1="52"
+                x2={node.x}
+                y2={node.y}
+                className={selectedSet.has(node.value) ? "word-graph-edge word-graph-edge-strong" : "word-graph-edge"}
+              />
+            ))}
+          </svg>
+          <div className="word-map-core" aria-hidden="true">
+            <span>interest</span>
+            <strong>signals</strong>
+          </div>
+          {graphNodes.length ? graphNodes.map((node) => {
+            const selected = selectedSet.has(node.value);
+            const disabled = !selected && limitReached;
+            return (
+              <div
+                key={node.value}
+                role="listitem"
+                className="word-map-point"
+                style={{
+                  "--x": `${node.x}%`,
+                  "--y": `${node.y}%`,
+                  "--z": `${node.z}px`,
+                  "--scale": selected ? node.scale + 0.08 : node.scale,
+                }}
               >
-                <span>{node.label}</span>
-                <small>{node.meta}</small>
+                <button
+                  type="button"
+                  data-testid="interest-signal"
+                  data-signal-value={node.value}
+                  className={`word-map-node word-map-node-${node.tone} ${selected ? "word-map-node-active" : ""}`}
+                  onClick={() => onToggleInterest(node.value)}
+                  aria-pressed={selected}
+                  disabled={disabled}
+                  aria-label={`${node.label}. ${categoryIndex.get(node.category)}. ${node.why}`}
+                >
+                  <span>{node.label}</span>
+                  <small>{categoryIndex.get(node.category)}</small>
+                  {selected ? <Check size={14} aria-hidden="true" /> : null}
+                </button>
+              </div>
+            );
+          }) : (
+            <div className="word-map-empty" role="status">No mapped interest matches that search or category.</div>
+          )}
+        </div>
+
+        <aside className="word-map-side" aria-label="Selected interests and career path suggestions">
+          <div className="selected-interest-panel">
+            <div className="flex items-center justify-between gap-3">
+              <h3>Selected interests</h3>
+              <button type="button" className="reset-map-button" onClick={onReset}>
+                <RotateCcw size={16} aria-hidden="true" /> Reset word map
               </button>
             </div>
-          );
-        })}
-      </div>
-      <div className="real-world-panel" aria-live="polite">
-        <div>
-          <p className="text-xs font-bold uppercase text-forest-700">Real-world signal to confirm</p>
-          <h3>{activeRoute.title}</h3>
-          <p>{compactSignal(activeRoute.day, 96)}</p>
-        </div>
-        <dl>
-          <div>
-            <dt>Work setting</dt>
-            <dd>{compactSignal(activeRoute.environment, 72)}</dd>
+            {selectedInterests.length ? (
+              <div className="selected-interest-list">
+                {selectedInterests.map((interest) => (
+                  <button key={interest.value} type="button" onClick={() => onToggleInterest(interest.value)} aria-label={`Remove ${interest.label}`}>
+                    {interest.label} <X size={14} aria-hidden="true" />
+                  </button>
+                ))}
+              </div>
+            ) : (
+              <p className="empty-state-copy">Choose interest words in the map to see how they connect to skills, clusters and career paths.</p>
+            )}
+            <p className="limit-message" aria-live="polite">
+              {limitMessage || (limitReached ? `Limit reached: remove one interest before adding another.` : `${selectionLimit - selectedCount} selections left.`)}
+            </p>
           </div>
-          <div>
-            <dt>Pressure signal</dt>
-            <dd>{compactSignal(activeRoute.stress, 72)}</dd>
+
+          <div className="recommendation-panel">
+            <h3>Career paths to explore</h3>
+            {hasRecommendationInput && recommendations.length ? (
+              <>
+                <p className="recommendation-summary" aria-live="polite">
+                  Showing {recommendations.length} paths shaped by selected interests{hasPreferenceInput ? " and slider choices" : ""}.
+                </p>
+                <div className="recommendation-list">
+                  {recommendations.map((route) => (
+                    <ExplorationCard
+                      key={route.id}
+                      route={route}
+                      active={false}
+                      hasInput={hasRecommendationInput}
+                      recommendationDetails={getInterestRecommendationDetails(route, selectedSignals, preferences, interests, PREFERENCE_DEFINITIONS)}
+                      onOpen={onOpen}
+                    />
+                  ))}
+                </div>
+              </>
+            ) : (
+              <p className="empty-state-copy">No path is suggested yet. Select at least one mapped interest or adjust a slider to start comparing routes.</p>
+            )}
           </div>
-          <div>
-            <dt>Useful subjects</dt>
-            <dd>{usefulSubjects}</dd>
-          </div>
-        </dl>
-        <button type="button" className="secondary-button w-full justify-between" onClick={() => onOpen(activeRoute.id)}>
-          Open full profile <ChevronRight size={18} aria-hidden="true" />
-        </button>
+        </aside>
       </div>
     </section>
   );
@@ -700,7 +684,7 @@ function RouteModeBadge({ title, text, active }) {
   );
 }
 
-function ExplorationCard({ route, active, hasInput, onOpen }) {
+function ExplorationCard({ route, active, hasInput, recommendationDetails, onOpen }) {
   const matched = matchedSignalLabels(route);
   return (
     <article data-testid="route-card" data-route-id={route.id} className={`flex min-h-[330px] flex-col rounded-xl border bg-cream-50 p-5 ${active ? "border-2 border-forest-700 shadow-[4px_4px_0_#a9c59f]" : "border-sage-300"}`}>
@@ -718,6 +702,32 @@ function ExplorationCard({ route, active, hasInput, onOpen }) {
           ? `It overlaps with ${matched.join(", ")}.`
           : "It is a starter example. Choose signals to create a ranked comparison."}
       </div>
+      {recommendationDetails ? (
+        <div className="recommendation-detail-block">
+          <p><strong>Why this path may fit:</strong> {recommendationDetails.why}</p>
+          {recommendationDetails.contributingInterests.length ? (
+            <p><strong>Selected interests:</strong> {recommendationDetails.contributingInterests.join(", ")}</p>
+          ) : null}
+          {recommendationDetails.relatedSkills.length ? (
+            <p><strong>Related skills:</strong> {recommendationDetails.relatedSkills.join(", ")}</p>
+          ) : null}
+          <p><strong>Often involves:</strong> {route.day}</p>
+          <p><strong>Possible learning route:</strong> {recommendationDetails.learningRoute}</p>
+          {recommendationDetails.sliderInfluences.length ? (
+            <div>
+              <strong>Slider influence:</strong>
+              <ul>
+                {recommendationDetails.sliderInfluences.map((influence) => (
+                  <li key={influence.id}>{influence.label}: {influence.learnerChoice}; route signal is {influence.routeSignal.toLowerCase()} ({influence.fitLabel}).</li>
+                ))}
+              </ul>
+            </div>
+          ) : null}
+          {recommendationDetails.tradeOffs.length ? (
+            <p><strong>Things to consider:</strong> {recommendationDetails.tradeOffs.join(" ")}</p>
+          ) : null}
+        </div>
+      ) : null}
       <button type="button" data-testid="route-open" data-route-id={route.id} onClick={() => onOpen(route.id)} className="mt-auto flex items-center justify-between pt-6 text-left text-sm font-bold text-forest-700">
         <span>View pathway: {route.title}</span><ChevronRight size={18} aria-hidden="true" />
       </button>
@@ -834,8 +844,4 @@ function DetailSection({ title, children }) {
 
 function SubjectNote({ label, text }) {
   return <div className="rounded-xl bg-sage-50 p-4"><p className="text-xs font-bold uppercase tracking-normal text-forest-700">{label}</p><p className="mt-2 text-sm leading-6 text-forest-800">{text || "No template note available."}</p></div>;
-}
-
-function TrustPoint({ icon: Icon, title, text }) {
-  return <div className="rounded-xl border border-sage-200 bg-cream-50 p-5"><span className="grid h-11 w-11 place-items-center rounded-full bg-forest-700 text-white"><Icon size={20} aria-hidden="true" /></span><h3 className="mt-4 font-bold text-forest-950">{title}</h3><p className="mt-2 text-sm leading-6 text-forest-800/80">{text}</p></div>;
 }

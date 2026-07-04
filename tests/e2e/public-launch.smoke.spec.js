@@ -21,5 +21,5 @@ test("learner can complete the public discovery and pathway journey", async ({ p
   await expect(page.getByText("Needs provider verification", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/not an admissions decision/i).first()).toBeVisible();
 
-  await expect(page.getByRole("textbox", { name: "Search interests" })).toHaveCount(0);
+  await expect(page.getByRole("searchbox", { name: "Search interests" })).toBeVisible();
 });

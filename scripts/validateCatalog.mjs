@@ -1,5 +1,5 @@
 import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS, PATHWAY_TYPES, SOURCE_REGISTRY } from "../src/data/careerCatalog.js";
-import { rankCareerRoutes, validateGuidanceLanguage } from "../src/lib/scoring.js";
+import { PREFERENCE_DEFINITIONS, rankCareerRoutes, validateGuidanceLanguage, validateInterestSignalTaxonomy } from "../src/lib/scoring.js";
 
 const errors = [];
 const routeIds = new Set();
@@ -124,6 +124,11 @@ for (const route of CAREER_ROUTES) {
   if (!language.valid) {
     errors.push(`Route ${route.id} uses unsafe guidance language: ${language.reason}`);
   }
+}
+
+const interestTaxonomy = validateInterestSignalTaxonomy(INTEREST_SIGNALS, CAREER_ROUTES, PREFERENCE_DEFINITIONS);
+if (!interestTaxonomy.valid) {
+  errors.push(...interestTaxonomy.errors);
 }
 
 const sampleAnswers = Object.fromEntries(

@@ -166,7 +166,7 @@ button:disabled {
   }
 
   .home-entry {
-    min-height: calc(100svh - 88px);
+    min-height: calc(82svh - 88px);
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -182,9 +182,36 @@ button:disabled {
 
   .home-entry-grid {
     display: grid;
-    grid-template-columns: minmax(0, 0.86fr) minmax(0, 1.14fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 1rem;
     align-items: start;
+  }
+
+  .entry-choice {
+    @apply flex min-h-[250px] flex-col rounded-lg border border-sage-200 bg-white p-6 text-left text-forest-900 transition hover:-translate-y-1 hover:border-forest-400 focus-visible:outline-forest-700;
+    box-shadow: 0 24px 58px rgba(15, 23, 42, 0.1);
+  }
+
+  .entry-choice-primary {
+    background:
+      linear-gradient(180deg, rgba(255, 253, 247, 0.96), rgba(243, 247, 240, 0.94)),
+      linear-gradient(135deg, rgba(21, 128, 61, 0.14), rgba(217, 119, 6, 0.1));
+  }
+
+  .entry-choice-kicker {
+    @apply text-xs font-bold uppercase text-forest-700;
+  }
+
+  .entry-choice strong {
+    @apply mt-3 text-3xl font-extrabold leading-tight text-forest-950;
+  }
+
+  .entry-choice > span:not(.entry-choice-kicker):not(.entry-choice-action) {
+    @apply mt-4 text-base leading-7 text-forest-800/80;
+  }
+
+  .entry-choice-action {
+    @apply mt-auto inline-flex items-center gap-2 pt-8 text-sm font-bold text-forest-700;
   }
 
   .entry-panel {
@@ -265,9 +292,88 @@ button:disabled {
     @apply mt-3 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950;
   }
 
-  .word-map-shell {
-    @apply rounded-lg border border-sage-200 bg-white p-4 sm:p-5;
+  .word-map-experience {
+    @apply rounded-lg border border-sage-200 bg-white p-4 sm:p-6;
     box-shadow: 0 28px 70px rgba(15, 23, 42, 0.12);
+  }
+
+  .word-map-heading {
+    @apply flex flex-wrap items-start justify-between gap-5;
+  }
+
+  .word-map-heading h2 {
+    @apply mt-2 text-4xl font-extrabold leading-tight text-forest-950 sm:text-5xl;
+  }
+
+  .word-map-heading p {
+    @apply mt-3 max-w-3xl text-base leading-7 text-forest-800/80;
+  }
+
+  .word-map-status {
+    @apply grid gap-2 rounded-lg border border-sage-200 bg-sage-50 p-4 text-sm text-forest-800;
+  }
+
+  .word-map-status span,
+  .word-map-status strong {
+    @apply inline-flex items-center gap-2 font-bold;
+  }
+
+  .decision-panel {
+    @apply mt-8 rounded-lg border border-sage-200 bg-cream-50 p-4 sm:p-5;
+  }
+
+  .decision-panel-heading {
+    @apply flex gap-4 text-forest-900;
+  }
+
+  .decision-panel-heading svg {
+    @apply mt-1 shrink-0 text-forest-700;
+  }
+
+  .decision-panel-heading h3,
+  .selected-interest-panel h3,
+  .recommendation-panel h3 {
+    @apply text-xl font-extrabold text-forest-950;
+  }
+
+  .decision-panel-heading p {
+    @apply mt-2 max-w-3xl text-sm leading-6 text-forest-800/75;
+  }
+
+  .decision-slider-grid {
+    @apply mt-5 grid gap-4 md:grid-cols-2 xl:grid-cols-4;
+  }
+
+  .decision-note {
+    @apply mt-5 rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm leading-6 text-amber-950;
+  }
+
+  .word-map-controls {
+    @apply mt-7 grid gap-4 lg:grid-cols-[0.8fr_1.2fr] lg:items-end;
+  }
+
+  .word-map-controls label {
+    @apply text-sm font-bold text-forest-900;
+  }
+
+  .word-map-controls input {
+    @apply w-full rounded-xl border border-sage-300 bg-cream-50 py-3 pl-11 pr-4 font-normal text-forest-900 placeholder:text-forest-600/50;
+  }
+
+  .interest-category-list {
+    @apply flex flex-wrap gap-2;
+  }
+
+  .interest-category-list button {
+    @apply min-h-11 rounded-full border border-sage-300 bg-cream-50 px-4 py-2 text-sm font-bold text-forest-800 transition hover:border-forest-500 hover:bg-sage-50;
+  }
+
+  .interest-category-list .interest-category-active {
+    @apply border-forest-700 bg-forest-700 text-white;
+  }
+
+  .word-map-workspace {
+    @apply mt-7 grid gap-5 xl:grid-cols-[minmax(0,1.05fr)_minmax(390px,0.95fr)];
   }
 
   .word-map-count {
@@ -276,15 +382,16 @@ button:disabled {
 
   .word-map-stage {
     position: relative;
-    min-height: 340px;
-    margin-top: 1.25rem;
+    min-height: 620px;
+    margin-top: 0;
     overflow: hidden;
     border-radius: 8px;
     border: 1px solid rgba(21, 128, 61, 0.18);
     background:
-      radial-gradient(circle at 50% 42%, rgba(21, 128, 61, 0.2), transparent 27%),
-      radial-gradient(circle at 76% 22%, rgba(217, 119, 6, 0.17), transparent 23%),
-      linear-gradient(135deg, rgba(15, 23, 42, 0.98), rgba(16, 36, 28, 0.95));
+      radial-gradient(circle at 50% 42%, rgba(108, 255, 176, 0.2), transparent 27%),
+      radial-gradient(circle at 76% 22%, rgba(217, 119, 6, 0.2), transparent 24%),
+      radial-gradient(circle at 18% 78%, rgba(59, 130, 246, 0.2), transparent 25%),
+      linear-gradient(135deg, rgba(3, 7, 18, 0.98), rgba(16, 36, 28, 0.95));
     perspective: 900px;
     transform-style: preserve-3d;
     isolation: isolate;
@@ -356,16 +463,17 @@ button:disabled {
 
   .word-map-node {
     display: inline-flex;
-    min-height: 44px;
-    min-width: 86px;
+    min-height: 46px;
+    min-width: 88px;
+    max-width: 150px;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 1px;
-    white-space: nowrap;
+    white-space: normal;
     border-radius: 999px;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    padding: 0.5rem 0.8rem;
+    padding: 0.52rem 0.78rem;
     color: white;
     text-align: center;
     transform: rotateX(10deg) rotateY(-12deg) scale(var(--scale));
@@ -375,15 +483,25 @@ button:disabled {
 
   .word-map-node span {
     font-family: "Cascadia Code", "SFMono-Regular", Consolas, monospace;
-    font-size: 0.96rem;
+    font-size: 0.88rem;
     font-weight: 800;
     letter-spacing: 0;
+    line-height: 1.12;
   }
 
   .word-map-node small {
+    max-width: 118px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 0.66rem;
     font-weight: 700;
     opacity: 0.72;
+  }
+
+  .word-map-node:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
   }
 
   .word-map-node:hover,
@@ -408,6 +526,84 @@ button:disabled {
 
   .word-map-node-pink {
     background: linear-gradient(135deg, rgba(190, 24, 93, 0.9), rgba(124, 58, 237, 0.82));
+  }
+
+  .word-map-node-blue {
+    background: linear-gradient(135deg, rgba(30, 64, 175, 0.95), rgba(14, 116, 144, 0.9));
+  }
+
+  .word-map-node-violet {
+    background: linear-gradient(135deg, rgba(109, 40, 217, 0.93), rgba(30, 64, 175, 0.86));
+  }
+
+  .word-map-node-slate {
+    background: linear-gradient(135deg, rgba(51, 65, 85, 0.95), rgba(20, 83, 45, 0.86));
+  }
+
+  .word-map-core {
+    display: grid;
+    place-items: center;
+    color: rgba(255, 255, 255, 0.82);
+    text-align: center;
+  }
+
+  .word-map-core span {
+    font-size: 0.72rem;
+    font-weight: 800;
+    text-transform: uppercase;
+  }
+
+  .word-map-core strong {
+    margin-top: -0.3rem;
+    font-size: 1.2rem;
+  }
+
+  .word-map-empty {
+    @apply absolute left-1/2 top-1/2 z-10 w-[min(86%,360px)] -translate-x-1/2 -translate-y-1/2 rounded-lg border border-white/20 bg-white/10 p-5 text-center text-sm font-semibold leading-6 text-white;
+  }
+
+  .word-map-side {
+    @apply grid content-start gap-5;
+  }
+
+  .selected-interest-panel,
+  .recommendation-panel {
+    @apply rounded-lg border border-sage-200 bg-cream-50 p-5;
+  }
+
+  .reset-map-button {
+    @apply inline-flex min-h-10 items-center gap-2 rounded-md border border-sage-300 bg-white px-3 py-2 text-sm font-bold text-forest-800 transition hover:border-forest-500 hover:bg-sage-50;
+  }
+
+  .selected-interest-list {
+    @apply mt-4 flex flex-wrap gap-2;
+  }
+
+  .selected-interest-list button {
+    @apply inline-flex min-h-10 items-center gap-2 rounded-full border border-forest-300 bg-sage-100 px-3 py-2 text-sm font-bold text-forest-800;
+  }
+
+  .limit-message,
+  .empty-state-copy,
+  .recommendation-summary {
+    @apply mt-4 text-sm leading-6 text-forest-800/75;
+  }
+
+  .limit-message {
+    @apply font-semibold text-forest-800;
+  }
+
+  .recommendation-list {
+    @apply mt-4 grid gap-4;
+  }
+
+  .recommendation-detail-block {
+    @apply mt-4 grid gap-3 rounded-lg border border-sage-200 bg-white p-4 text-sm leading-6 text-forest-800;
+  }
+
+  .recommendation-detail-block ul {
+    @apply mt-2 grid gap-2 pl-5;
+    list-style: disc;
   }
 
   .real-world-panel {
@@ -509,7 +705,7 @@ button:disabled {
   }
 
   .word-map-stage {
-    min-height: 390px;
+    min-height: 520px;
   }
 
   .word-map-core {
@@ -537,78 +733,6 @@ button:disabled {
 
   .home-entry-grid {
     grid-template-columns: 1fr;
-  }
-}
-
-@media (min-width: 900px) {
-  .real-world-panel {
-    grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.2fr);
-    align-items: start;
-  }
-
-  .real-world-panel .secondary-button {
-    grid-column: 1 / -1;
-  }
-}
-
-@media (min-width: 1120px) {
-  .word-map-shell {
-    display: grid;
-    grid-template-columns: minmax(0, 1.15fr) minmax(240px, 0.85fr);
-    gap: 1rem;
-    align-items: start;
-  }
-
-  .word-map-shell > .flex {
-    grid-column: 1 / -1;
-  }
-
-  .word-map-shell .word-map-stage,
-  .word-map-shell .real-world-panel {
-    margin-top: 0;
-  }
-
-  .word-map-shell .real-world-panel {
-    grid-template-columns: 1fr;
-    align-content: start;
-    gap: 0.75rem;
-  }
-
-  .word-map-shell .real-world-panel h3 {
-    font-size: 1.15rem;
-    margin-top: 0.45rem;
-  }
-
-  .word-map-shell .real-world-panel p {
-    margin-top: 0.45rem;
-    font-size: 0.84rem;
-    line-height: 1.45;
-  }
-
-  .word-map-shell .real-world-panel > div > p {
-    -webkit-line-clamp: 3;
-  }
-
-  .word-map-shell .real-world-panel dl {
-    gap: 0.5rem;
-  }
-
-  .word-map-shell .real-world-panel dl > div {
-    padding: 0.7rem;
-  }
-
-  .word-map-shell .real-world-panel dt {
-    font-size: 0.68rem;
-  }
-
-  .word-map-shell .real-world-panel dd {
-    font-size: 0.82rem;
-    line-height: 1.35;
-    -webkit-line-clamp: 2;
-  }
-
-  .word-map-shell .real-world-panel .secondary-button {
-    grid-column: auto;
   }
 }
 
