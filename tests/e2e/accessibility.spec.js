@@ -14,9 +14,8 @@ test("landing and pathway journey have no automated WCAG A/AA violations", async
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await expectNoA11yViolations(page);
 
-  await page.getByRole("link", { name: /Start exploring/i }).first().click();
-  await page.getByRole("button", { name: "Digital tools", exact: true }).click();
-  await page.getByRole("button", { name: /^View pathway:/i }).first().click();
+  await page.getByRole("searchbox", { name: /Career search/i }).fill("Data Analyst");
+  await page.getByRole("button", { name: /Open first match/i }).click();
   await expect(page.getByText("Needs provider verification", { exact: true }).first()).toBeVisible();
   await expectNoA11yViolations(page);
 });

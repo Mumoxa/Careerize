@@ -12,8 +12,6 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import learnersCollaborating640 from "./assets/learners-collaborating-640.jpg";
-import learnersCollaborating1280 from "./assets/learners-collaborating-1280.jpg";
 import { CAREER_COVERAGE_SUMMARY, CAREER_ROUTES, DISCOVERY_QUESTIONS, INTEREST_SIGNALS } from "./data/careerCatalog.js";
 import { getAcademicPathwayForCareer } from "./data/careerPathwayGraph.js";
 import { assessSubjectRisk } from "./lib/subjectRisk.js";
@@ -45,6 +43,21 @@ const SUBJECT_OPTIONS = [
   "Visual Arts",
   "Design",
 ];
+const WORD_MAP_NODES = [
+  { id: "data", routeId: "data-analyst", label: "Data", meta: "analysis", x: 50, y: 43, z: 118, scale: 1.08, tone: "green" },
+  { id: "software", routeId: "software-developer", label: "Software", meta: "build", x: 20, y: 28, z: 76, scale: 0.96, tone: "teal" },
+  { id: "nursing", routeId: "registered-nurse", label: "Nursing", meta: "care", x: 81, y: 28, z: 72, scale: 0.94, tone: "amber" },
+  { id: "trades", routeId: "technical-artisan", label: "Trades", meta: "hands-on", x: 17, y: 61, z: 56, scale: 0.9, tone: "amber" },
+  { id: "teaching", routeId: "teacher", label: "Teaching", meta: "people", x: 82, y: 59, z: 58, scale: 0.9, tone: "green" },
+  { id: "tourism", routeId: "chef", label: "Tourism", meta: "service", x: 69, y: 82, z: 38, scale: 0.82, tone: "teal" },
+  { id: "design", routeId: "graphic-designer", label: "Design", meta: "creative", x: 32, y: 82, z: 42, scale: 0.84, tone: "pink" },
+  { id: "finance", routeId: "bookkeeper", label: "Finance", meta: "numbers", x: 50, y: 20, z: 30, scale: 0.78, tone: "teal" },
+  { id: "environment", routeId: "environmental-scientist", label: "Environment", meta: "field", x: 65, y: 70, z: 24, scale: 0.75, tone: "green" },
+  { id: "logistics", routeId: "logistics-manager", label: "Logistics", meta: "movement", x: 41, y: 72, z: 18, scale: 0.75, tone: "teal" },
+  { id: "law", routeId: "attorney", label: "Law", meta: "public", x: 15, y: 43, z: 20, scale: 0.78, tone: "pink" },
+  { id: "business", routeId: "chief-executive-officer", label: "Business", meta: "growth", x: 85, y: 43, z: 20, scale: 0.78, tone: "amber" },
+  { id: "maths", routeId: "mathematics-teacher", label: "Maths", meta: "subject", x: 51, y: 90, z: 10, scale: 0.74, tone: "green" },
+];
 
 function initialRouteState() {
   if (typeof window === "undefined") return { signals: [], pathwayId: null };
@@ -70,6 +83,9 @@ export default function App() {
   const [routeSearch, setRouteSearch] = useState("");
   const [streamFilter, setStreamFilter] = useState("all");
   const [lifestylePreferences, setLifestylePreferences] = useState(DEFAULT_LIFESTYLE_PREFERENCES);
+  const [activeWordNodeId, setActiveWordNodeId] = useState("data");
+  const [entryMode, setEntryMode] = useState("existing");
+  const directSearchRef = useRef(null);
   const pathwayHeadingRef = useRef(null);
 
   const ranked = useMemo(
@@ -97,10 +113,26 @@ export default function App() {
       })
       .slice(0, hasDiscoveryInput || hasRouteFilters ? 9 : 3);
   }, [defaultResults, hasDiscoveryInput, hasRouteFilters, routeSearch, streamFilter]);
+  const searchEntryResults = useMemo(() => {
+    const search = routeSearch.trim().toLowerCase();
+    const source = search ? CAREER_ROUTES : starterRoutes;
+    return source
+      .filter((route) => {
+        if (!search) return true;
+        const searchable = [route.title, route.stream, route.summary, ...(route.subjects ?? [])]
+          .join(" ")
+          .toLowerCase();
+        return searchable.includes(search);
+      })
+      .slice(0, 4);
+  }, [routeSearch, starterRoutes]);
   const activeRoute = ranked.find((route) => route.id === activePathwayId) ?? visibleRoutes[0] ?? ranked[0];
   const pathwayRecord = activeRoute ? getAcademicPathwayForCareer(activeRoute.id) : null;
   const progress = getProfileProgress(answers, DISCOVERY_QUESTIONS);
   const currentQuestion = DISCOVERY_QUESTIONS[questionStep];
+  const activeWordNode = WORD_MAP_NODES.find((node) => node.id === activeWordNodeId) ?? WORD_MAP_NODES[0];
+  const activeWordRoute = CAREER_ROUTES.find((route) => route.id === activeWordNode.routeId) ?? ranked[0];
+  const hasWordMapInput = entryMode === "word-map";
 
   useEffect(() => {
     const url = new URL(window.location.href);
@@ -113,16 +145,19 @@ export default function App() {
 
   function choose(questionId, value) {
     setAnswers((current) => ({ ...current, [questionId]: value }));
+    setEntryMode("discovery");
     setActivePathwayId(null);
   }
 
   function toggleInterest(signal) {
     setSelectedSignals((current) => toggleSignal(current, signal));
+    setEntryMode("discovery");
     setActivePathwayId(null);
   }
 
   function updateLifestylePreference(id, value) {
     setLifestylePreferences((current) => ({ ...current, [id]: Number(value) }));
+    setEntryMode("discovery");
     setActivePathwayId(null);
   }
 
@@ -148,6 +183,7 @@ export default function App() {
     setRouteSearch("");
     setStreamFilter("all");
     setLifestylePreferences(DEFAULT_LIFESTYLE_PREFERENCES);
+    setEntryMode("existing");
   }
 
   function advanceDiscovery() {
@@ -164,15 +200,28 @@ export default function App() {
 
   function handleRouteSearchSubmit(event) {
     event.preventDefault();
+    setEntryMode("existing");
     jumpToSection("#matches");
   }
 
-  function applyQuickStream(stream) {
-    setStreamFilter(stream);
-    jumpToSection("#matches");
+  function handleCareerSearchSubmit(event) {
+    event.preventDefault();
+    setEntryMode("existing");
+    const firstMatch = searchEntryResults[0];
+    if (firstMatch) openPathway(firstMatch.id);
+    else jumpToSection("#matches");
   }
 
-  const directEntryExamples = routeStreams.slice(0, 4);
+  function handleWordMapSelect(node) {
+    setActiveWordNodeId(node.id);
+    const route = CAREER_ROUTES.find((item) => item.id === node.routeId);
+    if (route) {
+      setRouteSearch(route.title);
+      setStreamFilter(route.stream);
+    }
+    setEntryMode("word-map");
+    setActivePathwayId(null);
+  }
 
   return (
     <>
@@ -181,12 +230,12 @@ export default function App() {
         <div className="mx-auto flex max-w-[1240px] items-center justify-between px-5 py-5">
           <a href="#top" className="brand-wordmark" aria-label="Careerize home">Careerize</a>
           <nav className="hidden items-center gap-8 text-sm font-medium md:flex" aria-label="Primary navigation">
-            <a href="#discover">Discovery</a>
-            <a href="#matches">Exploration matches</a>
+            <a href="#career-search">Career search</a>
+            <a href="#word-graph">Word graph</a>
+            <a href="#matches">Routes</a>
             <a href="#pathway-detail">Pathway guide</a>
-            <a href="#trust">Trust</a>
           </nav>
-          <a href="#discover" className="primary-button hidden md:inline-flex">Start exploring</a>
+          <a href="#career-search" className="primary-button hidden md:inline-flex">Search careers</a>
           <button
             type="button"
             onClick={() => setMobileNavOpen((value) => !value)}
@@ -200,116 +249,57 @@ export default function App() {
         </div>
         {mobileNavOpen ? (
           <nav id="mobile-navigation" className="grid gap-4 border-t border-sage-200 bg-cream-100 px-5 py-5 text-sm font-semibold md:hidden" aria-label="Mobile navigation">
-            <a href="#discover" onClick={() => setMobileNavOpen(false)}>Discovery</a>
-            <a href="#matches" onClick={() => setMobileNavOpen(false)}>Exploration matches</a>
+            <a href="#career-search" onClick={() => setMobileNavOpen(false)}>Career search</a>
+            <a href="#word-graph" onClick={() => setMobileNavOpen(false)}>Word graph</a>
+            <a href="#matches" onClick={() => setMobileNavOpen(false)}>Routes</a>
             <a href="#pathway-detail" onClick={() => setMobileNavOpen(false)}>Pathway guide</a>
-            <a href="#trust" onClick={() => setMobileNavOpen(false)}>Trust</a>
           </nav>
         ) : null}
       </header>
 
       <main id="main-content">
-        <section id="top" className="mx-auto grid max-w-[1240px] gap-12 px-5 py-14 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-20">
-          <div>
-            <GuidanceLabels />
-            <p className="mt-6 text-sm font-bold uppercase tracking-[0.2em] text-forest-700">South African route exploration</p>
-            <h1 className="mt-6 max-w-[680px] text-5xl font-extrabold leading-[1.02] tracking-[-0.045em] sm:text-6xl lg:text-[72px]">
-              Start with a question, or start with a route you already have in mind.
+        <section id="top" className="home-entry mx-auto max-w-[1240px] px-5 py-10 lg:py-14">
+          <div className="home-entry-heading">
+            <p className="text-sm font-bold uppercase text-forest-700">Careerize route entry</p>
+            <h1 className="mt-4 max-w-[820px] text-[42px] font-extrabold leading-[1.02] sm:text-6xl">
+              Search a career, or explore the word graph.
             </h1>
-            <div className="accent-stroke mt-5" />
-            <p className="mt-8 max-w-2xl text-lg leading-8 text-forest-800/80">
-              Careerize is a route-exploration tool for South African learners. You can use guided discovery when you need direction, or jump straight into a field, subject or route you want to investigate. This is starter guidance, not an admissions decision. Check subject and entry requirements with each provider.
+            <p className="mt-5 max-w-3xl text-lg leading-8 text-forest-800/80">
+              Pick one path in. Search opens the career profile flow. The graph helps you compare real-world career signals before opening a full profile.
             </p>
-            <div className="mt-10 grid gap-4 xl:grid-cols-2">
-              <EntryPointCard
-                eyebrow="Entry point 1"
-                title="I need direction"
-                body="Move through a few signal-based prompts, then compare starter routes shaped by your answers, interests and career-reality preferences."
-                actionLabel="Start guided discovery"
-                onAction={() => jumpToSection("#discover")}
-                tone="forest"
-              />
-              <EntryPointCard
-                eyebrow="Entry point 2"
-                title="I have an idea"
-                body="Search a career area, browse a cluster, or open a pathway directly when you already have a direction worth checking."
-                actionLabel="Jump to direct exploration"
-                onAction={() => jumpToSection("#matches")}
-                tone="cream"
-              />
-            </div>
-            <div className="mt-6 flex flex-wrap gap-3">
-              <a href="#discover" className="primary-button">Start exploring <ArrowRight size={18} /></a>
-              <a href="#matches" className="secondary-button">Open route explorer</a>
-            </div>
-            <p className="mt-6 flex items-center gap-2 text-sm font-medium text-forest-800/80"><MapIcon size={18} className="text-forest-700" /> Built for South African learners</p>
           </div>
-          <div className="grid gap-4">
-            <div className="overflow-hidden rounded-2xl border border-sage-200 bg-sage-100 shadow-[8px_8px_0_#a9c59f]">
-              <img
-                src={learnersCollaborating1280}
-                srcSet={`${learnersCollaborating640} 640w, ${learnersCollaborating1280} 1280w`}
-                sizes="(min-width: 1024px) 52vw, 100vw"
-                width="1280"
-                height="720"
-                fetchpriority="high"
-                decoding="async"
-                alt="Learners discussing possible study and career routes"
-                className="aspect-[16/10] w-full object-cover"
-              />
-              <div className="grid gap-2 bg-forest-900 p-5 text-cream-50 sm:grid-cols-3">
-                <HeroFact value="Two ways in" label="guided discovery or direct route search" />
-                <HeroFact value="Signals first" label="not suitability scores" />
-                <HeroFact value="Provider check" label="before subject choices" />
-              </div>
-            </div>
-            <aside className="route-studio-panel rounded-[28px] border border-sage-200 p-5 sm:p-6" aria-label="Direct route exploration shortcut">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-forest-700">Route studio</p>
-              <h2 className="mt-3 text-2xl font-extrabold tracking-[-0.04em] text-forest-950">If you already have a direction, investigate it fast.</h2>
-              <p className="mt-3 max-w-xl text-sm leading-7 text-forest-800/80">
-                Search a field, subject or route, then open the pathway guide to compare template subject signals, qualification routes and next verification steps.
-              </p>
-              <form className="mt-5 grid gap-3 sm:grid-cols-[1fr_auto]" onSubmit={handleRouteSearchSubmit}>
-                <label className="text-sm font-semibold text-forest-800">
-                  <span className="sr-only">Search a career area, subject or route directly</span>
-                  <span className="relative block">
-                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-forest-600/60" size={18} aria-hidden="true" />
-                    <input
-                      type="search"
-                      value={routeSearch}
-                      onChange={(event) => setRouteSearch(event.target.value)}
-                      className="w-full rounded-xl border border-sage-300 bg-cream-50 py-3 pl-11 pr-4 font-normal text-forest-900 placeholder:text-forest-600/50"
-                      placeholder="Try nursing, tourism, data or Mathematics"
-                      aria-label="Search a career area, subject or route directly"
-                    />
-                  </span>
-                </label>
-                <button type="submit" className="primary-button">Explore now <CornerDownRight size={18} /></button>
-              </form>
-              <div className="mt-5">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-forest-700">Quick cluster jump</p>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {directEntryExamples.map((stream) => (
-                    <button key={stream} type="button" className="interest-chip" onClick={() => applyQuickStream(stream)}>
-                      {stream}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <p className="mt-5 text-sm leading-6 text-forest-800/80">
-                Search is for exploration only. Careerize does not confirm entry, APS, subject sufficiency or provider availability.
-              </p>
-            </aside>
+
+          <div className="home-entry-grid mt-8">
+            <CareerSearchEntry
+              query={routeSearch}
+              results={searchEntryResults}
+              inputRef={directSearchRef}
+              onQueryChange={(value) => {
+                setRouteSearch(value);
+                setEntryMode("existing");
+              }}
+              onSubmit={handleCareerSearchSubmit}
+              onOpen={openPathway}
+            />
+            <WordGraph
+              nodes={WORD_MAP_NODES}
+              activeNode={activeWordNode}
+              activeRoute={activeWordRoute}
+              coverage={CAREER_COVERAGE_SUMMARY.totalRoutes}
+              onPreview={setActiveWordNodeId}
+              onSelect={handleWordMapSelect}
+              onOpen={openPathway}
+            />
           </div>
         </section>
 
         <section id="discover" className="section-border bg-sage-50/80">
           <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Guided discovery" text="Use this path when you need direction. Your answers change the order of exploration routes. They do not determine eligibility or readiness." />
+            <SectionIntro title="Refine matches" text="Optional prompts help compare routes after you enter through search or the word graph. They do not determine eligibility or readiness." />
             <div>
               <div className="discovery-ribbon mb-7 flex flex-wrap items-center justify-between gap-4 rounded-2xl p-4 text-sm text-forest-900">
-                <p className="max-w-2xl leading-6"><strong>How this lane works:</strong> answer a few prompts, add interest signals if you want, then compare routes that seem worth investigating further.</p>
-                <span className="rounded-full border border-forest-300 bg-white/70 px-3 py-1 font-semibold">Entry point 1</span>
+                <p className="max-w-2xl leading-6"><strong>Optional layer:</strong> answer a few prompts, add interest signals if you want, then compare routes that seem worth investigating further.</p>
+                <span className="rounded-full border border-forest-300 bg-white/70 px-3 py-1 font-semibold">Refinement</span>
               </div>
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <h2 className="text-xl font-bold">{currentQuestion.label}</h2>
@@ -341,14 +331,14 @@ export default function App() {
                   {questionStep === DISCOVERY_QUESTIONS.length - 1 ? "View exploration matches" : "Next question"} <ArrowRight size={17} />
                 </button>
               </div>
-              <p className="mt-5 text-sm text-forest-700">Discovery answers complete: {progress}%</p>
+              <p className="mt-5 text-sm text-forest-700">Refinement answers complete: {progress}%</p>
             </div>
           </div>
         </section>
 
         <section className="section-border">
           <div className="mx-auto grid max-w-[1240px] gap-10 px-5 py-16 lg:grid-cols-[250px_1fr]">
-            <SectionIntro title="Interest signals" text="Choose any signals that feel useful. The address updates so you can revisit or share this exploration state." />
+            <SectionIntro title="Signals to refine" text="Choose any signals that feel useful. The address updates so you can revisit or share this exploration state." />
             <div>
               <div className="flex flex-wrap gap-3">
                 {INTEREST_SIGNALS.map((signal) => {
@@ -369,7 +359,7 @@ export default function App() {
                 })}
               </div>
               <div className="mt-7 flex flex-wrap items-center justify-between gap-4">
-                <button type="button" onClick={resetDiscovery} className="text-sm font-semibold text-forest-700 underline">Clear discovery</button>
+                <button type="button" onClick={resetDiscovery} className="text-sm font-semibold text-forest-700 underline">Clear refinements</button>
                 <span className="text-sm text-forest-700">{selectedSignals.length} interest signals selected</span>
               </div>
             </div>
@@ -402,13 +392,13 @@ export default function App() {
               <div>
                 <div className="route-mode-banner mb-5 grid gap-3 rounded-2xl border border-sage-300 bg-cream-50 p-4 sm:grid-cols-2">
                   <RouteModeBadge
-                    title="I need direction"
-                    active={hasDiscoveryInput}
-                    text="Ranking is using your answers, interest signals or career-reality sliders."
+                    title="Word graph or refinement"
+                    active={hasDiscoveryInput || hasWordMapInput}
+                    text="Ranking is using your prompt answers, selected word terms, interest signals or career-reality sliders."
                   />
                   <RouteModeBadge
-                    title="I have an idea"
-                    active={!hasDiscoveryInput}
+                    title="Existing path"
+                    active={!hasDiscoveryInput && !hasWordMapInput}
                     text="Search and cluster filters let you inspect routes directly without implying personal fit."
                   />
                 </div>
@@ -420,7 +410,10 @@ export default function App() {
                       <input
                         type="search"
                         value={routeSearch}
-                        onChange={(event) => setRouteSearch(event.target.value)}
+                        onChange={(event) => {
+                          setRouteSearch(event.target.value);
+                          setEntryMode("existing");
+                        }}
                         className="w-full rounded-xl border border-sage-300 bg-cream-50 py-3 pl-11 pr-4 font-normal text-forest-900 placeholder:text-forest-600/50"
                         placeholder="Try data, nursing, plumbing or tourism"
                       />
@@ -428,7 +421,14 @@ export default function App() {
                   </label>
                   <label className="text-sm font-semibold text-forest-800">
                     Filter by career cluster
-                    <select value={streamFilter} onChange={(event) => setStreamFilter(event.target.value)} className="mt-2 w-full rounded-xl border border-sage-300 bg-cream-50 px-4 py-3 font-normal text-forest-900">
+                    <select
+                      value={streamFilter}
+                      onChange={(event) => {
+                        setStreamFilter(event.target.value);
+                        setEntryMode("existing");
+                      }}
+                      className="mt-2 w-full rounded-xl border border-sage-300 bg-cream-50 px-4 py-3 font-normal text-forest-900"
+                    >
                       <option value="all">All career clusters</option>
                       {routeStreams.map((stream) => <option key={stream}>{stream}</option>)}
                     </select>
@@ -437,6 +437,8 @@ export default function App() {
                 <p className="mt-5 rounded-xl border border-sage-300 bg-sage-100 p-4 text-sm leading-6 text-forest-800" aria-live="polite">
                   {hasDiscoveryInput
                     ? `${visibleRoutes.length} exploration matches shown. Ranking uses your selected answers, interest signals and career reality sliders.`
+                    : hasWordMapInput
+                      ? `${visibleRoutes.length} starter routes shown from the word graph term "${activeWordNode.label}". No personal fit is inferred.`
                     : hasRouteFilters
                       ? `${visibleRoutes.length} starter routes shown from your search or career-cluster filter. No personal fit is inferred.`
                     : "Use guided discovery to rank routes, or search directly if you already have a direction. These three routes are starter examples."}
@@ -517,30 +519,144 @@ function StatusBadge({ children, tone = "slate" }) {
   return <span className={`inline-flex rounded-full border px-3 py-1 text-xs font-bold ${tones[tone]}`}>{children}</span>;
 }
 
-function HeroFact({ value, label }) {
-  return <div><p className="font-extrabold">{value}</p><p className="mt-1 text-xs leading-5 text-sage-200">{label}</p></div>;
+function CareerSearchEntry({ query, results, inputRef, onQueryChange, onSubmit, onOpen }) {
+  return (
+    <section id="career-search" className="entry-panel entry-panel-primary" aria-labelledby="career-search-title">
+      <div className="entry-panel-heading">
+        <span>Entry 1</span>
+        <h2 id="career-search-title">Search a career</h2>
+        <p>Type a career, field or subject. Open a result to see the profile, subject signals, route options and next checks.</p>
+      </div>
+      <form className="career-search-form" onSubmit={onSubmit}>
+        <label htmlFor="direct-route-search">Career search</label>
+        <div className="career-search-control">
+          <Search className="career-search-icon" size={18} aria-hidden="true" />
+          <input
+            id="direct-route-search"
+            ref={inputRef}
+            type="search"
+            value={query}
+            onChange={(event) => onQueryChange(event.target.value)}
+            placeholder="Try Data Analyst, Nurse, Electrician or Design"
+          />
+          <button type="submit">Open first match <CornerDownRight size={17} aria-hidden="true" /></button>
+        </div>
+      </form>
+      <div className="career-search-results" aria-live="polite">
+        <p className="career-search-results-label">{query.trim() ? `${results.length} matching careers` : "Suggested careers"}</p>
+        {results.length ? (
+          <div className="career-result-list">
+            {results.map((route) => (
+              <button key={route.id} type="button" className="career-result" onClick={() => onOpen(route.id)}>
+                <span>
+                  <strong>{route.title}</strong>
+                  <small>{route.stream}</small>
+                </span>
+                <ChevronRight size={18} aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        ) : (
+          <p className="career-no-results">No direct match yet. Try a broader field such as data, care, business, trades or tourism.</p>
+        )}
+      </div>
+    </section>
+  );
 }
 
-function EntryPointCard({ eyebrow, title, body, actionLabel, onAction, tone }) {
-  const tones = {
-    forest: "border-forest-900 bg-forest-950 text-cream-50 shadow-[8px_8px_0_#a9c59f]",
-    cream: "border-sage-300 bg-cream-50 text-forest-950 shadow-[8px_8px_0_#d8ccb6]",
+function WordGraph({ nodes, activeNode, activeRoute, coverage, onPreview, onSelect, onOpen }) {
+  const edges = nodes.filter((node) => node.id !== activeNode.id).slice(0, 8);
+  const compactSignal = (value, limit = 92) => {
+    if (!value) return "Check the full profile.";
+    if (value.length <= limit) return value;
+    const clipped = value.slice(0, limit).replace(/\s+\S*$/, "");
+    return `${clipped}...`;
   };
-
+  const usefulSubjects = activeRoute.subjects?.slice(0, 2).join(", ") || "Check provider requirements";
   return (
-    <article className={`rounded-[28px] border p-5 sm:p-6 ${tones[tone]}`}>
-      <p className={`text-xs font-bold uppercase tracking-[0.18em] ${tone === "forest" ? "text-sage-200" : "text-forest-700"}`}>{eyebrow}</p>
-      <h2 className="mt-4 text-2xl font-extrabold tracking-[-0.04em]">{title}</h2>
-      <p className={`mt-3 text-sm leading-7 ${tone === "forest" ? "text-cream-50/85" : "text-forest-800/80"}`}>{body}</p>
-      <button type="button" className={`mt-6 inline-flex items-center gap-2 text-sm font-bold ${tone === "forest" ? "text-cream-50" : "text-forest-800"}`} onClick={onAction}>
-        {actionLabel} <ArrowRight size={16} />
-      </button>
-    </article>
+    <section id="word-graph" className="entry-panel word-map-shell" aria-labelledby="word-map-title">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase text-forest-700">Entry 2</p>
+          <h2 id="word-map-title" className="mt-2 text-2xl font-extrabold text-forest-950">Word graph</h2>
+          <p className="mt-2 max-w-xl text-sm leading-6 text-forest-800/75">Tap a word to preview what the work is really like, then open the full profile.</p>
+        </div>
+        <span className="word-map-count"><MapIcon size={16} aria-hidden="true" /> {coverage}+ routes</span>
+      </div>
+      <div className="word-map-stage" role="list" aria-label="Career word graph">
+        <svg className="word-graph-edges" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+          {edges.map((node) => (
+            <line
+              key={`${activeNode.id}-${node.id}`}
+              x1={activeNode.x}
+              y1={activeNode.y}
+              x2={node.x}
+              y2={node.y}
+              className={node.tone === activeNode.tone ? "word-graph-edge word-graph-edge-strong" : "word-graph-edge"}
+            />
+          ))}
+        </svg>
+        <div className="word-map-core" aria-hidden="true" />
+        {nodes.map((node) => {
+          const active = activeNode.id === node.id;
+          return (
+            <div
+              key={node.id}
+              role="listitem"
+              className="word-map-point"
+              style={{
+                "--x": `${node.x}%`,
+                "--y": `${node.y}%`,
+                "--z": `${node.z}px`,
+                "--scale": node.scale,
+              }}
+            >
+              <button
+                type="button"
+                className={`word-map-node word-map-node-${node.tone} ${active ? "word-map-node-active" : ""}`}
+                onMouseEnter={() => onPreview(node.id)}
+                onFocus={() => onPreview(node.id)}
+                onClick={() => onSelect(node)}
+                aria-pressed={active}
+                aria-label={`${node.label}: ${node.meta}`}
+              >
+                <span>{node.label}</span>
+                <small>{node.meta}</small>
+              </button>
+            </div>
+          );
+        })}
+      </div>
+      <div className="real-world-panel" aria-live="polite">
+        <div>
+          <p className="text-xs font-bold uppercase text-forest-700">Real-world signal to confirm</p>
+          <h3>{activeRoute.title}</h3>
+          <p>{compactSignal(activeRoute.day, 96)}</p>
+        </div>
+        <dl>
+          <div>
+            <dt>Work setting</dt>
+            <dd>{compactSignal(activeRoute.environment, 72)}</dd>
+          </div>
+          <div>
+            <dt>Pressure signal</dt>
+            <dd>{compactSignal(activeRoute.stress, 72)}</dd>
+          </div>
+          <div>
+            <dt>Useful subjects</dt>
+            <dd>{usefulSubjects}</dd>
+          </div>
+        </dl>
+        <button type="button" className="secondary-button w-full justify-between" onClick={() => onOpen(activeRoute.id)}>
+          Open full profile <ChevronRight size={18} aria-hidden="true" />
+        </button>
+      </div>
+    </section>
   );
 }
 
 function SectionIntro({ title, text }) {
-  return <div><h2 className="text-3xl font-extrabold tracking-[-0.035em] text-forest-950">{title}</h2><div className="accent-stroke mt-3 w-24" /><p className="mt-5 max-w-[260px] leading-7 text-forest-800/80">{text}</p></div>;
+  return <div><h2 className="text-3xl font-extrabold tracking-normal text-forest-950">{title}</h2><div className="accent-stroke mt-3 w-24" /><p className="mt-5 max-w-[260px] leading-7 text-forest-800/80">{text}</p></div>;
 }
 
 function matchedSignalLabels(route) {
@@ -578,7 +694,7 @@ function PreferenceSlider({ preference, value, onChange }) {
 function RouteModeBadge({ title, text, active }) {
   return (
     <div className={`rounded-xl border p-4 ${active ? "border-forest-700 bg-sage-100" : "border-sage-200 bg-white"}`}>
-      <p className="text-xs font-bold uppercase tracking-[0.14em] text-forest-700">{title}</p>
+      <p className="text-xs font-bold uppercase tracking-normal text-forest-700">{title}</p>
       <p className="mt-2 text-sm leading-6 text-forest-800/80">{text}</p>
     </div>
   );
@@ -628,8 +744,8 @@ function PathwayDetail({ route, pathwayRecord, selectedSubjects, onToggleSubject
       </div>
       <div className="mt-6 grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
         <div>
-          <p className="text-sm font-bold uppercase tracking-[0.14em] text-forest-700">Pathway detail</p>
-          <h2 ref={headingRef} tabIndex="-1" className="mt-3 text-4xl font-extrabold tracking-[-0.04em] outline-none sm:text-5xl">{route.title}</h2>
+          <p className="text-sm font-bold uppercase tracking-normal text-forest-700">Pathway detail</p>
+          <h2 ref={headingRef} tabIndex="-1" className="mt-3 text-4xl font-extrabold tracking-normal outline-none sm:text-5xl">{route.title}</h2>
           <p className="mt-3 font-semibold text-forest-800/80">Career cluster: {route.stream}</p>
           <p className="mt-6 leading-7 text-forest-800">{route.summary}</p>
           <div className="mt-6 rounded-xl border border-sage-300 bg-sage-50 p-5 text-sm leading-6 text-forest-800">
@@ -686,7 +802,7 @@ function PathwayDetail({ route, pathwayRecord, selectedSubjects, onToggleSubject
             <div className="grid gap-3 sm:grid-cols-2">
               {pathway.qualificationRoutes.slice(0, 4).map((option) => (
                 <article key={`${option.type}-${option.qualification}`} className="rounded-xl border border-sage-300 bg-cream-50 p-4">
-                  <p className="text-xs font-bold uppercase tracking-[0.12em] text-forest-700">{option.type.replaceAll("_", " ")}</p>
+                  <p className="text-xs font-bold uppercase tracking-normal text-forest-700">{option.type.replaceAll("_", " ")}</p>
                   <h4 className="mt-2 font-bold">{option.qualification}</h4>
                   <p className="mt-2 text-sm leading-6 text-forest-800/80">Entry guide: {option.gate}</p>
                   <p className="mt-2 text-xs font-semibold text-amber-800">Template guidance · provider check required</p>
@@ -717,7 +833,7 @@ function DetailSection({ title, children }) {
 }
 
 function SubjectNote({ label, text }) {
-  return <div className="rounded-xl bg-sage-50 p-4"><p className="text-xs font-bold uppercase tracking-[0.1em] text-forest-700">{label}</p><p className="mt-2 text-sm leading-6 text-forest-800">{text || "No template note available."}</p></div>;
+  return <div className="rounded-xl bg-sage-50 p-4"><p className="text-xs font-bold uppercase tracking-normal text-forest-700">{label}</p><p className="mt-2 text-sm leading-6 text-forest-800">{text || "No template note available."}</p></div>;
 }
 
 function TrustPoint({ icon: Icon, title, text }) {

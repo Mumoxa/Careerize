@@ -26,7 +26,7 @@ const SUBJECT_OPTIONS = [
 
 async function renderApp() {
   render(<App />);
-  await screen.findByRole("heading", { name: /start with a question, or start with a route/i });
+  await screen.findByRole("heading", { name: /search a career, or explore the word graph/i });
 }
 
 function byDataset(testId, field, value) {
@@ -72,10 +72,13 @@ describe("Careerize public launch selection system", () => {
   it("shows the two entry points clearly near the top of the experience", async () => {
     await renderApp();
 
-    expect(screen.getByRole("heading", { name: "I need direction" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "I have an idea" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Start guided discovery/i })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /Jump to direct exploration/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Search a career" })).toBeInTheDocument();
+    expect(screen.getByRole("searchbox", { name: /Career search/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open first match/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Word graph" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /^Data: analysis/i })).toBeInTheDocument();
+    expect(screen.getByText(/Real-world signal to confirm/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Open full profile/i })).toBeInTheDocument();
   });
 
   it("renders every question option, interest signal, lifestyle slider and subject-risk option", async () => {
@@ -150,7 +153,7 @@ describe("Careerize public launch selection system", () => {
     await waitFor(() => expectFirstRoute(expected));
     expect(preferenceSlider("earnings")).toHaveValue("100");
 
-    await user.click(screen.getByRole("button", { name: /clear discovery/i }));
+    await user.click(screen.getByRole("button", { name: /clear refinements/i }));
 
     expect(discoveryOption("interest", "people")).toHaveAttribute("aria-pressed", "false");
     expect(interestSignal("care")).toHaveAttribute("aria-pressed", "false");
@@ -190,6 +193,6 @@ describe("Careerize public launch selection system", () => {
     expect(interestSignal("care")).toHaveAttribute("aria-pressed", "true");
     expect(window.location.search).toContain("signals=technology%2Ccare");
     expect(window.location.search).toContain("pathway=data-analyst");
-    expect(screen.getByRole("heading", { name: "Data Analyst" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 2, name: "Data Analyst" })).toBeInTheDocument();
   });
 });
