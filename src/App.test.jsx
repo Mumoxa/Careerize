@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { describe, expect, it } from "vitest";
 import App from "./App";
@@ -31,7 +31,7 @@ const SUBJECT_OPTIONS = [
 
 async function renderApp() {
   render(<App />);
-  await Promise.resolve();
+  await screen.findByRole("banner");
 }
 
 function byDataset(testId, field, value) {
@@ -95,6 +95,7 @@ describe("Careerize focused homepage and wordmap", () => {
     const firstCard = routeCards()[0];
     const routeId = firstCard.dataset.routeId;
     const route = CAREER_ROUTES.find((item) => item.id === routeId);
+    expect(route).toBeTruthy();
 
     await user.click(byDataset("route-open", "routeId", routeId));
 
@@ -103,19 +104,21 @@ describe("Careerize focused homepage and wordmap", () => {
     expect(screen.getByText(/starter pathway guide, not an admissions decision/i)).toBeInTheDocument();
   });
 
-  it("renders separate explainer pages without front-page decision controls", async () => {
+  it("renders the parents and teachers explainer without front-page decision controls", async () => {
     window.history.pushState({}, "", "/for-parents-teachers");
     await renderApp();
 
     expect(screen.getByRole("heading", { level: 1, name: /for parents and teachers/i })).toBeInTheDocument();
     expect(screen.getByText(/what Careerize can and cannot claim/i)).toBeInTheDocument();
     expect(screen.queryByTestId("interest-signal")).not.toBeInTheDocument();
+  });
 
-    cleanup();
-
+  it("renders the partners explainer without front-page decision controls", async () => {
     window.history.pushState({}, "", "/for-partners");
-    render(<App />);
+    await renderApp();
+
     expect(await screen.findByRole("heading", { level: 1, name: /for partners/i })).toBeInTheDocument();
+    expect(screen.queryByTestId("interest-signal")).not.toBeInTheDocument();
   });
 
   it("renders only mapped interest words, categories, sliders and subject-risk options", async () => {
