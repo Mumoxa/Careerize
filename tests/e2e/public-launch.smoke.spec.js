@@ -4,8 +4,9 @@ test("learner can complete the public discovery and pathway journey", async ({ p
   await page.goto("/");
 
   await expect(page).toHaveTitle(/Careerize/i);
-  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Signal Deck Studio" })).toBeVisible();
 
+  await page.getByRole("link", { name: "Career search" }).click();
   const careerSearch = page.getByRole("searchbox", { name: /Career search/i });
   await expect(careerSearch).toBeVisible();
   await careerSearch.fill("Data Analyst");
@@ -14,12 +15,15 @@ test("learner can complete the public discovery and pathway journey", async ({ p
   await page.getByRole("button", { name: /Open first match/i }).click();
 
   await expect.poll(() => page.url()).not.toBe(beforeProfileSelection);
+  await expect(page).toHaveURL(/\/careers\/data-analyst/);
   await expect(page).toHaveURL(/pathway=data-analyst/);
-  await expect(page.locator("#pathway-detail").getByRole("heading", { name: "Data Analyst", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { level: 1, name: "Data Analyst", exact: true })).toBeVisible();
   await expect(page.getByText("Starter guidance", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Template guidance", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("Needs provider verification", { exact: true }).first()).toBeVisible();
   await expect(page.getByText(/not an admissions decision/i).first()).toBeVisible();
 
+  await page.getByRole("link", { name: "Signal Deck" }).click();
+  await expect(page.getByRole("heading", { level: 1, name: "Signal Deck Studio" })).toBeVisible();
   await expect(page.getByRole("searchbox", { name: "Search interests" })).toBeVisible();
 });
