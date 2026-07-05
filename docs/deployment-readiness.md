@@ -39,9 +39,17 @@ Before enabling saved profiles:
 - Verify export/delete flows.
 - Add visible privacy copy before collecting learner data.
 
-## GitHub Pages Deployment
+## Cloudflare Pages Deployment
 
-The deployment workflow builds from `main` and uploads `dist/` to GitHub Pages.
+Production hosting is Cloudflare Pages. GitHub Pages is not used.
+
+Cloudflare Pages should track the `main` branch with:
+
+- Build command: `npm run build`
+- Build output directory: `dist`
+- Node version: `.node-version` / `.nvmrc`
+
+GitHub Actions CI is the release gate for validation, browser smoke and accessibility checks. The app includes `public/_redirects` so Cloudflare Pages can serve the React single-page app for direct route loads such as `/careers` and pathway detail URLs.
 
 Release checklist:
 
@@ -49,7 +57,7 @@ Release checklist:
 - `npm run audit:deps` reports no moderate-or-higher vulnerabilities.
 - `npm run check` passes.
 - `npm run test:browser` passes.
-- GitHub Actions CI and deploy workflows use the same Node version file.
+- GitHub Actions CI and Cloudflare Pages use the same Node version file.
 - Public copy still uses starter/template/provider-verification language.
 - No `.env` file, service-role key, private API key or token is committed.
 - The generated research-layer data is in sync with `npm run generate:foundation-research` when data changes.
@@ -60,7 +68,7 @@ Release checklist:
 Rollback is currently commit-based:
 
 1. Revert the faulty commit or redeploy a previous known-good commit.
-2. Let the GitHub Pages workflow rebuild and publish `dist/`.
+2. Let the Cloudflare Pages Git integration rebuild and publish `dist/`.
 3. Re-run smoke checks against the public URL.
 
 ## Production Gaps

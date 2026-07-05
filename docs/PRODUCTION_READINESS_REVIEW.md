@@ -68,7 +68,7 @@ Security checks covered:
 - Career content is broad starter guidance, not provider-verified qualification advice.
 - No production monitoring or analytics are configured.
 - `src/App.jsx` is still a large component and should be split before adding account, admin or deeper pathway flows.
-- No Dockerfile is needed for the current static GitHub Pages deployment, but one may be useful if the app moves to a container host.
+- No Dockerfile is needed for the current static Cloudflare Pages deployment, but one may be useful if the app moves to a container host.
 
 ## Launch Assessment
 
