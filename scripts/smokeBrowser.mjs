@@ -93,37 +93,40 @@ async function main() {
     page.on("pageerror", (error) => consoleErrors.push(error.message));
 
     await page.goto(url, { waitUntil: "networkidle" });
-    await page.getByRole("heading", { name: /turn interests into career paths/i }).waitFor();
+    await page.getByRole("heading", { name: /signal deck studio/i }).waitFor();
 
-    await page.getByRole("button", { name: /Talking to people/ }).click();
-    await page.getByRole("button", { name: /Caring for people/ }).click();
+    await page.getByRole("button", { name: /Add signal: Talking to people/ }).click();
+    await page.getByRole("button", { name: /Add signal: Caring for people/ }).click();
     await setSlider(page, "Earning potential", 100);
 
     const firstRoute = page.locator('[data-testid="route-card"]').first();
     await firstRoute.waitFor();
     const firstRouteText = await firstRoute.innerText();
-    if (!firstRouteText.includes("Health, care and social services")) {
-      fail(`Care plus high earning did not keep a health/care route first. Saw: ${firstRouteText}`);
-    }
+    if (!/Why this path may fit/i.test(firstRouteText)) fail("Ranked route did not explain why the path may fit.");
     if (!/Reality signal:/i.test(firstRouteText)) fail("First route did not show a lifestyle reality signal.");
 
-    const secondRoute = page.locator('[data-testid="route-card"]').nth(1);
-    const routeId = await secondRoute.getAttribute("data-route-id");
-    const selectedTitle = (await secondRoute.locator("h3").innerText()).trim();
-    await secondRoute.locator(`[data-testid="route-open"][data-route-id="${routeId}"]`).click();
-    await page.locator(`h2:has-text("${selectedTitle}")`).waitFor();
+    const routeId = await firstRoute.getAttribute("data-route-id");
+    const selectedTitle = (await firstRoute.locator("h3").innerText()).trim();
+    await firstRoute.locator(`[data-testid="route-open"][data-route-id="${routeId}"]`).click();
+    await page.waitForURL(new RegExp(`/careers/${routeId}`));
+    await page.getByRole("heading", { level: 1, name: selectedTitle }).waitFor();
+
+    await page.goto(`${url}/?signals=technology,care&pathway=data-analyst`, { waitUntil: "networkidle" });
+    await page.waitForURL(/\/careers\/data-analyst/);
+    await page.getByRole("heading", { level: 1, name: "Data Analyst" }).waitFor();
 
     await page.setViewportSize({ width: 390, height: 844 });
     await page.getByLabel("Open navigation").click();
     await page.getByRole("navigation", { name: "Mobile navigation" }).waitFor();
-    await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Pathway guide" }).click();
+    await page.getByRole("navigation", { name: "Mobile navigation" }).getByRole("link", { name: "Signal Deck" }).click();
+    await page.getByRole("heading", { level: 1, name: "Signal Deck Studio" }).waitFor();
     await page.getByLabel("Open navigation").waitFor();
 
     if (consoleErrors.length) {
       fail(`Browser console/page errors detected:\n- ${consoleErrors.join("\n- ")}`);
     }
 
-    console.log("Browser smoke validation passed for desktop discovery, sliders, route selection and mobile navigation.");
+    console.log("Browser smoke validation passed for Signal Deck discovery, sliders, routed pathways, legacy links and mobile navigation.");
   } finally {
     if (browser) await browser.close();
     server.close();

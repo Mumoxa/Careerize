@@ -1,8 +1,8 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it } from "vitest";
 import App from "./App";
-import { CAREER_ROUTES, INTEREST_SELECTION_LIMIT, INTEREST_SIGNALS } from "./data/careerCatalog";
+import { CAREER_ROUTES, INTEREST_CATEGORIES, INTEREST_SELECTION_LIMIT, INTEREST_SIGNALS } from "./data/careerCatalog";
 import {
   DEFAULT_LIFESTYLE_PREFERENCES,
   PREFERENCE_DEFINITIONS,
@@ -29,9 +29,13 @@ const SUBJECT_OPTIONS = [
   "Design",
 ];
 
-async function renderApp() {
+beforeEach(() => {
+  window.history.pushState({}, "", "/");
+});
+
+async function renderApp({ ready = /signal deck studio/i } = {}) {
   render(<App />);
-  await screen.findByRole("banner");
+  await screen.findByRole("heading", { level: 1, name: ready });
 }
 
 function byDataset(testId, field, value) {
@@ -60,7 +64,7 @@ function expectFirstRoute(expectedRoute) {
   expect(routeCards()[0]).toHaveTextContent(expectedRoute.title);
 }
 
-describe("Careerize focused homepage and wordmap", () => {
+describe("Careerize Signal Deck Studio and routed pathway pages", () => {
   it("shows Signal Deck Studio as the focused front-page product", async () => {
     await renderApp();
 
@@ -71,15 +75,15 @@ describe("Careerize focused homepage and wordmap", () => {
     expect(screen.getByRole("link", { name: /career search/i })).toHaveAttribute("href", "/careers");
     expect(screen.getByRole("link", { name: /parents and teachers/i })).toHaveAttribute("href", "/for-parents-teachers");
 
-    expect(screen.queryByRole("heading", { level: 2, name: /interest word map/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 2, name: /explore career paths/i })).not.toBeInTheDocument();
-    expect(screen.queryByRole("heading", { level: 2, name: /pathway guide/i })).not.toBeInTheDocument();
+    expect(screen.queryByText(/interest word map/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/explore career paths/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/pathway guide/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Careerize helps young people connect raw interests/i)).not.toBeInTheDocument();
   });
 
   it("keeps career search on a separate route-equivalent page", async () => {
     window.history.pushState({}, "", "/careers");
-    await renderApp();
+    await renderApp({ ready: /career search/i });
 
     expect(screen.getByRole("heading", { level: 1, name: /career search/i })).toBeInTheDocument();
     expect(screen.getByLabelText(/career search/i)).toBeInTheDocument();
@@ -106,7 +110,7 @@ describe("Careerize focused homepage and wordmap", () => {
 
   it("renders the parents and teachers explainer without front-page decision controls", async () => {
     window.history.pushState({}, "", "/for-parents-teachers");
-    await renderApp();
+    await renderApp({ ready: /for parents and teachers/i });
 
     expect(screen.getByRole("heading", { level: 1, name: /for parents and teachers/i })).toBeInTheDocument();
     expect(screen.getByText(/what Careerize can and cannot claim/i)).toBeInTheDocument();
@@ -115,13 +119,13 @@ describe("Careerize focused homepage and wordmap", () => {
 
   it("renders the partners explainer without front-page decision controls", async () => {
     window.history.pushState({}, "", "/for-partners");
-    await renderApp();
+    await renderApp({ ready: /for partners/i });
 
-    expect(await screen.findByRole("heading", { level: 1, name: /for partners/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: /for partners/i })).toBeInTheDocument();
     expect(screen.queryByTestId("interest-signal")).not.toBeInTheDocument();
   });
 
-  it("renders only mapped interest words, categories, sliders and subject-risk options", async () => {
+  it("renders mapped interest cards, categories, sliders and routed subject-risk options", async () => {
     await renderApp();
 
     const taxonomy = validateInterestSignalTaxonomy(INTEREST_SIGNALS, CAREER_ROUTES, PREFERENCE_DEFINITIONS);
@@ -132,25 +136,41 @@ describe("Careerize focused homepage and wordmap", () => {
 
     for (const signal of INTEREST_SIGNALS) {
       const button = interestSignal(signal.value);
-      expect(button).toHaveTextContent(signal.label);
+      expect(button).toHaveTextContent(`signal: ${signal.label}`);
       expect(signal.skills.length).toBeGreaterThan(0);
       expect(signal.sliderDimensions.length).toBeGreaterThan(0);
     }
 
-    const wordMap = screen.getByRole("list", { name: /mapped interest keywords/i });
+    const categories = screen.getByLabelText(/interest categories/i);
+    expect(categories).toHaveTextContent("All");
+    for (const category of INTEREST_CATEGORIES) {
+      expect(categories).toHaveTextContent(category.label);
+    }
+
+    expect(screen.getByLabelText(/selected signal stack/i)).toHaveTextContent(/add interest cards to build a signal mix/i);
+    expect(screen.getByRole("heading", { name: /starter signal cards/i })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: /starter route cards/i })).toBeInTheDocument();
+
+    const interestCards = screen.getByRole("list", { name: /mapped interest keywords/i });
     for (const preference of PREFERENCE_DEFINITIONS) {
       const slider = preferenceSlider(preference.id);
       expect(slider).toHaveAccessibleName(preference.label);
       expect(slider).toHaveValue(String(DEFAULT_LIFESTYLE_PREFERENCES[preference.id]));
-      expect(slider.compareDocumentPosition(wordMap) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+      expect(slider.compareDocumentPosition(interestCards) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
+
+    expect(screen.queryByTestId("subject-toggle")).not.toBeInTheDocument();
+    cleanup();
+    window.history.pushState({}, "", "/careers/data-analyst");
+    render(<App />);
+    await screen.findByRole("heading", { level: 1, name: "Data Analyst" });
 
     for (const subject of SUBJECT_OPTIONS) {
       expect(subjectToggle(subject)).toHaveTextContent(subject);
     }
   });
 
-  it("selects and deselects wordmap interests and explains path suggestions", async () => {
+  it("selects and deselects Signal Deck interests and explains path suggestions", async () => {
     const user = userEvent.setup();
     await renderApp();
 
@@ -166,7 +186,7 @@ describe("Careerize focused homepage and wordmap", () => {
 
     await user.click(interestSignal("technology"));
     expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByText(/No path is suggested yet/i)).toBeInTheDocument();
+    expect(screen.getByText(/Starter route overlap appears before you add inputs/i)).toBeInTheDocument();
   });
 
   it("enforces the maximum of 20 selected interest keywords", async () => {
@@ -204,7 +224,7 @@ describe("Careerize focused homepage and wordmap", () => {
     expect(preferenceSlider("danger")).toHaveValue("100");
     expect(screen.getAllByText(/Slider influence/i).length).toBeGreaterThan(0);
 
-    await user.click(screen.getByRole("button", { name: /reset word map/i }));
+    await user.click(screen.getByRole("button", { name: /reset deck/i }));
 
     expect(interestSignal("handsOn")).toHaveAttribute("aria-pressed", "false");
     expect(interestSignal("tools")).toHaveAttribute("aria-pressed", "false");
@@ -223,8 +243,8 @@ describe("Careerize focused homepage and wordmap", () => {
     expect(route).toBeTruthy();
 
     await user.click(byDataset("route-open", "routeId", routeId));
-    await waitFor(() => expect(window.location.search).toContain(`pathway=${routeId}`));
-    expect(screen.getAllByRole("heading", { name: route.title }).length).toBeGreaterThan(0);
+    await waitFor(() => expect(window.location.pathname).toBe(`/careers/${routeId}`));
+    expect(screen.getByRole("heading", { level: 1, name: route.title })).toBeInTheDocument();
 
     for (const subject of SUBJECT_OPTIONS) {
       const button = subjectToggle(subject);
@@ -236,14 +256,31 @@ describe("Careerize focused homepage and wordmap", () => {
     expect(screen.getByText(/possible qualification routes/i)).toBeInTheDocument();
   });
 
-  it("hydrates linkable wordmap state from URL signals and pathway parameters", async () => {
-    window.history.pushState({}, "", "/?signals=technology,care&pathway=data-analyst");
-    await renderApp();
+  it("hydrates linkable Signal Deck state from URL signals on a pathway route", async () => {
+    const user = userEvent.setup();
+    window.history.pushState({}, "", "/careers/data-analyst?signals=technology,care");
+    await renderApp({ ready: /data analyst/i });
+
+    expect(window.location.pathname).toBe("/careers/data-analyst");
+    expect(window.location.search).toContain("signals=technology%2Ccare");
+    expect(screen.getByRole("heading", { level: 1, name: "Data Analyst" })).toBeInTheDocument();
+    expect(screen.getByText(/Your selected signals overlap with Digital tools/i)).toBeInTheDocument();
+
+    await user.click(screen.getByRole("link", { name: /signal deck/i }));
+    await screen.findByRole("heading", { level: 1, name: /signal deck studio/i });
 
     expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "true");
     expect(interestSignal("care")).toHaveAttribute("aria-pressed", "true");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("2 / 20 selected");
+  });
+
+  it("normalizes legacy pathway query links to dedicated pathway routes", async () => {
+    window.history.pushState({}, "", "/?signals=technology,care&pathway=data-analyst");
+    await renderApp({ ready: /data analyst/i });
+
+    expect(window.location.pathname).toBe("/careers/data-analyst");
     expect(window.location.search).toContain("signals=technology%2Ccare");
     expect(window.location.search).toContain("pathway=data-analyst");
-    expect(screen.getByRole("heading", { level: 2, name: "Data Analyst" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1, name: "Data Analyst" })).toBeInTheDocument();
   });
 });
