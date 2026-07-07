@@ -48,6 +48,7 @@ The full qualification database is a long-term target. The immediate learner val
 | `career_qualification_coverage.csv` | Generated 1,050-row reconciliation showing every live career route and its conservative qualification-family association. Exact provider programmes remain source-verification work. |
 | `career_research_queue.csv` | Generated 1,050-row source-verification work queue. Every live career has required source categories and high-risk fields blocked until evidence is attached. |
 | `career_research_team_workplan.csv` | Generated 1,050-row research-team execution plan assigning every route to a lane, phase, primary role, evidence reviewer and learner-safety QA reviewer. |
+| `career_claim_evidence.csv` | Generated claim-level evidence layer covering all 1,050 live career routes. It includes occupation-recognition rows, blocked-field limitation rows, promoted source-backed demand signposts where supported, and review-needed research-archive rows. |
 
 ## 27 June 2026 research archive integration
 
@@ -131,4 +132,4 @@ Instead, this folder is the source-backed workbench for future phases:
 
 Convert this folder into a database seed/import layer and add validation scripts that reject public qualification claims without source URL, access date, verification status and confidence score.
 
-Do not add more hand-coded frontend career objects until the subject-choice, research-queue, research-team workplan and qualification-pathway structures are wired into the app.
+Do not add more hand-coded frontend career objects until the subject-choice, research-queue, research-team workplan, claim-evidence and qualification-pathway structures are wired into the app.

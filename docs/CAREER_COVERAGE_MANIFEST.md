@@ -1,7 +1,7 @@
 # Careerize Career Coverage Manifest
 
 Date: 28 June 2026
-Status: Expanded starter taxonomy with OFO-linked route coverage
+Status: Expanded starter taxonomy with claim-level evidence coverage
 Country focus: South Africa
 Salary policy: qualitative earning-potential insight only; no detailed salary bands or salary figures.
 
@@ -36,6 +36,23 @@ The live `CAREER_ROUTES` catalog generates **1,050 starter career routes** acros
 | Armed forces and security services | 39 |
 | Science, research and frontier careers | 38 |
 | **Total** | **1,050** |
+
+## Claim Evidence Coverage
+
+Careerize now includes a generated claim-evidence file:
+
+```text
+data/sa-foundation/career_claim_evidence.csv
+```
+
+That file currently covers all **1,050 live career routes** with **2,688 claim evidence rows**. The evidence layer includes:
+
+- one occupation-recognition row for every live route
+- one source-limitation row for every live route
+- promoted high-demand or critical-skill signposts only where imported source evidence supports that claim type
+- research-archive rows marked as review-needed working data, not automatically published facts
+
+This is not permission to present every career as fully verified. Exact salary, APS/marks, provider-specific entry requirements, accreditation status, province-level demand and guaranteed employment outcomes remain blocked until source-specific rows are added and reviewed.
 
 ## What Each Starter Route Includes
 
@@ -73,6 +90,7 @@ The imported research foundation currently contains:
 - 589 live starter routes with a direct, suggestion or curated research link.
 - 461 live starter routes still tracked as research-link gaps.
 - 145 canonical-career links covering the Top 100 build queue.
+- 2,688 generated claim-evidence rows covering all 1,050 live routes.
 
 The research gap file is:
 
@@ -114,16 +132,17 @@ This starter taxonomy solves breadth. The next serious product step is depth.
 
 Priority enrichment order:
 
-1. Close the 461 starter-route research-link gaps.
-2. Convert the Top 100 priority careers from starter profiles into source-backed profiles.
-3. Add verified NSC/NQF/TVET/SETA/university route details.
-4. Add province-level demand status only where sourced.
-5. Keep earning potential qualitative until the team deliberately decides otherwise.
-6. Add parent/advisor-friendly explanations and action plans.
-7. Build governed admin/content tooling so the catalog can keep expanding without editing code by hand.
+1. Keep `career_claim_evidence.csv` regenerated and validated whenever catalog or research data changes.
+2. Close the 461 starter-route research-link gaps.
+3. Convert the Top 100 priority careers from starter profiles into source-backed profiles.
+4. Add verified NSC/NQF/TVET/SETA/university route details.
+5. Add province-level demand status only where sourced.
+6. Keep earning potential qualitative until the team deliberately decides otherwise.
+7. Add parent/advisor-friendly explanations and action plans.
+8. Build governed admin/content tooling so the catalog can keep expanding without editing code by hand.
 
 ## Product Interpretation
 
-Careerize now has a broad career universe for exploration. It is not yet a fully verified 1,050-career knowledge graph.
+Careerize now has a broad career universe for exploration and a claim-evidence layer for every route. It is not yet a fully verified 1,050-career knowledge graph.
 
-Breadth exists now. Deep verified guidance still needs staged editorial and source work.
+Breadth exists now. Claim-level evidence governance exists now. Deep verified guidance still needs staged editorial and source work.

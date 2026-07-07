@@ -98,6 +98,7 @@ const routeIds = new Set(CAREER_ROUTES.map((route) => route.id));
 const qualificationRows = parseCsv("career_qualification_coverage.csv");
 const researchRows = parseCsv("career_research_queue.csv");
 const workplanRows = parseCsv("career_research_team_workplan.csv");
+const evidenceRows = parseCsv("career_claim_evidence.csv");
 
 for (const [file, rows] of [
   ["career_qualification_coverage.csv", qualificationRows],
@@ -112,6 +113,40 @@ for (const [file, rows] of [
   for (const id of ids) {
     if (!routeIds.has(id)) errors.push(`${file} contains unknown career id ${id}.`);
   }
+}
+
+if (evidenceRows.length < CAREER_ROUTES.length * 2) {
+  errors.push(`career_claim_evidence.csv must contain at least two evidence rows per live career; found ${evidenceRows.length}.`);
+}
+
+const evidenceCoverage = new Map(CAREER_ROUTES.map((route) => [route.id, {
+  total: 0,
+  occupationRecognition: 0,
+  sourceLimitation: 0,
+  verified: 0,
+  unsupported: 0,
+}]));
+
+for (const row of evidenceRows) {
+  if (!routeIds.has(row.career_id)) {
+    errors.push(`career_claim_evidence.csv contains unknown career id ${row.career_id}.`);
+    continue;
+  }
+
+  const coverage = evidenceCoverage.get(row.career_id);
+  coverage.total += 1;
+  if (row.claim_type === "occupation_recognition") coverage.occupationRecognition += 1;
+  if (row.claim_type === "source_limitation") coverage.sourceLimitation += 1;
+  if (row.verification_status === "verified") coverage.verified += 1;
+  if (row.verification_status === "unsupported_do_not_publish") coverage.unsupported += 1;
+}
+
+for (const [routeId, coverage] of evidenceCoverage.entries()) {
+  if (coverage.total === 0) errors.push(`career_claim_evidence.csv is missing live career id ${routeId}.`);
+  if (coverage.occupationRecognition === 0) errors.push(`career_claim_evidence.csv is missing occupation_recognition for ${routeId}.`);
+  if (coverage.sourceLimitation === 0) errors.push(`career_claim_evidence.csv is missing source_limitation for ${routeId}.`);
+  if (coverage.verified === 0) errors.push(`career_claim_evidence.csv is missing at least one verified evidence row for ${routeId}.`);
+  if (coverage.unsupported === 0) errors.push(`career_claim_evidence.csv must include blocked-claim limitations for ${routeId}.`);
 }
 
 const researchById = new Map(researchRows.map((row) => [row.career_id, row]));
@@ -188,4 +223,7 @@ if (errors.length) {
   process.exit(1);
 }
 
-console.log(`Production readiness validation passed for ${CAREER_ROUTES.length} live routes, ${qualificationRows.length} qualification rows, ${researchRows.length} research queue rows, ${workplanRows.length} team workplan rows and ${SOURCE_REGISTRY.length} source records.`);
+const verifiedEvidenceRows = evidenceRows.filter((row) => row.verification_status === "verified").length;
+const blockedEvidenceRows = evidenceRows.filter((row) => row.verification_status === "unsupported_do_not_publish").length;
+
+console.log(`Production readiness validation passed for ${CAREER_ROUTES.length} live routes, ${qualificationRows.length} qualification rows, ${researchRows.length} research queue rows, ${workplanRows.length} team workplan rows, ${evidenceRows.length} claim evidence rows (${verifiedEvidenceRows} verified, ${blockedEvidenceRows} blocked) and ${SOURCE_REGISTRY.length} source records.`);

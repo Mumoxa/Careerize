@@ -8,13 +8,15 @@ The current public launch surface is account-free. It does not expose Supabase l
 
 The public catalog currently contains 1,050 starter career routes across 18 macro streams.
 
-This should be marketed as a starter career-guidance and pathway-exploration platform, not as a fully provider-verified career intelligence graph yet.
+This should be marketed as a starter career-guidance and pathway-exploration platform with claim-evidence governance, not as a fully provider-verified career intelligence graph yet.
 
 ## Required Commands
 
 ```bash
 npm ci
 npm run audit:deps
+npm run export:claim-evidence
+npm run validate:claim-evidence
 npm run check
 npm run test:browser
 ```
@@ -57,10 +59,12 @@ Release checklist:
 - `npm run audit:deps` reports no moderate-or-higher vulnerabilities.
 - `npm run check` passes.
 - `npm run test:browser` passes.
+- `data/sa-foundation/career_claim_evidence.csv` covers all 1,050 live careers.
 - GitHub Actions CI and Cloudflare Pages use the same Node version file.
 - Public copy still uses starter/template/provider-verification language.
 - No `.env` file, service-role key, private API key or token is committed.
 - The generated research-layer data is in sync with `npm run generate:foundation-research` when data changes.
+- The generated claim-evidence data is in sync with `npm run export:claim-evidence` when catalog or research data changes.
 - `data/sa-foundation/careerize_sa_starter_route_research_gaps.csv` is reviewed if the catalog changes.
 
 ## Rollback
@@ -78,3 +82,4 @@ Rollback is currently commit-based:
 - Monitoring, analytics and error reporting are not configured yet.
 - Saved-profile launch requires Supabase RLS verification and privacy UX.
 - Provider-verified career data ingestion still needs governed admin tooling.
+- Salary figures, APS/marks, provider-specific entry requirements, accreditation status, province-level demand and employment outcomes remain blocked until source-specific evidence rows are reviewed.
