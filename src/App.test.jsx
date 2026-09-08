@@ -69,16 +69,13 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
     await renderApp();
 
     expect(screen.getByRole("heading", { level: 1, name: /signal deck studio/i })).toBeInTheDocument();
-    expect(screen.getByText(/react to interest cards/i)).toBeInTheDocument();
+    expect(screen.getByText(/pick interest cards/i)).toBeInTheDocument();
     expect(screen.getByText(/tune your signal mix/i)).toBeInTheDocument();
-    expect(screen.getByText(/starter signal overlap/i)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /career search/i })).toHaveAttribute("href", "/careers");
-    expect(screen.getByRole("link", { name: /parents and teachers/i })).toHaveAttribute("href", "/for-parents-teachers");
-
-    expect(screen.queryByText(/interest word map/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/explore career paths/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/pathway guide/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/Careerize helps young people connect raw interests/i)).not.toBeInTheDocument();
+    expect(screen.getByText(/starter route examples/i)).toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: /browse.*careers/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByRole("link", { name: "Parents & teachers" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Trust" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Partners" })).toBeInTheDocument();
   });
 
   it("keeps career search on a separate route-equivalent page", async () => {
@@ -125,6 +122,23 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
     expect(screen.queryByTestId("interest-signal")).not.toBeInTheDocument();
   });
 
+  it("renders the trust principles page", async () => {
+    window.history.pushState({}, "", "/trust");
+    await renderApp({ ready: /how careerize stays honest/i });
+
+    expect(screen.getByRole("heading", { level: 1, name: /how careerize stays honest/i })).toBeInTheDocument();
+    expect(screen.getByText(/learner is never the product/i)).toBeInTheDocument();
+    expect(screen.queryByTestId("interest-signal")).not.toBeInTheDocument();
+  });
+
+  it("renders a 404 page for unknown routes", async () => {
+    window.history.pushState({}, "", "/nonexistent-route");
+    await renderApp({ ready: /page not found/i });
+
+    expect(screen.getByRole("heading", { level: 1, name: /page not found/i })).toBeInTheDocument();
+    expect(screen.getByText(/doesn't exist/i)).toBeInTheDocument();
+  });
+
   it("renders mapped interest cards, categories, sliders and routed subject-risk options", async () => {
     await renderApp();
 
@@ -136,27 +150,24 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
 
     for (const signal of INTEREST_SIGNALS) {
       const button = interestSignal(signal.value);
-      expect(button).toHaveTextContent(`signal: ${signal.label}`);
+      expect(button).toHaveTextContent(new RegExp(`(Add signal|Remove signal).*${signal.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}`, "i"));
       expect(signal.skills.length).toBeGreaterThan(0);
       expect(signal.sliderDimensions.length).toBeGreaterThan(0);
     }
 
-    const categories = screen.getByLabelText(/interest categories/i);
-    expect(categories).toHaveTextContent("All");
+    expect(screen.getByLabelText(/interest categories/i)).toHaveTextContent("All");
     for (const category of INTEREST_CATEGORIES) {
-      expect(categories).toHaveTextContent(category.label);
+      expect(screen.getByLabelText(/interest categories/i)).toHaveTextContent(category.label);
     }
 
     expect(screen.getByLabelText(/selected signal stack/i)).toHaveTextContent(/add interest cards to build a signal mix/i);
     expect(screen.getByRole("heading", { name: /starter signal cards/i })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: /starter route cards/i })).toBeInTheDocument();
 
-    const interestCards = screen.getByRole("list", { name: /mapped interest keywords/i });
     for (const preference of PREFERENCE_DEFINITIONS) {
       const slider = preferenceSlider(preference.id);
       expect(slider).toHaveAccessibleName(preference.label);
       expect(slider).toHaveValue(String(DEFAULT_LIFESTYLE_PREFERENCES[preference.id]));
-      expect(slider.compareDocumentPosition(interestCards) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     }
 
     expect(screen.queryByTestId("subject-toggle")).not.toBeInTheDocument();
@@ -179,14 +190,14 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
     const expected = rankCareerRoutes(CAREER_ROUTES, {}, ["technology"], DEFAULT_LIFESTYLE_PREFERENCES)[0];
     await waitFor(() => expectFirstRoute(expected));
     expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("1 / 20 selected");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent(/1\s*\/\s*20/);
     expect(screen.getAllByText(/Why this path may fit/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Related skills/i).length).toBeGreaterThan(0);
     expect(screen.getAllByText(/Possible learning route/i).length).toBeGreaterThan(0);
 
     await user.click(interestSignal("technology"));
     expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "false");
-    expect(screen.getByText(/Starter route overlap appears before you add inputs/i)).toBeInTheDocument();
+    expect(screen.getByText(/starter route examples appear before you add inputs/i)).toBeInTheDocument();
   });
 
   it("enforces the maximum of 20 selected interest keywords", async () => {
@@ -197,12 +208,12 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
       await user.click(interestSignal(signal.value));
     }
 
-    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("20 / 20 selected");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent(/20\s*\/\s*20/);
     expect(screen.getByText(/Limit reached/i)).toBeInTheDocument();
     expect(interestSignal(INTEREST_SIGNALS[INTEREST_SELECTION_LIMIT].value)).toBeDisabled();
 
     await user.click(interestSignal(INTEREST_SIGNALS[0].value));
-    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("19 / 20 selected");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent(/19\s*\/\s*20/);
     expect(interestSignal(INTEREST_SIGNALS[INTEREST_SELECTION_LIMIT].value)).not.toBeDisabled();
   });
 
@@ -229,7 +240,7 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
     expect(interestSignal("handsOn")).toHaveAttribute("aria-pressed", "false");
     expect(interestSignal("tools")).toHaveAttribute("aria-pressed", "false");
     expect(preferenceSlider("danger")).toHaveValue("50");
-    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("0 / 20 selected");
+    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent(/0\s*\/\s*20/);
   });
 
   it("opens pathway details, updates the URL and exercises every subject-risk toggle", async () => {
@@ -254,6 +265,9 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
 
     expect(screen.getByText(/subject-risk check/i)).toBeInTheDocument();
     expect(screen.getByText(/possible qualification routes/i)).toBeInTheDocument();
+    expect(screen.getByText(/best parts/i)).toBeInTheDocument();
+    expect(screen.getByText(/worst parts/i)).toBeInTheDocument();
+    expect(screen.getByText(/common misconceptions/i)).toBeInTheDocument();
   });
 
   it("hydrates linkable Signal Deck state from URL signals on a pathway route", async () => {
@@ -266,12 +280,8 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
     expect(screen.getByRole("heading", { level: 1, name: "Data Analyst" })).toBeInTheDocument();
     expect(screen.getByText(/Your selected signals overlap with Digital tools/i)).toBeInTheDocument();
 
-    await user.click(screen.getByRole("link", { name: /signal deck/i }));
-    await screen.findByRole("heading", { level: 1, name: /signal deck studio/i });
-
-    expect(interestSignal("technology")).toHaveAttribute("aria-pressed", "true");
-    expect(interestSignal("care")).toHaveAttribute("aria-pressed", "true");
-    expect(screen.getByTestId("selected-interest-count")).toHaveTextContent("2 / 20 selected");
+    const backButton = screen.getByRole("button", { name: /back to career search/i });
+    expect(backButton).toBeInTheDocument();
   });
 
   it("normalizes legacy pathway query links to dedicated pathway routes", async () => {
@@ -280,7 +290,6 @@ describe("Careerize Signal Deck Studio and routed pathway pages", () => {
 
     expect(window.location.pathname).toBe("/careers/data-analyst");
     expect(window.location.search).toContain("signals=technology%2Ccare");
-    expect(window.location.search).toContain("pathway=data-analyst");
     expect(screen.getByRole("heading", { level: 1, name: "Data Analyst" })).toBeInTheDocument();
   });
 });

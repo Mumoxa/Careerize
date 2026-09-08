@@ -1,4 +1,5 @@
-import { MASTER_CAREER_GROUPS, MASTER_CAREER_TOTAL } from "./masterCareerList.js";
+import { MASTER_CAREER_GROUPS, MASTER_CAREER_LIST, MASTER_CAREER_TOTAL } from "./masterCareerList.js";
+import { buildDirectionIndex, findRelatedCareers } from "./careerDirections.js";
 
 export const SOURCE_REGISTRY = [
   {
@@ -122,7 +123,7 @@ const SIGNAL_PRESETS = {
   people: { people: 3, helping: 2, business: 2, structure: 1, office: 1 },
   hospitality: { people: 3, moving: 2, practical: 2, helping: 2, highStress: 1 },
   engineering: { technical: 3, maths: 2, problemSolving: 2, practical: 2, tools: 2 },
-  entrepreneur: { business: 3, people: 2, practical: 2, problemSolving: 2, moving: 1 },
+  entrepreneur: { business: 3, people: 2, practical: 3, problemSolving: 2, moving: 2 },
   science: { science: 3, biology: 2, patterns: 2, detail: 2, problemSolving: 2 },
 };
 
@@ -235,6 +236,27 @@ const VARIABLE_STRESS_KINDS = new Set(["creative", "entrepreneur", "agri"]);
 const REMOTE_FRIENDLY_KINDS = new Set(["tech", "creative", "finance"]);
 const PART_REMOTE_KINDS = new Set(["people", "public", "education", "science"]);
 
+// Structured lifestyle profile per kind (0-100). This is the source of truth for
+// the lifestyle sliders instead of keyword-parsing prose strings. Values are
+// starter-tier structural estimates (confidence < 70) and must not be treated as
+// verified facts about any individual role.
+const LIFESTYLE_PROFILES = {
+  tech:         { earnings: 80, travel: 25, stress: 50, danger: 20 },
+  finance:      { earnings: 75, travel: 20, stress: 60, danger: 15 },
+  practical:    { earnings: 60, travel: 75, stress: 60, danger: 70 },
+  care:         { earnings: 55, travel: 50, stress: 82, danger: 55 },
+  education:    { earnings: 60, travel: 30, stress: 60, danger: 20 },
+  agri:         { earnings: 55, travel: 80, stress: 66, danger: 70 },
+  logistics:    { earnings: 60, travel: 80, stress: 60, danger: 65 },
+  public:       { earnings: 60, travel: 50, stress: 82, danger: 55 },
+  creative:     { earnings: 55, travel: 40, stress: 66, danger: 20 },
+  people:       { earnings: 50, travel: 45, stress: 60, danger: 20 },
+  hospitality:  { earnings: 45, travel: 45, stress: 82, danger: 30 },
+  engineering:  { earnings: 75, travel: 75, stress: 82, danger: 75 },
+  entrepreneur: { earnings: 70, travel: 65, stress: 66, danger: 50 },
+  science:      { earnings: 65, travel: 45, stress: 60, danger: 40 },
+};
+
 const CANONICAL_IDS = {
   "Data Analyst": "data-analyst",
   "Software Developer": "software-developer",
@@ -256,7 +278,7 @@ function makePathways(title, profile) {
   }));
 }
 
-function makeRoute(title, stream, kind, profile) {
+function makeRoute(title, stream, kind, profile, ofoCode) {
   const tools = TOOL_PRESETS[kind];
   const [earningLabel, earningExplanation] = EARNING_PRESETS[kind];
   const remote = REMOTE_FRIENDLY_KINDS.has(kind)
@@ -270,49 +292,48 @@ function makeRoute(title, stream, kind, profile) {
       ? "Variable. Some weeks are calm, while busy periods can be demanding."
       : "Medium. Pressure rises when deadlines, people, quality or unclear information come together.";
 
+  const starterNote = "Starter profile — source-verified details for South Africa are still being added. Compare this route with alternatives before making subject or study choices.";
+
   return {
     id: CANONICAL_IDS[title] ?? slugify(title),
     title,
     stream,
     cluster: stream,
+    ofoCode: ofoCode ?? null,
     signalWeights: SIGNAL_PRESETS[kind],
-    summary: `You work in ${stream.toLowerCase()} as a ${title.toLowerCase()}, helping people or organisations solve a real problem.`,
-    day: `A normal day involves planning work, using the right tools, solving problems, communicating progress and checking quality in ${title.toLowerCase()} work.`,
-    tools: `A mix of ${tools.slice(0, -1).join(", ")} and ${tools.at(-1)}.`,
-    environment: `This work can live in ${ENVIRONMENT_PRESETS[kind]}.`,
+    summary: starterNote,
+    day: starterNote,
+    tools: "Tool examples are not yet source-verified for this route.",
+    environment: ENVIRONMENT_PRESETS[kind],
     stress,
     remote,
-    growth: `Can grow into senior ${title.toLowerCase()} work, supervision, specialist practice, consulting, training, operations leadership or business ownership depending on the route.`,
-    worst: "The difficult part is dealing with pressure, unclear expectations, repetitive tasks or work that must be redone when details are missed.",
-    best: "The enjoyable part is seeing a visible result, helping people make progress and building skill that becomes more useful over time.",
+    growth: starterNote,
+    worst: "Challenges are not yet source-verified for this route.",
+    best: "Rewards are not yet source-verified for this route.",
     earningPotential: {
       status: "editorial-insight",
       label: earningLabel,
-      explanation: `Careerize does not show salary figures here. The useful learner insight is that ${earningExplanation}`,
+      explanation: `Careerize does not show salary figures here. The useful learner insight is that ${earningExplanation} Salary figures, APS scores and employer demand must not be treated as verified for this profile until an evidence record is attached.`,
     },
-    dayInLife: [
-      `Check priorities for ${title.toLowerCase()} work and confirm what matters today.`,
-      "Use the main tools, systems or practical methods for the job.",
-      "Solve problems, ask for information and keep records of what changed.",
-      "Report progress, hand over work or prepare the next step.",
-    ],
-    keyTasks: ["Plan the work", "Use relevant tools or systems", "Solve practical or information problems", "Communicate with stakeholders", "Check quality and safety where relevant"],
+    dayInLife: [starterNote],
+    keyTasks: ["Verify source-verified tasks during research for this route."],
     toolExamples: tools,
-    workEnvironment: [REMOTE_FRIENDLY_KINDS.has(kind) ? "hybrid-or-remote-possible" : "mostly-in-person", "team-based", "skills-based", "SA-context"],
+    workEnvironment: [REMOTE_FRIENDLY_KINDS.has(kind) ? "hybrid-or-remote-possible" : "mostly-in-person", "SA-context-starter"],
+    lifestyleProfile: LIFESTYLE_PROFILES[kind] ?? { earnings: 50, travel: 50, stress: 50, danger: 40 },
     subjects: SUBJECT_PRESETS[kind],
     qualifications: [
-      "Relevant NSC subject choices and practical proof of interest",
-      "Relevant certificate, diploma, degree, learnership, apprenticeship, short course or workplace route depending on the role level",
-      "Portfolio, workplace evidence, references or practical projects where formal qualification is not the only entry route",
+      "Subject and qualification requirements still need source verification per institution and role level.",
+      "Relevant certificate, diploma, degree, learnership, apprenticeship, short course or workplace route depending on the role level — verify entry rules directly with providers.",
+      "Portfolio, workplace evidence, references or practical projects can matter where formal qualification is not the only entry route.",
     ],
     pathways: makePathways(title, profile),
     misconceptions: [
-      `${title} is not only the visible part people see from outside; the real work includes repetition, admin, feedback and problem-solving.`,
-      "One qualification route is not the only route. Careerize shows several possible paths and marks uncertainty where data still needs verification.",
+      "This is a starter profile, not a verified occupational fact sheet.",
+      "One qualification route is not the only route. Verify options directly with SAQA, DHET, the relevant SETA, TVET colleges, universities and employers before deciding.",
     ],
     fitWarnings: [
       "This route should be compared with at least two alternatives before making subject or study decisions.",
-      "Source-verified South African demand and qualification detail still needs to be added before treating this as final advice.",
+      "Source-verified South African demand, salary, APS, institution and qualification detail still needs to be added before treating this as final advice.",
     ],
     similarCareerIds: [],
   };
@@ -321,24 +342,28 @@ function makeRoute(title, stream, kind, profile) {
 const CAREER_GROUPS = MASTER_CAREER_GROUPS.map((g) => [g.stream, g.kind, g.profile, g.titles]);
 
 const generatedRoutes = CAREER_GROUPS.flatMap(([stream, kind, profile, titles]) =>
-  titles.map((title) => makeRoute(title, stream, kind, profile))
+  titles.map((title) => {
+    // Look up OFO code from the master list so related-career matching can use it.
+    const master = MASTER_CAREER_LIST.find((m) => m.title === title);
+    return makeRoute(title, stream, kind, profile, master?.ofoCode);
+  })
 ).sort((a, b) => a.stream.localeCompare(b.stream) || a.title.localeCompare(b.title));
 
-const routesByStream = generatedRoutes.reduce((acc, route) => {
-  acc[route.stream] = acc[route.stream] ?? [];
-  acc[route.stream].push(route.id);
-  return acc;
-}, {});
+// Build career-direction index and assign sensible related-career ids using
+// OFO-code + keyword + direction clustering (replaces the naive next-two-in-stream
+// algorithm that produced nonsensical pairings).
+const directionIndex = buildDirectionIndex(generatedRoutes);
 
-export const CAREER_ROUTES = generatedRoutes.map((route) => {
-  const sameStream = routesByStream[route.stream] ?? [];
-  const index = sameStream.indexOf(route.id);
-  return {
-    ...baseProfile,
-    ...route,
-    similarCareerIds: sameStream.length > 2 ? [sameStream[(index + 1) % sameStream.length], sameStream[(index + 2) % sameStream.length]] : sameStream.filter((id) => id !== route.id),
-  };
-});
+export const CAREER_DIRECTIONS = directionIndex;
+
+const routesWithRelated = generatedRoutes.map((route) => ({
+  ...baseProfile,
+  ...route,
+  directionId: directionIndex.find((d) => d.routeIds.includes(route.id))?.id ?? null,
+  similarCareerIds: findRelatedCareers(route, generatedRoutes, directionIndex, 4),
+}));
+
+export const CAREER_ROUTES = routesWithRelated;
 
 const streamCounts = MASTER_CAREER_GROUPS.reduce((acc, g) => {
   acc[g.stream] = g.careerCount;

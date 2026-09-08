@@ -6,7 +6,7 @@ Careerize is deployable today as a static Vite/React frontend when `npm run chec
 
 The current public launch surface is account-free. It does not expose Supabase login, saved profiles or cross-device persistence in the UI. Supabase schema and persistence helpers exist for a future release, but that flow needs RLS verification and user-facing privacy UX before launch.
 
-The public catalog currently contains 1,050 starter career routes across 18 macro streams.
+The public catalog currently contains 2,676 starter career routes across 18 macro streams.
 
 This should be marketed as a starter career-guidance and pathway-exploration platform with claim-evidence governance, not as a fully provider-verified career intelligence graph yet.
 
@@ -59,7 +59,7 @@ Release checklist:
 - `npm run audit:deps` reports no moderate-or-higher vulnerabilities.
 - `npm run check` passes.
 - `npm run test:browser` passes.
-- `data/sa-foundation/career_claim_evidence.csv` covers all 1,050 live careers.
+- `data/sa-foundation/career_claim_evidence.csv` covers all 2,676 live careers.
 - GitHub Actions CI and Cloudflare Pages use the same Node version file.
 - Public copy still uses starter/template/provider-verification language.
 - No `.env` file, service-role key, private API key or token is committed.

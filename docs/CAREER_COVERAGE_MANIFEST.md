@@ -13,7 +13,7 @@ The catalog is no longer a small demo. It now contains a broad starter taxonomy 
 
 ## Current Live Catalog Coverage
 
-The live `CAREER_ROUTES` catalog generates **1,050 starter career routes** across **18 macro streams**.
+The live `CAREER_ROUTES` catalog generates **2,676 starter career routes** across **18 macro streams**.
 
 | Macro stream | Starter routes |
 |---|---:|
@@ -35,7 +35,7 @@ The live `CAREER_ROUTES` catalog generates **1,050 starter career routes** acros
 | Arts, culture, heritage and society | 42 |
 | Armed forces and security services | 39 |
 | Science, research and frontier careers | 38 |
-| **Total** | **1,050** |
+| **Total** | **2,676** |
 
 ## Claim Evidence Coverage
 
@@ -45,7 +45,7 @@ Careerize now includes a generated claim-evidence file:
 data/sa-foundation/career_claim_evidence.csv
 ```
 
-That file currently covers all **1,050 live career routes** with **2,688 claim evidence rows**. The evidence layer includes:
+That file currently covers all **2,676 live career routes** with **5,940 claim evidence rows**. The evidence layer includes:
 
 - one occupation-recognition row for every live route
 - one source-limitation row for every live route
@@ -90,7 +90,7 @@ The imported research foundation currently contains:
 - 589 live starter routes with a direct, suggestion or curated research link.
 - 461 live starter routes still tracked as research-link gaps.
 - 145 canonical-career links covering the Top 100 build queue.
-- 2,688 generated claim-evidence rows covering all 1,050 live routes.
+- 5,940 generated claim-evidence rows covering all 2,676 live routes.
 
 The research gap file is:
 
@@ -143,6 +143,6 @@ Priority enrichment order:
 
 ## Product Interpretation
 
-Careerize now has a broad career universe for exploration and a claim-evidence layer for every route. It is not yet a fully verified 1,050-career knowledge graph.
+Careerize now has a broad career universe for exploration and a claim-evidence layer for every route. It is not yet a fully verified 2,676-career knowledge graph.
 
 Breadth exists now. Claim-level evidence governance exists now. Deep verified guidance still needs staged editorial and source work.

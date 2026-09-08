@@ -94,26 +94,37 @@ function includesAny(text, terms) {
 }
 
 export function getRoutePreferenceProfile(route) {
+  // Structured profile from the catalog is the source of truth when present.
+  // Keyword fallbacks remain only for routes without an explicit profile.
+  if (route.lifestyleProfile && typeof route.lifestyleProfile === "object") {
+    return {
+      earnings: Number(route.lifestyleProfile.earnings ?? 50),
+      travel: Number(route.lifestyleProfile.travel ?? 50),
+      stress: Number(route.lifestyleProfile.stress ?? 50),
+      danger: Number(route.lifestyleProfile.danger ?? 40),
+    };
+  }
+
   const earningText = `${route.earningPotential?.label ?? ""} ${route.earningPotential?.explanation ?? ""}`;
   const environmentText = `${route.environment ?? ""} ${(route.workEnvironment ?? []).join(" ")}`;
   const stressText = route.stress ?? "";
 
-  const earnings = includesAny(earningText, ["high", "strong", "specialist", "scarce", "good progression"])
-    ? 80
-    : includesAny(earningText, ["stable", "steady"])
+  const earnings = includesAny(earningText, ["high upside", "strong technical", "scarce", "specialist earning", "high personal responsibility"])
+    ? 75
+    : includesAny(earningText, ["good progression", "stable", "steady"])
       ? 60
       : 45;
-  const travel = includesAny(environmentText, ["remote", "office", "online"])
-    ? 25
-    : includesAny(environmentText, ["site", "field", "vehicle", "farm", "mine", "customer locations", "events", "ports", "streets"])
+  const travel = includesAny(environmentText, ["remote teams", "hybrid", "online channels", "online classes"])
+    ? 30
+    : includesAny(environmentText, ["site", "field", "vehicle", "farm", "mine", "customer locations", "events", "ports", "streets", "warehouse", "depot", "taxis", "taxi rank"])
       ? 78
       : 50;
-  const stress = includesAny(stressText, ["high"])
+  const stress = includesAny(stressText, ["High at times", "High."])
     ? 82
-    : includesAny(stressText, ["variable"])
+    : includesAny(stressText, ["Variable"])
       ? 66
       : 50;
-  const danger = includesAny(environmentText, ["mine", "site", "plant", "factory", "farm", "emergency", "equipment", "vehicles", "workshops", "safety"])
+  const danger = includesAny(environmentText, ["mine", "plant", "factory", "farm", "emergency", "equipment-heavy", "workshops", "safety gear"])
     ? 72
     : includesAny(environmentText, ["clinic", "hospital", "field"])
       ? 58
@@ -123,15 +134,19 @@ export function getRoutePreferenceProfile(route) {
 }
 
 export function getPreferenceScore(route, preferences = DEFAULT_LIFESTYLE_PREFERENCES) {
-  const hasExplicitPreference = Object.entries(DEFAULT_LIFESTYLE_PREFERENCES).some(([key, defaultValue]) => {
+  // Only dimensions the learner actually moved away from the midpoint affect scoring.
+  // Untouched sliders stay neutral (50) and must not penalise any route.
+  const changedEntries = Object.entries(DEFAULT_LIFESTYLE_PREFERENCES).filter(([key, defaultValue]) => {
     return Number(preferences[key] ?? defaultValue) !== defaultValue;
   });
-  if (!hasExplicitPreference) return 0;
+  if (!changedEntries.length) return 0;
 
   const profile = getRoutePreferenceProfile(route);
-  return Object.entries(DEFAULT_LIFESTYLE_PREFERENCES).reduce((total, [key, defaultValue]) => {
+  return changedEntries.reduce((total, [key, defaultValue]) => {
     const learnerValue = Number(preferences[key] ?? defaultValue);
     const routeValue = Number(profile[key] ?? defaultValue);
+    // Reward closeness to the learner's chosen endpoint. When learner=100 (high end),
+    // routes near 100 score up to 25; when learner=0, routes near 0 score up to 25.
     const distance = Math.abs(learnerValue - routeValue);
     return total + Math.max(0, 25 - distance / 4);
   }, 0);
