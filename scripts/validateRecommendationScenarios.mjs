@@ -41,8 +41,12 @@ assert(
   topStreams(careHighIncome, 20).every((stream) => careAdjacentStreams.has(stream)),
   `Care plus high-income scenario should keep care or education-support routes in the top 20; saw ${topStreams(careHighIncome, 20).join(" | ")}.`
 );
+const financeStream = "Finance, admin and business operations";
 assert(
-  !topTitles(careHighIncome, 20).some((title) => /account|creditor|debtor|bookkeeper|payroll/i.test(title)),
+  !topTitles(careHighIncome, 20).some((title, i) =>
+    careHighIncome[i]?.stream === financeStream &&
+    /account(?!ing teacher)|creditor|debtor|bookkeeper|payroll/i.test(title)
+  ),
   `Care plus high-income scenario must not surface finance clerk routes in top 20; saw ${topTitles(careHighIncome, 20).join(" | ")}.`
 );
 

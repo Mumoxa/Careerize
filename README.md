@@ -10,7 +10,7 @@ Careerize is at **expanded public guidance SPA + pathway-engine foundation** sta
 
 The live public app is a Vite/React single-page application. It currently supports account-free exploration, deterministic route ranking, career-reality sliders, subject-risk prompts and pathway template guidance.
 
-The catalog covers **1,050 starter career routes** across **18 South African-first macro streams**. This breadth is useful for exploration, but exact provider requirements, APS thresholds, salary data, accreditation status and labour-market claims remain marked for source verification before they can be treated as facts.
+The catalog covers **2,676 starter career routes** across **18 South African-first macro streams**. This breadth is useful for exploration, but exact provider requirements, APS thresholds, salary data, accreditation status and labour-market claims remain marked for source verification before they can be treated as facts.
 
 ## Core Product Idea
 
@@ -55,7 +55,7 @@ The current app includes:
 - Career reality sliders for earning ambition, travel/movement, stress tolerance and safety/danger tolerance.
 - Deterministic career-route signals.
 - Transparent recommendation explanations showing matched signals, missing signals, confidence and next step.
-- 1,050 structured starter career routes across 18 macro streams.
+- 2,676 structured starter career routes across 18 macro streams.
 - Structured starter career profiles with day-in-life, tasks, subjects, qualification/pathway notes, misconceptions, best/worst parts and uncertainty states.
 - Source registry and confidence display for starter content.
 - Qualitative earning-potential insights instead of detailed salary information.
@@ -179,7 +179,7 @@ data/sa-foundation/accreditation_source_registry.csv
 Research-link coverage as of the current generated layer:
 
 - 1,702 canonical research careers imported from the source archive.
-- 589 of 1,050 live starter routes have a direct, suggestion or curated research link.
+- 589 of 2,676 live starter routes have a direct, suggestion or curated research link.
 - 461 live starter routes are tracked in `data/sa-foundation/careerize_sa_starter_route_research_gaps.csv`.
 - The Top 100 enrichment backlog is fully linked in `data/sa-foundation/careerize_sa_top100_research_gaps.csv`, which is intentionally header-only.
 
@@ -211,7 +211,7 @@ npm run generate:foundation-research
 | Arts, culture, heritage and society | 42 |
 | Armed forces and security services | 39 |
 | Science, research and frontier careers | 38 |
-| **Total** | **1,050** |
+| **Total** | **2,676** |
 
 For the full coverage note, see `docs/CAREER_COVERAGE_MANIFEST.md`.
 

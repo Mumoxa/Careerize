@@ -64,20 +64,112 @@ for (const s of STREAMS) {
     const key = c.title;
     if (!seen.has(key)) {
       seen.set(key, true);
+      const hasCode = c.ofoCode && /^2021-\d{6}$/.test(c.ofoCode);
       deduped.push({
         title: c.title,
-        ofoCode: c.ofoCode,
+        ofoCode: hasCode ? c.ofoCode : null,
         stream: s.stream,
         kind: s.kind,
         profile: s.profile,
         ofoMajorGroups: s.ofoGroups,
-        sourceIds: ["dhet-ofo-2021", "careerize-editorial-v1"],
-        sourceStatus: getSourceStatus(SOURCES.OFO_2021.confidence),
-        sourceRef: `OFO 2021: ${c.ofoCode}`,
-        verification: "editorial",
+        sourceIds: hasCode
+          ? ["dhet-ofo-2021", "careerize-editorial-v1"]
+          : ["careerize-editorial-v1"],
+        sourceStatus: hasCode ? getSourceStatus(SOURCES.OFO_2021.confidence) : "in-progress",
+        sourceRef: hasCode ? `OFO 2021: ${c.ofoCode}` : "OFO mapping pending review",
+        verification: hasCode ? "editorial" : "needs-ofo-verification",
       });
     }
   }
+}
+
+// Source-of-truth OFO sanitizer: OFO 2021 codes must map to the occupation the
+// code actually describes. Where the expansion scripts assigned a code to a
+// title in a different stream that doesn't share a meaningful occupational root
+// (e.g. "Animal Scientist" sharing a Telecommunications Engineer code, or
+// "Small-Scale Clothing Designer" sharing a Diesel Mechanic code), we clear the
+// code rather than publish a misleading mapping. Wrong codes are worse than no
+// code — null codes render as "OFO mapping in progress" in the UI.
+const STOPWORDS = new Set([
+  "self","employed","informal","freelance","township","small","scale","assistant",
+  "general","basic","home","based","independent","field","senior","junior",
+  "live","private","voluntary","casual","night","manager","officer","worker",
+  "operator","technician","supervisor","clerk","attendant","labourer",
+  "app","online","owner","director","the","and","for","with","from","code",
+  "craft","traditional","abnormal","mining","manufacturing","public","private",
+  "services","service","sales","retail","health","care","production","entry",
+  "level","removals","furniture","long","haul","heavy","light","foundation",
+  "phase","intermediate","senior","phase","grade","south","africa","saps",
+  "sars","prasa","ca","sa","llb","bcom","bsc","ba","nsc","tvet","seta",
+  "ai","ml","llm","nlp","bi","crm","dba","devops","soc","cto","cdo","ciso",
+  "ceo","coo","mp","mpl","it","ux","ui","fpga","seo","sem","sme","smmes",
+  "led","ward","committee","non","executive","member","local","metro",
+  "chief","deputy","acting","head","lead","principal","clinical",
+  "registered","enrolled","military","air","force","navy","army",
+  "township","street","village","rural","local","provincial","national",
+]);
+
+function occupationalTokens(title) {
+  return new Set(
+    String(title || "")
+      .toLowerCase()
+      .replace(/\(.*?\)/g, " ")
+      .replace(/[^a-z]/g, " ")
+      .split(/\s+/)
+      .filter((t) => t.length >= 4 && !STOPWORDS.has(t))
+  );
+}
+
+let sanitizedCount = 0;
+// Pass 1: null any code whose 1-digit major group isn't allowed by its stream's
+// declared OFO major groups. These are fabricated/invented codes (e.g. "close
+// protection officer" given a code in major group 5 when the armed forces stream
+// only lists major 0/1). Wrong codes are worse than no codes.
+for (const c of deduped) {
+  if (!c.ofoCode) continue;
+  const major = Number(c.ofoCode.slice(5, 6));
+  if (!c.ofoMajorGroups?.includes(major)) {
+    c.ofoCode = null;
+    c.sourceIds = (c.sourceIds ?? []).filter((id) => id !== "dhet-ofo-2021");
+    c.sourceRef = "OFO mapping pending — major-group mismatch";
+    c.sourceStatus = "in-progress";
+    c.verification = "needs-ofo-verification";
+    sanitizedCount++;
+  }
+}
+// Pass 2: for codes shared across routes within the allowed major groups, clear
+// assignments that don't share an occupational root with the canonical title
+// (this catches cross-stream nonsense like Animal Scientist sharing a Telecom
+// Engineer code, or Clothing Designer sharing a Diesel Mechanic code).
+const ofoCodeToEntries = new Map();
+for (const c of deduped) {
+  if (!c.ofoCode) continue;
+  if (!ofoCodeToEntries.has(c.ofoCode)) ofoCodeToEntries.set(c.ofoCode, []);
+  ofoCodeToEntries.get(c.ofoCode).push(c);
+}
+for (const [code, entries] of ofoCodeToEntries) {
+  if (entries.length <= 1) continue;
+  entries.sort((a, b) => a.title.length - b.title.length);
+  const canonical = entries[0];
+  const canonTokens = occupationalTokens(canonical.title);
+  if (canonTokens.size === 0) continue;
+  for (const e of entries) {
+    if (e === canonical) continue;
+    const eTokens = occupationalTokens(e.title);
+    const overlap = [...eTokens].some((t) => canonTokens.has(t));
+    if (!overlap) {
+      e.ofoCode = null;
+      e.sourceIds = (e.sourceIds ?? []).filter((id) => id !== "dhet-ofo-2021");
+      e.sourceRef = "OFO mapping pending — code assignment did not pass the shared-occupational-root check";
+      e.sourceStatus = "in-progress";
+      e.verification = "needs-ofo-verification";
+      sanitizedCount++;
+    }
+  }
+}
+
+if (sanitizedCount > 0 && !process.env.CAREERIZE_QUIET_SANITIZER) {
+  console.info(`[masterCareerList] Sanitized ${sanitizedCount} OFO code mappings that did not share an occupational root with the canonical title.`);
 }
 
 export const MASTER_CAREER_LIST = deduped;

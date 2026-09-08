@@ -6,21 +6,25 @@ const warnings = [];
 const ofoPattern = /^2021-\d{6}$/;
 
 for (const entry of MASTER_CAREER_LIST) {
-  if (!entry.ofoCode) {
-    errors.push(`Missing OFO code: ${entry.title} (${entry.stream})`);
+  if (entry.ofoCode === null || entry.ofoCode === undefined) {
+    // Acceptable: OFO mapping still pending — better than a wrong code.
     continue;
   }
   if (!ofoPattern.test(entry.ofoCode)) {
-    errors.push(`Invalid OFO code format: ${entry.title} = ${entry.ofoCode} (expected 2021-NNNNNN)`);
+    errors.push(`Invalid OFO code format: ${entry.title} = ${entry.ofoCode} (expected 2021-NNNNNN or null)`);
   }
-  if (!entry.sourceRef || !entry.sourceRef.startsWith("OFO 2021:")) {
-    errors.push(`Missing or invalid sourceRef: ${entry.title} (${entry.ofoCode})`);
+  const major = Number(entry.ofoCode.slice(5, 6));
+  if (entry.ofoMajorGroups && !entry.ofoMajorGroups.includes(major)) {
+    errors.push(`OFO code ${entry.ofoCode} major group ${major} not allowed for stream "${entry.stream}" (allowed: ${entry.ofoMajorGroups.join(",")}) — ${entry.title}`);
+  }
+  if (!entry.sourceRef) {
+    errors.push(`Missing sourceRef: ${entry.title} (${entry.ofoCode})`);
   }
   if (!entry.sourceStatus) {
     errors.push(`Missing sourceStatus: ${entry.title} (${entry.ofoCode})`);
   }
-  if (!entry.sourceIds || !entry.sourceIds.includes("dhet-ofo-2021")) {
-    errors.push(`Missing dhet-ofo-2021 sourceId: ${entry.title} (${entry.ofoCode})`);
+  if (entry.ofoCode && (!entry.sourceIds || !entry.sourceIds.includes("dhet-ofo-2021"))) {
+    errors.push(`Missing dhet-ofo-2021 sourceId for coded entry: ${entry.title} (${entry.ofoCode})`);
   }
 }
 
